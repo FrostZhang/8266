@@ -69,6 +69,18 @@ static void smartconfig_callback(smartconfig_status_t status, void *pdata)
                 wifi_config_t *wifi_config = pdata;
                 ESP_LOGI(tag, "SSID:%s", wifi_config->sta.ssid);
                 ESP_LOGI(tag, "PASSWORD:%s", wifi_config->sta.password);
+                nvs_handle mHandleNvsRead;
+                esp_err_t err = nvs_open("wifi", NVS_READWRITE, &mHandleNvsRead);
+                if (err == ESP_OK)
+                {
+                        char ssid[32] = {0};
+                        strcpy(ssid, (char *)wifi_config->sta.ssid);
+                        nvs_set_str(mHandleNvsRead, "ssid", ssid);
+                        char pass[64] = {0};
+                        strcpy(pass, (char *)wifi_config->sta.password);
+                        nvs_set_str(mHandleNvsRead, "pass", pass);
+                }
+                nvs_close(mHandleNvsRead);
                 ESP_ERROR_CHECK(esp_wifi_disconnect());
                 ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, wifi_config));
                 ESP_ERROR_CHECK(esp_wifi_connect());
@@ -174,35 +186,57 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
 
 static void initialise_wifi(void)
 {
-         //NVS操作的句柄，类似于 rtos系统的任务创建返回的句柄！
-    nvs_handle mHandleNvsRead;
-    int8_t nvs_i8 = 0;
+        //NVS操作的句柄，类似于 rtos系统的任务创建返回的句柄！
+        nvs_handle mHandleNvsRead;
+        int8_t nvs_i8 = 0;
 
-    esp_err_t err = nvs_open(TB_SELF, NVS_READWRITE, &mHandleNvsRead);
-    //打开数据库，打开一个数据库就相当于会返回一个句柄
-    if (err != ESP_OK)
-    {
-        ESP_LOGE(TAG, "Open NVS Table fail");
-        vTaskDelete(NULL);
-    }
-    else
-    {
-        ESP_LOGI(TAG, "Open NVS Table ok.");
-    }
+        esp_err_t err = nvs_open("wifi", NVS_READWRITE, &mHandleNvsRead);
+        //打开数据库，打开一个数据库就相当于会返回一个句柄
+        if (err != ESP_OK)
+        {
+                ESP_LOGE(tag, "Open NVS Table fail");
+                vTaskDelete(NULL);
+        }
+        else
+        {
+                ESP_LOGI(tag, "Open NVS Table ok.");
+        }
 
-    //读取 字符串
-    char data[65];
-    uint32_t len = sizeof(data);
-    err = nvs_get_str(mHandleNvsRead, FILED_SELF_Str, data, &len);
+        //读取 字符串
+        char ssid[32] = {0};
+        uint32_t len = sizeof(ssid);
+        err = nvs_get_str(mHandleNvsRead, "ssid", ssid, &len);
+        wifi_config_t wifi_config = {0};
+        if (err == ESP_OK)
+        {
+                ESP_LOGI(tag, "get str ssid = %s ", ssid);
+                strncpy((char *)wifi_config.sta.ssid, ssid, sizeof(wifi_config.sta.ssid));
+        }
+        else
+        {
+                ESP_LOGI(tag, "get str ssid error");
+                strncpy((char *)wifi_config.sta.ssid, CONFIG_ESP_WIFI_SSID, sizeof(wifi_config.sta.ssid));
+                // nvs_set_str(mHandleNvsRead, "ssid", data);
+        }
 
-    if (err == ESP_OK)
-        ESP_LOGI(TAG, "get str data = %s ", data);
-    else
-        ESP_LOGI(TAG, "get str data error");
+        char pass[64] = {0};
+        len = sizeof(pass);
+        err = nvs_get_str(mHandleNvsRead, "pass", pass, &len);
 
-    //关闭数据库，关闭面板！
-    nvs_close(mHandleNvsRead);
+        if (err == ESP_OK)
+        {
+                ESP_LOGI(tag, "get str pass = %s ", pass);
+                strncpy((char *)wifi_config.sta.password, pass, sizeof(wifi_config.sta.password));
+        }
+        else
+        {
+                ESP_LOGI(tag, "get str pass error");
+                strncpy((char *)wifi_config.sta.password, CONFIG_ESP_WIFI_PASSWORD, sizeof(wifi_config.sta.password));
+                // nvs_set_str(mHandleNvsRead, "ssid", data);
+        }
 
+        //关闭数据库，关闭面板！
+        nvs_close(mHandleNvsRead);
 
         tcpip_adapter_init();
 
@@ -213,12 +247,14 @@ static void initialise_wifi(void)
         //ESP_ERROR_CHECK( esp_wifi_start() );
         // wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
         //ESP_ERROR_CHECK(esp_wifi_init(&cfg));
-        wifi_config_t wifi_config = {
-            .sta = {
-                .ssid = CONFIG_ESP_WIFI_SSID,
-                .password = CONFIG_ESP_WIFI_PASSWORD},
-        };
-        ESP_LOGI(tag, "ssid %s   pass %s", CONFIG_ESP_WIFI_SSID, CONFIG_ESP_WIFI_PASSWORD);
+        // wifi_config_t wifi_config = {
+        //     .sta = {
+        //         .ssid = &ssid,
+        //         .password = &pass,
+        //     },
+        // };
+
+        ESP_LOGI(tag, "ssid %s   pass %s", ssid, pass);
         ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
         ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config));
         ESP_ERROR_CHECK(esp_event_loop_init(event_handler, NULL));
@@ -455,7 +491,7 @@ static void mqtt_app_start(void)
 
 void Taskds18b20(void *p)
 {
-        ESP_ERROR_CHECK(Ds18b20Init()) ;
+        ESP_ERROR_CHECK(Ds18b20Init());
         while (1)
         {
                 printf("ds18b20采集的温度: %d \n\n", (int)(Ds18b20ReadTemp() * 0.0625 + 0.005));
@@ -465,16 +501,16 @@ void Taskds18b20(void *p)
 
 void TaskCreatDht11(void *p)
 {
-    uint8_t curTem = 0;
-    uint8_t curHum = 0;
-    ESP_LOGI(tag, " dh11Init() : %d ", dh11Init());
-    while (1)
-    {
-        vTaskDelay(5000 / portTICK_RATE_MS);
-        dh11Read(&curTem, &curHum);
-        ESP_LOGI(tag, "Temperature : %d , Humidity : %d", curTem, curHum);
-    }
-    vTaskDelete(NULL);
+        uint8_t curTem = 0;
+        uint8_t curHum = 0;
+        ESP_LOGI(tag, " dh11Init() : %d ", dh11Init());
+        while (1)
+        {
+                vTaskDelay(5000 / portTICK_RATE_MS);
+                dh11Read(&curTem, &curHum);
+                //ESP_LOGI(tag, "Temperature : %d , Humidity : %d", curTem, curHum);
+        }
+        vTaskDelete(NULL);
 }
 
 void app_main()
@@ -508,6 +544,6 @@ void app_main()
                 ESP_LOGE(tag, "mqtt create client thread failed");
         }
 
-        xTaskCreate(TaskCreatDht11, "TaskCreatDht11", 2048, NULL, 4, NULL); 
+        xTaskCreate(TaskCreatDht11, "TaskCreatDht11", 2048, NULL, 4, NULL);
         //xTaskCreate(Taskds18b20, "Taskds18b20", 2048, NULL, 3, NULL);
 }
