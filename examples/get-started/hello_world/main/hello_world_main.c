@@ -40,7 +40,12 @@
 #include "dht.h"
 #include "ds18b20.h"
 
+#include "driver/ledc.h"
+
 const char *tag = "Hello world";
+
+#define LEDC_TEST_DUTY (4096)
+#define LEDC_TEST_FADE_TIME (1500)
 
 static xQueueHandle gpio_evt_queue = NULL;
 static EventGroupHandle_t wifi_event_group;
@@ -439,7 +444,7 @@ static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
                 ESP_LOGI(tag, "MQTT_EVENT_UNSUBSCRIBED, msg_id=%d", event->msg_id);
                 break;
         case MQTT_EVENT_PUBLISHED:
-                ESP_LOGI(tag, "MQTT_EVENT_PUBLISHED, msg_id=%d", event->msg_id);
+                //ESP_LOGI(tag, "MQTT_EVENT_PUBLISHED, msg_id=%d", event->msg_id);
                 break;
         case MQTT_EVENT_DATA:
                 printf("TOPIC=%.*s\r\n", event->topic_len, event->topic);
@@ -491,7 +496,12 @@ static void mqtt_app_start(void)
 
 void Taskds18b20(void *p)
 {
-        ESP_ERROR_CHECK(Ds18b20Init());
+        uint8_t res = Ds18b20Init();
+        if (res != 0)
+        {
+                ESP_LOGE(tag, "18b20 ini failed");
+                //vTaskDelete(NULL);
+        }
         while (1)
         {
                 printf("ds18b20采集的温度: %d \n\n", (int)(Ds18b20ReadTemp() * 0.0625 + 0.005));
@@ -508,9 +518,44 @@ void TaskCreatDht11(void *p)
         {
                 vTaskDelay(5000 / portTICK_RATE_MS);
                 dh11Read(&curTem, &curHum);
-                //ESP_LOGI(tag, "Temperature : %d , Humidity : %d", curTem, curHum);
+                ESP_LOGI(tag, "Temperature : %d , Humidity : %d", curTem, curHum);
         }
         vTaskDelete(NULL);
+}
+
+void LEDC(void *p)
+{
+        ledc_timer_config_t ledc_timer = {
+            .duty_resolution = LEDC_TIMER_13_BIT, // resolution of PWM duty
+            .freq_hz = 5000,                      // frequency of PWM signal
+            .speed_mode = LEDC_HIGH_SPEED_MODE,   // timer mode
+            .timer_num = LEDC_TIMER_0             // timer index
+        };
+        // Set configuration of timer0 for high speed channels
+        ledc_timer_config(&ledc_timer);
+        ledc_channel_config_t ledc_channel = {
+            .channel = LEDC_CHANNEL_0,
+            .duty = 0,
+            .gpio_num = 12,
+            .speed_mode = LEDC_HIGH_SPEED_MODE,
+            .hpoint = 0,
+            .timer_sel = LEDC_TIMER_0};
+
+        ledc_channel_config(&ledc_channel);
+        ledc_fade_func_install(0);
+        while (1)
+        {
+                ledc_set_fade_with_time(ledc_channel.speed_mode,
+                                        ledc_channel.channel, LEDC_TEST_DUTY, LEDC_TEST_FADE_TIME);
+                ledc_fade_start(ledc_channel.speed_mode,
+                                ledc_channel.channel, LEDC_FADE_NO_WAIT);
+                vTaskDelay(LEDC_TEST_FADE_TIME / portTICK_PERIOD_MS);
+                ledc_set_fade_with_time(ledc_channel.speed_mode,
+                                        ledc_channel.channel, 0, LEDC_TEST_FADE_TIME);
+                ledc_fade_start(ledc_channel.speed_mode,
+                                ledc_channel.channel, LEDC_FADE_NO_WAIT);
+                vTaskDelay(LEDC_TEST_FADE_TIME / portTICK_PERIOD_MS);
+        }
 }
 
 void app_main()
@@ -546,4 +591,5 @@ void app_main()
 
         xTaskCreate(TaskCreatDht11, "TaskCreatDht11", 2048, NULL, 4, NULL);
         //xTaskCreate(Taskds18b20, "Taskds18b20", 2048, NULL, 3, NULL);
+        xTaskCreate(LEDC, "LEDC", 4096, NULL, 8, NULL);
 }
