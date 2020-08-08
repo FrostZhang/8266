@@ -41,6 +41,8 @@
 #include "ds18b20.h"
 
 #include "driver/ledc.h"
+#include "ir_remote.h"
+#include "ir_remote_def.h"
 
 const char *tag = "Hello world";
 
@@ -592,4 +594,7 @@ void app_main()
         xTaskCreate(TaskCreatDht11, "TaskCreatDht11", 2048, NULL, 4, NULL);
         //xTaskCreate(Taskds18b20, "Taskds18b20", 2048, NULL, 3, NULL);
         xTaskCreate(LEDC, "LEDC", 4096, NULL, 8, NULL);
+
+        ir_remote_init(PERIPHS_IO_MUX_GPIO2_U, FUNC_GPIO2, 2, true);
+        ir_remote_send_nec(0x5EA1F807, 32); // power on/off code for Yamaha RX-700
 }
