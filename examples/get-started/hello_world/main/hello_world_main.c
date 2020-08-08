@@ -41,13 +41,15 @@
 #include "ds18b20.h"
 
 #include "driver/ledc.h"
-#include "ir_remote.h"
-#include "ir_remote_def.h"
 
+#include "driver/ir_rx.h"
 const char *tag = "Hello world";
 
 #define LEDC_TEST_DUTY (4096)
 #define LEDC_TEST_FADE_TIME (1500)
+
+#define IR_RX_IO_NUM 5
+#define IR_RX_BUF_LEN 128
 
 static xQueueHandle gpio_evt_queue = NULL;
 static EventGroupHandle_t wifi_event_group;
@@ -560,6 +562,49 @@ void LEDC(void *p)
         }
 }
 
+static esp_err_t ir_rx_nec_code_check(ir_rx_nec_data_t nec_code)
+{
+
+        if ((nec_code.addr1 != ((~nec_code.addr2) & 0xff)))
+        {
+                return ESP_FAIL;
+        }
+
+        if ((nec_code.cmd1 != ((~nec_code.cmd2) & 0xff)))
+        {
+                return ESP_FAIL;
+        }
+
+        return ESP_OK;
+}
+
+void ir_rx_task(void *arg)
+{
+        ir_rx_nec_data_t ir_data;
+        ir_rx_config_t ir_rx_config = {
+            .io_num = IR_RX_IO_NUM,
+            .buf_len = IR_RX_BUF_LEN};
+        ir_rx_init(&ir_rx_config);
+
+        while (1)
+        {
+                ir_data.val = 0;
+                ir_rx_recv_data(&ir_data, 1, portMAX_DELAY);
+                ESP_LOGI(tag, "addr1: 0x%x, addr2: 0x%x, cmd1: 0x%x, cmd2: 0x%x", ir_data.addr1, ir_data.addr2, ir_data.cmd1, ir_data.cmd2);
+
+                if (ESP_OK == ir_rx_nec_code_check(ir_data))
+                {
+                        ESP_LOGI(tag, "ir rx nec data:  0x%x", ir_data.cmd1);
+                }
+                else
+                {
+                        ESP_LOGI(tag, "Non-standard nec infrared protocol");
+                }
+        }
+
+        vTaskDelete(NULL);
+}
+
 void app_main()
 {
         printf("Hello world!\n");
@@ -593,8 +638,7 @@ void app_main()
 
         xTaskCreate(TaskCreatDht11, "TaskCreatDht11", 2048, NULL, 4, NULL);
         //xTaskCreate(Taskds18b20, "Taskds18b20", 2048, NULL, 3, NULL);
-        xTaskCreate(LEDC, "LEDC", 4096, NULL, 8, NULL);
+        //xTaskCreate(LEDC, "LEDC", 4096, NULL, 8, NULL);
 
-        ir_remote_init(PERIPHS_IO_MUX_GPIO2_U, FUNC_GPIO2, 2, true);
-        ir_remote_send_nec(0x5EA1F807, 32); // power on/off code for Yamaha RX-700
+        //xTaskCreate(ir_rx_task, "ir_rx_task", 2048, NULL, 5, NULL);
 }
