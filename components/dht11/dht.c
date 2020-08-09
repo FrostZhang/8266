@@ -39,7 +39,7 @@ static uint8_t dht11Check(void)
 	}
 
 	if (retry >= 100)
-		return 1;
+		return 0;
 	else
 		retry = 0;
 
@@ -50,9 +50,9 @@ static uint8_t dht11Check(void)
 	}
 
 	if (retry >= 100)
-		return 1; //chack error
+		return 0; //chack error
 
-	return 0;
+	return 1;
 }
 
 static uint8_t dht11ReadBit(void)

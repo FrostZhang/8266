@@ -29,7 +29,7 @@ endchoice
 
 config EXAMPLE_IPV4_ADDR
     string "IPV4 Address"
-    default "192.168.0.165"
+    default "192.168.43.236"
     depends on EXAMPLE_IPV4
     help
        IPV4 address to which the client example will send data.

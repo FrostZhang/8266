@@ -43,6 +43,11 @@
 #include "driver/ledc.h"
 
 #include "driver/ir_rx.h"
+#include "driver/ir_tx.h"
+
+#include "lwip/err.h"
+#include "lwip/sys.h"
+
 const char *tag = "Hello world";
 
 #define LEDC_TEST_DUTY (4096)
@@ -58,7 +63,7 @@ static const int ESPTOUCH_DONE_BIT = BIT1;
 static const int CONNECTED_FIELD = BIT2;
 static const int Net_SUCCESS = BIT3;
 
-char isinSC = 0;
+char isSCini = 0;
 
 static void smartconfig_callback(smartconfig_status_t status, void *pdata)
 {
@@ -79,6 +84,7 @@ static void smartconfig_callback(smartconfig_status_t status, void *pdata)
                 ESP_LOGI(tag, "SSID:%s", wifi_config->sta.ssid);
                 ESP_LOGI(tag, "PASSWORD:%s", wifi_config->sta.password);
                 nvs_handle mHandleNvsRead;
+                //将airkiss获取的wifi写入内存
                 esp_err_t err = nvs_open("wifi", NVS_READWRITE, &mHandleNvsRead);
                 if (err == ESP_OK)
                 {
@@ -120,14 +126,13 @@ static void smartconfig_callback(smartconfig_status_t status, void *pdata)
         }
 }
 
-TaskHandle_t schandle;
 void smartconfig_example_task(void *parm)
 {
         EventBits_t uxBits;
         ESP_ERROR_CHECK(esp_smartconfig_set_type(SC_TYPE_ESPTOUCH_AIRKISS));
         ESP_ERROR_CHECK(esp_smartconfig_start(smartconfig_callback));
         int cot = 0;
-        isinSC = 1;
+        isSCini++;
         while (1)
         {
                 gpio_set_level(4, (cot++) % 2);
@@ -140,18 +145,22 @@ void smartconfig_example_task(void *parm)
                 {
                         ESP_LOGI(tag, "smartconfig over");
                         esp_smartconfig_stop();
-                        isinSC = 0;
+                        isSCini = 0;
                         gpio_set_level(4, 1);
-                        vTaskDelete(schandle);
+                        vTaskDelete(NULL);
                 }
                 else if (uxBits & CONNECTED_FIELD)
                 {
+                        //配置失败 重新开启airkiss配置
                         esp_smartconfig_stop();
                         ESP_ERROR_CHECK(esp_smartconfig_set_type(SC_TYPE_ESPTOUCH_AIRKISS));
                         ESP_ERROR_CHECK(esp_smartconfig_start(smartconfig_callback));
                 }
         }
 }
+
+ip4_addr_t *localIP;
+u8_t wifiretry = 0;
 
 static esp_err_t event_handler(void *ctx, system_event_t *event)
 {
@@ -164,9 +173,11 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
                 esp_wifi_connect();
                 break;
         case SYSTEM_EVENT_STA_GOT_IP:
+                localIP = &info->got_ip.ip_info.ip;
                 xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);
                 xEventGroupClearBits(wifi_event_group, CONNECTED_FIELD);
                 //发布消息给smc sntp
+                wifiretry = 0;
                 break;
         case SYSTEM_EVENT_STA_DISCONNECTED:
                 ESP_LOGE(tag, "Disconnect reason : %d", info->disconnected.reason);
@@ -179,12 +190,23 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
                 }
                 else
                 {
-                        if (isinSC == 1)
+                        wifiretry++;
+                        if (wifiretry < 5)
                         {
-                                xEventGroupSetBits(wifi_event_group, CONNECTED_FIELD);
+                                //断线重连
+                                os_delay_us(5000);
+                                esp_wifi_connect();
                         }
                         else
-                                xTaskCreate(smartconfig_example_task, "smartconfig_example_task", 4096, &schandle, 1, NULL);
+                        {
+                                if (isSCini > 0)
+                                {
+                                        //airkiss配网失败
+                                        xEventGroupSetBits(wifi_event_group, CONNECTED_FIELD);
+                                }
+                                else //启用airkiss配网
+                                        xTaskCreate(smartconfig_example_task, "smartconfig_example_task", 4096, NULL, 1, NULL);
+                        }
                 }
                 break;
         default:
@@ -197,7 +219,7 @@ static void initialise_wifi(void)
 {
         //NVS操作的句柄，类似于 rtos系统的任务创建返回的句柄！
         nvs_handle mHandleNvsRead;
-        int8_t nvs_i8 = 0;
+        //int8_t nvs_i8 = 0;
 
         esp_err_t err = nvs_open("wifi", NVS_READWRITE, &mHandleNvsRead);
         //打开数据库，打开一个数据库就相当于会返回一个句柄
@@ -346,24 +368,7 @@ static void sntp_example_task(void *arg)
         }
 }
 
-static void TestJson(void)
-{
-        printf(cJSON_Version());
-        //json send
-        cJSON *jsonSend = cJSON_CreateObject();
-        cJSON_AddItemToObject(jsonSend, "name", cJSON_CreateString("esp8266"));
-        cJSON *jsonSendprop = cJSON_CreateObject();
-        cJSON_AddItemToObject(jsonSend, "prop", jsonSendprop);
-        cJSON_AddItemToObject(jsonSendprop, "ip", cJSON_CreateString("192.168.1.1"));
-        cJSON_AddItemToObject(jsonSendprop, "res", cJSON_CreateTrue());
-
-        char *sendstr = cJSON_Print(jsonSend);
-        if (NULL != sendstr)
-        {
-                ESP_LOGI(tag, sendstr);
-                free(sendstr);
-        }
-}
+static void udp_client_send(const char *data);
 
 static void gpio_isr_handler(void *arg)
 {
@@ -429,17 +434,18 @@ static void ReStart()
 static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
 {
         esp_mqtt_client_handle_t client = event->client;
-        int msg_id;
+        //int msg_id;
         // your_context_t *context = event->context;
         switch (event->event_id)
         {
         case MQTT_EVENT_CONNECTED:
                 ESP_LOGI(tag, "MQTT_EVENT_CONNECTED");
                 esp_mqtt_client_subscribe(client, "$baidu/iot/shadow/Asher8266/update/accepted", 0);
-                esp_mqtt_client_subscribe(client, "$baidu/iot/shadow/Asher8266/get/accepted", 0);
+                //esp_mqtt_client_subscribe(client, "$baidu/iot/shadow/Asher8266/get/accepted", 0);
                 break;
         case MQTT_EVENT_DISCONNECTED:
                 ESP_LOGI(tag, "MQTT_EVENT_DISCONNECTED");
+
                 break;
         case MQTT_EVENT_SUBSCRIBED:
                 esp_mqtt_client_publish(client, "$baidu/iot/shadow/Asher8266/get", "{}", 0, 0, 0);
@@ -501,15 +507,29 @@ static void mqtt_app_start(void)
 void Taskds18b20(void *p)
 {
         uint8_t res = Ds18b20Init();
-        if (res != 0)
+        uint8_t temp = 0;
+        if (res == 0)
         {
                 ESP_LOGE(tag, "18b20 ini failed");
                 //vTaskDelete(NULL);
         }
         while (1)
         {
-                printf("ds18b20采集的温度: %d \n\n", (int)(Ds18b20ReadTemp() * 0.0625 + 0.005));
                 vTaskDelay(3000 / portTICK_PERIOD_MS);
+                temp = (int)(Ds18b20ReadTemp() * 0.0625 + 0.005);
+                printf("ds18b20采集的温度: %d \n\n", temp);
+                cJSON *jsonSend = cJSON_CreateObject();
+                //cJSON_AddItemToObject(jsonSend, "reported", cJSON_CreateNumber(localIP->addr));
+                cJSON *reported = cJSON_CreateObject();
+                cJSON_AddItemToObject(jsonSend, "reported", reported);
+                cJSON_AddItemToObject(reported, "temp", cJSON_CreateNumber(temp));
+                char *sendstr = cJSON_PrintUnformatted(jsonSend);
+                udp_client_send(sendstr);
+                if (NULL != sendstr)
+                {
+                        cJSON_free(sendstr);
+                }
+                cJSON_Delete(jsonSend);
         }
 }
 
@@ -517,12 +537,30 @@ void TaskCreatDht11(void *p)
 {
         uint8_t curTem = 0;
         uint8_t curHum = 0;
-        ESP_LOGI(tag, " dh11Init() : %d ", dh11Init());
+        uint8_t res = dh11Init();
+        if (res == 0)
+        {
+                ESP_LOGE(tag, "dh11Init failed");
+                //vTaskDelete(NULL);
+        }
         while (1)
         {
                 vTaskDelay(5000 / portTICK_RATE_MS);
                 dh11Read(&curTem, &curHum);
                 ESP_LOGI(tag, "Temperature : %d , Humidity : %d", curTem, curHum);
+                cJSON *jsonSend = cJSON_CreateObject();
+                //cJSON_AddItemToObject(jsonSend, "reported", cJSON_CreateNumber(localIP->addr));
+                cJSON *reported = cJSON_CreateObject();
+                cJSON_AddItemToObject(jsonSend, "reported", reported);
+                cJSON_AddItemToObject(reported, "temp", cJSON_CreateNumber(curTem));
+                cJSON_AddItemToObject(reported, "hum", cJSON_CreateNumber(curHum));
+                char *sendstr = cJSON_PrintUnformatted(jsonSend);
+                udp_client_send(sendstr);
+                if (NULL != sendstr)
+                {
+                        cJSON_free(sendstr);
+                }
+                cJSON_Delete(jsonSend);
         }
         vTaskDelete(NULL);
 }
@@ -605,6 +643,137 @@ void ir_rx_task(void *arg)
         vTaskDelete(NULL);
 }
 
+#define IR_TX_IO_NUM 14
+
+void ir_tx_task(void *arg)
+{
+    ir_tx_config_t ir_tx_config = {
+        .io_num = IR_TX_IO_NUM,
+        .freq = 38000,
+        .timer = IR_TX_WDEV_TIMER // WDEV timer will be more accurate, but PWM will not work
+    };
+
+    ir_tx_init(&ir_tx_config);
+
+    ir_tx_nec_data_t ir_data[5];
+    /*
+        The standard NEC ir code is:
+        addr + ~addr + cmd + ~cmd
+    */
+    ir_data[0].addr1 = 0x55;
+    ir_data[0].addr2 = ~0x55;
+    ir_data[0].cmd1 = 0x00;
+    ir_data[0].cmd2 = ~0x00;
+
+    while (1) {
+        for (int x = 1; x < 5; x++) { // repeat 4 times
+            ir_data[x] = ir_data[0];
+        }
+
+        ir_tx_send_data(ir_data, 5, portMAX_DELAY);
+        ESP_LOGI(tag, "ir tx nec: addr:%02xh;cmd:%02xh;repeat:%d", ir_data[0].addr1, ir_data[0].cmd1, 4);
+        ir_data[0].cmd1++;
+        ir_data[0].cmd2 = ~ir_data[0].cmd1;
+        vTaskDelay(1000 / portTICK_RATE_MS);
+    }
+
+    vTaskDelete(NULL);
+}
+
+#define CONFIG_EXAMPLE_IPV4 1
+#define UDP_HELLO "{\"esp8266\":\"hello\"}"
+char *HOST_IP_ADDR = "192.168.43.236";
+u16_t PORT = 8266;
+int sock = -1;
+struct sockaddr_in destAddr = {0};
+
+static void udp_client_send(const char *data)
+{
+        if (sock < 0)
+        {
+                ESP_LOGE(tag, "Error occured during sending: sock %d", sock);
+                return;
+        }
+        printf("udp_client_send %s %d %d \n", data, destAddr.sin_addr.s_addr, destAddr.sin_port);
+        int err = sendto(sock, data, strlen(data), 0, (struct sockaddr *)&destAddr, sizeof(destAddr));
+        if (err < 0)
+        {
+                ESP_LOGE(tag, "Error occured during sending: errno %d", errno);
+        }
+}
+
+static void udp_client_task(void *pvParameters)
+{
+        xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT,
+                            false, true, portMAX_DELAY);
+
+        char rx_buffer[128];
+        char addr_str[128];
+        int addr_family;
+        int ip_protocol;
+
+        while (1)
+        {
+
+#ifdef CONFIG_EXAMPLE_IPV4
+                destAddr.sin_addr.s_addr = inet_addr(HOST_IP_ADDR);
+                destAddr.sin_family = AF_INET;
+                destAddr.sin_port = htons(PORT);
+                addr_family = AF_INET;
+                ip_protocol = IPPROTO_IP;
+                inet_ntoa_r(destAddr.sin_addr, addr_str, sizeof(addr_str) - 1);
+#else // IPV6
+                struct sockaddr_in6 destAddr;
+                inet6_aton(HOST_IP_ADDR, &destAddr.sin6_addr);
+                destAddr.sin6_family = AF_INET6;
+                destAddr.sin6_port = htons(PORT);
+                addr_family = AF_INET6;
+                ip_protocol = IPPROTO_IPV6;
+                inet6_ntoa_r(destAddr.sin6_addr, addr_str, sizeof(addr_str) - 1);
+#endif
+
+                sock = socket(addr_family, SOCK_DGRAM, ip_protocol);
+                if (sock < 0)
+                {
+                        ESP_LOGE(tag, "Unable to create socket: errno %d", errno);
+                        break;
+                }
+                ESP_LOGI(tag, "Socket created");
+                udp_client_send(UDP_HELLO);
+                while (1)
+                {
+
+                        struct sockaddr_in sourceAddr; // Large enough for both IPv4 or IPv6
+                        socklen_t socklen = sizeof(sourceAddr);
+                        int len = recvfrom(sock, rx_buffer, sizeof(rx_buffer) - 1, 0, (struct sockaddr *)&sourceAddr, &socklen);
+
+                        // Error occured during receiving
+                        if (len < 0)
+                        {
+                                ESP_LOGE(tag, "recvfrom failed: errno %d", errno);
+                                break;
+                        }
+                        // Data received
+                        else
+                        {
+                                rx_buffer[len] = 0; // Null-terminate whatever we received and treat like a string
+                                ESP_LOGI(tag, "Received %d bytes from %s:", len, addr_str);
+                                ESP_LOGI(tag, "%s", rx_buffer);
+                        }
+
+                        vTaskDelay(2000 / portTICK_PERIOD_MS);
+                }
+
+                if (sock != -1)
+                {
+                        ESP_LOGE(tag, "Shutting down socket and restarting...");
+                        shutdown(sock, 0);
+                        close(sock);
+                }
+        }
+        vTaskDelete(NULL);
+}
+
 void app_main()
 {
         printf("Hello world!\n");
@@ -636,9 +805,11 @@ void app_main()
                 ESP_LOGE(tag, "mqtt create client thread failed");
         }
 
-        xTaskCreate(TaskCreatDht11, "TaskCreatDht11", 2048, NULL, 4, NULL);
+        //xTaskCreate(TaskCreatDht11, "TaskCreatDht11", 2048, NULL, 4, NULL);
         //xTaskCreate(Taskds18b20, "Taskds18b20", 2048, NULL, 3, NULL);
         //xTaskCreate(LEDC, "LEDC", 4096, NULL, 8, NULL);
 
-        //xTaskCreate(ir_rx_task, "ir_rx_task", 2048, NULL, 5, NULL);
+        xTaskCreate(ir_rx_task, "ir_rx_task", 2048, NULL, 5, NULL);
+        xTaskCreate(ir_tx_task, "ir_tx_task", 2048, NULL, 5, NULL);
+        //xTaskCreate(udp_client_task, "udp_client", 4096, NULL, 5, NULL);
 }
