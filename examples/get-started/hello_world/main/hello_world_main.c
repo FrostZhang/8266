@@ -806,10 +806,10 @@ void app_main()
         }
 
         //xTaskCreate(TaskCreatDht11, "TaskCreatDht11", 2048, NULL, 4, NULL);
-        //xTaskCreate(Taskds18b20, "Taskds18b20", 2048, NULL, 3, NULL);
+        xTaskCreate(Taskds18b20, "Taskds18b20", 2048, NULL, 3, NULL);
         //xTaskCreate(LEDC, "LEDC", 4096, NULL, 8, NULL);
 
-        xTaskCreate(ir_rx_task, "ir_rx_task", 2048, NULL, 5, NULL);
-        xTaskCreate(ir_tx_task, "ir_tx_task", 2048, NULL, 5, NULL);
-        //xTaskCreate(udp_client_task, "udp_client", 4096, NULL, 5, NULL);
+        //xTaskCreate(ir_rx_task, "ir_rx_task", 2048, NULL, 5, NULL);
+        //xTaskCreate(ir_tx_task, "ir_tx_task", 2048, NULL, 5, NULL);
+        xTaskCreate(udp_client_task, "udp_client", 4096, NULL, 5, NULL);
 }
