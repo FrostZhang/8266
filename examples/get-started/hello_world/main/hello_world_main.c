@@ -48,6 +48,8 @@
 #include "lwip/err.h"
 #include "lwip/sys.h"
 
+#include "sh1106_s.h"
+
 const char *tag = "Hello world";
 
 #define LEDC_TEST_DUTY (4096)
@@ -647,37 +649,39 @@ void ir_rx_task(void *arg)
 
 void ir_tx_task(void *arg)
 {
-    ir_tx_config_t ir_tx_config = {
-        .io_num = IR_TX_IO_NUM,
-        .freq = 38000,
-        .timer = IR_TX_WDEV_TIMER // WDEV timer will be more accurate, but PWM will not work
-    };
+        ir_tx_config_t ir_tx_config = {
+            .io_num = IR_TX_IO_NUM,
+            .freq = 38000,
+            .timer = IR_TX_WDEV_TIMER // WDEV timer will be more accurate, but PWM will not work
+        };
 
-    ir_tx_init(&ir_tx_config);
+        ir_tx_init(&ir_tx_config);
 
-    ir_tx_nec_data_t ir_data[5];
-    /*
+        ir_tx_nec_data_t ir_data[5];
+        /*
         The standard NEC ir code is:
         addr + ~addr + cmd + ~cmd
     */
-    ir_data[0].addr1 = 0x55;
-    ir_data[0].addr2 = ~0x55;
-    ir_data[0].cmd1 = 0x00;
-    ir_data[0].cmd2 = ~0x00;
+        ir_data[0].addr1 = 0x55;
+        ir_data[0].addr2 = ~0x55;
+        ir_data[0].cmd1 = 0x00;
+        ir_data[0].cmd2 = ~0x00;
 
-    while (1) {
-        for (int x = 1; x < 5; x++) { // repeat 4 times
-            ir_data[x] = ir_data[0];
+        while (1)
+        {
+                for (int x = 1; x < 5; x++)
+                { // repeat 4 times
+                        ir_data[x] = ir_data[0];
+                }
+
+                ir_tx_send_data(ir_data, 5, portMAX_DELAY);
+                ESP_LOGI(tag, "ir tx nec: addr:%02xh;cmd:%02xh;repeat:%d", ir_data[0].addr1, ir_data[0].cmd1, 4);
+                ir_data[0].cmd1++;
+                ir_data[0].cmd2 = ~ir_data[0].cmd1;
+                vTaskDelay(1000 / portTICK_RATE_MS);
         }
 
-        ir_tx_send_data(ir_data, 5, portMAX_DELAY);
-        ESP_LOGI(tag, "ir tx nec: addr:%02xh;cmd:%02xh;repeat:%d", ir_data[0].addr1, ir_data[0].cmd1, 4);
-        ir_data[0].cmd1++;
-        ir_data[0].cmd2 = ~ir_data[0].cmd1;
-        vTaskDelay(1000 / portTICK_RATE_MS);
-    }
-
-    vTaskDelete(NULL);
+        vTaskDelete(NULL);
 }
 
 #define CONFIG_EXAMPLE_IPV4 1
@@ -791,10 +795,7 @@ void app_main()
         //TestJson();
         GpioIni();
         wifi_event_group = xEventGroupCreate();
-        //OLED 未完成
-        // OLED_Init();
-        // OLED_ShowString(0, 0, "Project=");
-        // OLED_ShowString(64,0,"IIC_OLED");
+
         SmartConfig();
 
         xTaskCreate(sntp_example_task, "sntp_example_task", 2048, NULL, 8, NULL);
@@ -806,10 +807,20 @@ void app_main()
         }
 
         //xTaskCreate(TaskCreatDht11, "TaskCreatDht11", 2048, NULL, 4, NULL);
-        xTaskCreate(Taskds18b20, "Taskds18b20", 2048, NULL, 3, NULL);
+        //xTaskCreate(Taskds18b20, "Taskds18b20", 2048, NULL, 3, NULL);
         //xTaskCreate(LEDC, "LEDC", 4096, NULL, 8, NULL);
 
         //xTaskCreate(ir_rx_task, "ir_rx_task", 2048, NULL, 5, NULL);
         //xTaskCreate(ir_tx_task, "ir_tx_task", 2048, NULL, 5, NULL);
         xTaskCreate(udp_client_task, "udp_client", 4096, NULL, 5, NULL);
+
+        esp_err_t err = oled_ini();
+        if (err == ESP_OK)
+        {
+                oled_showStr(0, 0, "this is a test from asher 8266 !", 1);
+        }
+        else
+        {
+                ESP_LOGE(tag, "oled_ini failed %d", err);
+        }
 }
