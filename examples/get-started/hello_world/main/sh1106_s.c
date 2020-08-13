@@ -130,7 +130,7 @@ void oled_showStr(unsigned char x, unsigned char y, char ch[], unsigned char Tex
 		while (ch[j] != '\0')
 		{
 			c = ch[j] - 32;
-			if (x > 126)
+			if (x > 126 - 6)
 			{
 				//next line
 				x = 0;

@@ -25,30 +25,22 @@
 #include "smartconfig_ack.h" //回调
 #include "esp_event_loop.h"
 #include "freertos/event_groups.h"
-#include "tcpip_adapter.h"
 
 #include "driver/i2c.h"
 #include "driver/spi.h"
 
 #include "lwip/apps/sntp.h"
 
-#include "lwip/sockets.h"
-#include "lwip/dns.h"
-#include "lwip/netdb.h"
 #include "mqtt_client.h"
 #include "os.h"
 #include "dht.h"
 #include "ds18b20.h"
 
 #include "driver/ledc.h"
-
 #include "driver/ir_rx.h"
 #include "driver/ir_tx.h"
-
-#include "lwip/err.h"
-#include "lwip/sys.h"
-
 #include "sh1106_s.h"
+#include "hello_udp.h"
 
 const char *tag = "Hello world";
 
@@ -370,8 +362,6 @@ static void sntp_example_task(void *arg)
         }
 }
 
-static void udp_client_send(const char *data);
-
 static void gpio_isr_handler(void *arg)
 {
         uint32_t gpio_num = (uint32_t)arg;
@@ -684,98 +674,12 @@ void ir_tx_task(void *arg)
         vTaskDelete(NULL);
 }
 
-#define CONFIG_EXAMPLE_IPV4 1
-#define UDP_HELLO "{\"esp8266\":\"hello\"}"
-char *HOST_IP_ADDR = "192.168.43.236";
-u16_t PORT = 8266;
-int sock = -1;
-struct sockaddr_in destAddr = {0};
-
-static void udp_client_send(const char *data)
-{
-        if (sock < 0)
-        {
-                ESP_LOGE(tag, "Error occured during sending: sock %d", sock);
-                return;
-        }
-        printf("udp_client_send %s %d %d \n", data, destAddr.sin_addr.s_addr, destAddr.sin_port);
-        int err = sendto(sock, data, strlen(data), 0, (struct sockaddr *)&destAddr, sizeof(destAddr));
-        if (err < 0)
-        {
-                ESP_LOGE(tag, "Error occured during sending: errno %d", errno);
-        }
-}
-
-static void udp_client_task(void *pvParameters)
+static void udp_client(void *pvParameters)
 {
         xEventGroupWaitBits(wifi_event_group, CONNECTED_BIT,
                             false, true, portMAX_DELAY);
 
-        char rx_buffer[128];
-        char addr_str[128];
-        int addr_family;
-        int ip_protocol;
-
-        while (1)
-        {
-
-#ifdef CONFIG_EXAMPLE_IPV4
-                destAddr.sin_addr.s_addr = inet_addr(HOST_IP_ADDR);
-                destAddr.sin_family = AF_INET;
-                destAddr.sin_port = htons(PORT);
-                addr_family = AF_INET;
-                ip_protocol = IPPROTO_IP;
-                inet_ntoa_r(destAddr.sin_addr, addr_str, sizeof(addr_str) - 1);
-#else // IPV6
-                struct sockaddr_in6 destAddr;
-                inet6_aton(HOST_IP_ADDR, &destAddr.sin6_addr);
-                destAddr.sin6_family = AF_INET6;
-                destAddr.sin6_port = htons(PORT);
-                addr_family = AF_INET6;
-                ip_protocol = IPPROTO_IPV6;
-                inet6_ntoa_r(destAddr.sin6_addr, addr_str, sizeof(addr_str) - 1);
-#endif
-
-                sock = socket(addr_family, SOCK_DGRAM, ip_protocol);
-                if (sock < 0)
-                {
-                        ESP_LOGE(tag, "Unable to create socket: errno %d", errno);
-                        break;
-                }
-                ESP_LOGI(tag, "Socket created");
-                udp_client_send(UDP_HELLO);
-                while (1)
-                {
-
-                        struct sockaddr_in sourceAddr; // Large enough for both IPv4 or IPv6
-                        socklen_t socklen = sizeof(sourceAddr);
-                        int len = recvfrom(sock, rx_buffer, sizeof(rx_buffer) - 1, 0, (struct sockaddr *)&sourceAddr, &socklen);
-
-                        // Error occured during receiving
-                        if (len < 0)
-                        {
-                                ESP_LOGE(tag, "recvfrom failed: errno %d", errno);
-                                break;
-                        }
-                        // Data received
-                        else
-                        {
-                                rx_buffer[len] = 0; // Null-terminate whatever we received and treat like a string
-                                ESP_LOGI(tag, "Received %d bytes from %s:", len, addr_str);
-                                ESP_LOGI(tag, "%s", rx_buffer);
-                        }
-
-                        vTaskDelay(2000 / portTICK_PERIOD_MS);
-                }
-
-                if (sock != -1)
-                {
-                        ESP_LOGE(tag, "Shutting down socket and restarting...");
-                        shutdown(sock, 0);
-                        close(sock);
-                }
-        }
-        vTaskDelete(NULL);
+        udp_client_task(pvParameters);
 }
 
 void app_main()
@@ -810,9 +714,9 @@ void app_main()
         //xTaskCreate(Taskds18b20, "Taskds18b20", 2048, NULL, 3, NULL);
         //xTaskCreate(LEDC, "LEDC", 4096, NULL, 8, NULL);
 
-        //xTaskCreate(ir_rx_task, "ir_rx_task", 2048, NULL, 5, NULL);
+        xTaskCreate(ir_rx_task, "ir_rx_task", 2048, NULL, 5, NULL);
         //xTaskCreate(ir_tx_task, "ir_tx_task", 2048, NULL, 5, NULL);
-        xTaskCreate(udp_client_task, "udp_client", 4096, NULL, 5, NULL);
+        xTaskCreate(udp_client, "udp_client", 4096, NULL, 5, NULL);
 
         esp_err_t err = oled_ini();
         if (err == ESP_OK)
