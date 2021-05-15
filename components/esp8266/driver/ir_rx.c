@@ -219,7 +219,8 @@ static esp_err_t ir_rx_gpio_init(uint32_t io_num)
     io_conf.mode = GPIO_MODE_INPUT;
     io_conf.pull_up_en = 1;
     gpio_config(&io_conf);
-    gpio_install_isr_service(0);
+    //asher 同时多个中断时 只运行一次
+    //gpio_install_isr_service(0);
 
     return ESP_OK;
 }

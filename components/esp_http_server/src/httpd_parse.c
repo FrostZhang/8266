@@ -415,7 +415,6 @@ static int parse_block(http_parser *parser, size_t offset, size_t length)
     httpd_req_t          *req   = data->req;
     struct httpd_req_aux *raux  = req->aux;
     size_t nparsed = 0;
-
     if (!length) {
         ESP_LOGW(TAG, LOG_FMT("response uri/header too big"));
         switch (data->status) {

@@ -407,7 +407,7 @@ esp_err_t ir_tx_init(ir_tx_config_t *config)
         ir_tx_deinit();
         IR_TX_CHECK(false, "Semaphore create fail", ESP_ERR_NO_MEM);
     }
-
+    ESP_LOGI(TAG,"ir_tx_init ceshi ");
     // init default data
     ir_tx_obj->trans.data.addr1 = (uint8_t)0xee; //addr code
     ir_tx_obj->trans.data.addr2 = (uint8_t)~0xee;
