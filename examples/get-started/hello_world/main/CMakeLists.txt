@@ -26,7 +26,8 @@ set(COMPONENT_SRCS
     "source/htmlcompent"
     "source/navcompent"
     )
-set(COMPONENT_EMBED_TXTFILES jQuery.js)
-set(COMPONENT_EMBED_TXTFILES style.css)
+#set(COMPONENT_EMBED_TXTFILES jQuery.js)
+#set(COMPONENT_EMBED_TXTFILES style.css)
+set(COMPONENT_EMBED_TXTFILES index.html)
 register_component()
 

@@ -129,7 +129,7 @@ void ReStart()
 {
         //设备重启
         printf("Restarting now.\n");
-        fflush(stdout);
+        fflush(stdout); 
         esp_restart();
 }
 
@@ -140,7 +140,7 @@ void Taskds18b20(void *p)
         if (res == 0)
         {
                 ESP_LOGE(tag, "18b20 ini failed");
-                //vTaskDelete(NULL);
+                vTaskDelete(NULL);
         }
         while (1)
         {
@@ -170,7 +170,7 @@ void TaskCreatDht11(void *p)
         if (res == 0)
         {
                 ESP_LOGE(tag, "dh11Init failed");
-                //vTaskDelete(NULL);
+                vTaskDelete(NULL);
         }
         while (1)
         {
@@ -448,8 +448,8 @@ esp_err_t netcall(net_callback call)
 {
         if (call == NET_CONNNECT)
         {
-                sntpstart(sntpCallback);
                 datacompentini();
+                sntpstart(sntpCallback);
                 http_start();
                 //udpclientstart(udpcallback);
         }

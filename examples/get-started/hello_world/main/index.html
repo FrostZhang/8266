@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang='ch'>
+<link rel='icon' href='data:;base64,='>
+
+<head>
+    <meta charset='utf-8'>
+    <meta name='viewport' content='width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0'>
+    <title>AsherLink</title>
+    <style>
+        button {
+            min-width: 180px;
+        }
+        td {
+            min-width: 75px;
+        }
+        table {
+            padding-left: 15%;
+        }
+    </style>
+<body id="body" onload="load()">
+    <h1>Asher-Link</h1>
+    <h3>控制开关</h3>
+    <form id="gpio" method="get">
+        <table>
+            <tr>
+                <td>Gpio4:</td>
+                <td>
+                    <button id="open4" name="open4" type="submit" value="1">开</button>
+                </td>
+            </tr>
+            <tr>
+                <td>Gpio2:</td>
+                <td>
+                    <button id="open2" name="open2" type="submit" value="1">开</button>
+                </td>
+            </tr>
+            <tr>
+                <td>Gpio12:</td>
+                <td>
+                    <button id="open12" name="open12" type="submit" value="1">开</button>
+                </td>
+            </tr>
+            <tr>
+                <td>Gpio15:</td>
+                <td>
+                    <button id="open15" name="open15" type="submit" value="1">开</button>
+                </td>
+            </tr>
+        </table>
+    </form>
+    <h3>MQTT（开发者平台）</h3>
+    <form id="mqtt" method="post">
+        <table >
+            <tr>
+                <td>MQTT ZZ:</td>
+                <td>
+                    <input id="mqttzz" name="mqttzz" type="Text"></input>
+                </td>
+            </tr>
+            <tr>
+                <td>MQTT MM:</td>
+                <td>
+                    <input id="mqttmm" name="mqttmm" type="password"></input>
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>
+                    <button type="submit">更新MQTT配置</button>
+                </td>
+            </tr>
+        </table>
+    </form>
+    <script type='text/javascript'>
+        var xmlhttp;
+        function load() {
+            xmlhttp = null;
+            if (window.XMLHttpRequest) {// code for all new browsers
+                xmlhttp = new XMLHttpRequest();
+            }
+            else if (window.ActiveXObject) {// code for IE5 and IE6
+                xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+            }
+            if (xmlhttp == null) {
+                alert("浏览器版本过低，无法读取数据");
+            }
+            test();
+        }
+        function getXMLDoc(url, res) {
+            xmlhttp.onreadystatechange = state_Change;
+            xmlhttp.open("GET", url, true);
+            xml.htt
+            // if (!xmlhttp.isopen) {
+            //     console.log("打开失败")
+            //     return;
+            // }
+            xmlhttp.send(null);
+            function state_Change() {
+                if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                    if (xmlhttp.responseText != null && xmlhttp.responseText != "") {
+                        console.log(xmlhttp.responseText)
+                        res();
+                    }
+                }
+            }
+        }
+        function test() {
+            getXMLDoc("https://frostzhang.github.io/Liye/", lodback);
+            function lodback() {
+                //console.log(xmlhttp.responseText)
+                var str = "open4=1,str=sadf";
+                console.log("lond call back")
+                var g4 = document.getElementById("open4");
+                var strs = str.split(',');
+                console.log(strs[0].split("=")[1])
+                g4.value = "0";
+                g4.textContent = "关";
+            }
+        }
+    </script>
+</body>
+</head>
+</html>

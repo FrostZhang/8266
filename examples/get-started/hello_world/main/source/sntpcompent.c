@@ -44,10 +44,10 @@ static void obtain_time(void)
     }
 }
 
-static sntp_event event_t;
 static void sntp_task(void *arg)
 {
     sntp_event_callback_t callback = arg;
+    sntp_event event_t;
     char strftime_buf[64];
 
     time(&now);
@@ -101,5 +101,5 @@ static void sntp_task(void *arg)
 
 void sntpstart(sntp_event_callback_t event_handle)
 {
-    xTaskCreate(sntp_task, "sntptask", 2048, event_handle, 8, NULL);
+    xTaskCreate(sntp_task, "sntptask", 1024, event_handle, 8, NULL);
 }

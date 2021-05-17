@@ -8,10 +8,8 @@
 #include "navcompent.h"
 #include "start.h"
 #include <string.h>
-#include "sb.h"
 #include "sntpcompent.h"
-
-#define BURSIZE 2048
+#include "help.h"
 
 const char *httptag = "http";
 httpd_handle_t server = NULL;
@@ -22,104 +20,7 @@ void reset_callback_data()
 {
     httpevent.open = -1;
     httpevent.restart = -1;
-    httpevent.bdjs =NULL;
-}
-
-int hex2dec(char c)
-{
-    if ('0' <= c && c <= '9')
-    {
-        return c - '0';
-    }
-    else if ('a' <= c && c <= 'f')
-    {
-        return c - 'a' + 10;
-    }
-    else if ('A' <= c && c <= 'F')
-    {
-        return c - 'A' + 10;
-    }
-    else
-    {
-        return -1;
-    }
-}
-
-char dec2hex(short int c)
-{
-    if (0 <= c && c <= 9)
-    {
-        return c + '0';
-    }
-    else if (10 <= c && c <= 15)
-    {
-        return c + 'A' - 10;
-    }
-    else
-    {
-        return -1;
-    }
-}
-
-//编码一个url
-void urlencode(char url[])
-{
-    int i = 0;
-    int len = strlen(url);
-    int res_len = 0;
-    char res[BURSIZE];
-    for (i = 0; i < len; ++i)
-    {
-        char c = url[i];
-        if (('0' <= c && c <= '9') ||
-            ('a' <= c && c <= 'z') ||
-            ('A' <= c && c <= 'Z') ||
-            c == '/' || c == '.')
-        {
-            res[res_len++] = c;
-        }
-        else
-        {
-            int j = (short int)c;
-            if (j < 0)
-                j += 256;
-            int i1, i0;
-            i1 = j / 16;
-            i0 = j - i1 * 16;
-            res[res_len++] = '%';
-            res[res_len++] = dec2hex(i1);
-            res[res_len++] = dec2hex(i0);
-        }
-    }
-    res[res_len] = '\0';
-    strcpy(url, res);
-}
-
-// 解码url
-void urldecode(char url[])
-{
-    int i = 0;
-    int len = strlen(url);
-    int res_len = 0;
-    char res[BURSIZE];
-    for (i = 0; i < len; ++i)
-    {
-        char c = url[i];
-        if (c != '%')
-        {
-            res[res_len++] = c;
-        }
-        else
-        {
-            char c1 = url[++i];
-            char c0 = url[++i];
-            int num = 0;
-            num = hex2dec(c1) * 16 + hex2dec(c0);
-            res[res_len++] = num;
-        }
-    }
-    res[res_len] = '\0';
-    strcpy(url, res);
+    httpevent.bdjs = NULL;
 }
 
 esp_err_t index_post_handler(httpd_req_t *req)
@@ -142,7 +43,7 @@ esp_err_t index_post_handler(httpd_req_t *req)
         }
         /* Send back the same data */
         //httpd_resp_send_chunk(req, buf, ret);
-        
+
         remaining -= ret;
 
         /* Log data received */
@@ -207,7 +108,7 @@ httpd_uri_t indexpost = {
     .handler = index_post_handler,
     .user_ctx = NULL};
 
-esp_err_t begin_handle(httpd_req_t *req)
+esp_err_t indexget_handle(httpd_req_t *req)
 {
     //char *send = htmlindex();
     const char *resp_str = (const char *)req->user_ctx;
@@ -216,44 +117,46 @@ esp_err_t begin_handle(httpd_req_t *req)
     //free(send);
     return ESP_OK;
 }
+extern const char index_html_start[] asm("_binary_index_html_start");
+extern const char index_html_end[] asm("_binary_index_html_end");
 
-httpd_uri_t begin = {
+httpd_uri_t indexget = {
     .uri = "/",
     .method = HTTP_GET,
-    .handler = begin_handle,
-    .user_ctx = NULL};
+    .handler = indexget_handle,
+    .user_ctx = index_html_start};
 
-extern const char jQuery_js_start[] asm("_binary_jQuery_js_start");
-extern const char jQuery_js_end[] asm("_binary_jQuery_js_end");
+// extern const char jQuery_js_start[] asm("_binary_jQuery_js_start");
+// extern const char jQuery_js_end[] asm("_binary_jQuery_js_end");
 
-esp_err_t jquery_handle(httpd_req_t *req)
-{
-    const char *resp_str = (const char *)req->user_ctx;
-    httpd_resp_send(req, resp_str, strlen(resp_str));
-    return ESP_OK;
-}
+// esp_err_t jquery_handle(httpd_req_t *req)
+// {
+//     const char *resp_str = (const char *)req->user_ctx;
+//     httpd_resp_send(req, resp_str, strlen(resp_str));
+//     return ESP_OK;
+// }
 
-httpd_uri_t jquery = {
-    .uri = "/jquery",
-    .method = HTTP_GET,
-    .handler = jquery_handle,
-    .user_ctx = jQuery_js_start};
+// httpd_uri_t jquery = {
+//     .uri = "/jquery",
+//     .method = HTTP_GET,
+//     .handler = jquery_handle,
+//     .user_ctx = jQuery_js_start};
 
-extern const char style_css_start[] asm("_binary_style_css_start");
-extern const char style_css_end[] asm("_binary_style_css_end");
+// extern const char style_css_start[] asm("_binary_style_css_start");
+// extern const char style_css_end[] asm("_binary_style_css_end");
 
-esp_err_t style_handle(httpd_req_t *req)
-{
-    const char *resp_str = (const char *)req->user_ctx;
-    httpd_resp_send(req, resp_str, strlen(resp_str));
-    return ESP_OK;
-}
+// esp_err_t style_handle(httpd_req_t *req)
+// {
+//     const char *resp_str = (const char *)req->user_ctx;
+//     httpd_resp_send(req, resp_str, strlen(resp_str));
+//     return ESP_OK;
+// }
 
-httpd_uri_t styles = {
-    .uri = "/style",
-    .method = HTTP_GET,
-    .handler = style_handle,
-    .user_ctx = style_css_start};
+// httpd_uri_t styles = {
+//     .uri = "/style",
+//     .method = HTTP_GET,
+//     .handler = style_handle,
+//     .user_ctx = style_css_start};
 
 esp_err_t ds_handle(httpd_req_t *req)
 {
@@ -319,6 +222,20 @@ httpd_uri_t heartbeat = {
     .handler = heartbeat_handle,
     .user_ctx = NULL};
 
+esp_err_t htmlData_handle(httpd_req_t *req)
+{
+    extern struct tm timeinfo;
+    char strftime_buf[64];
+    strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
+    return httpd_resp_send(req, strftime_buf, strlen(strftime_buf));
+}
+
+httpd_uri_t htmlData = {
+    .uri = "/htmlData",
+    .method = HTTP_GET,
+    .handler = htmlData_handle,
+    .user_ctx = NULL};
+
 httpd_handle_t start_webserver(void)
 {
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
@@ -330,11 +247,11 @@ httpd_handle_t start_webserver(void)
     {
         // Set URI handlers
         ESP_LOGI(httptag, "Registering URI handlers");
-        httpd_register_uri_handler(server, &begin);
+        httpd_register_uri_handler(server, &indexget);
         httpd_register_uri_handler(server, &indexpost);
-        httpd_register_uri_handler(server, &jquery);
+        // httpd_register_uri_handler(server, &jquery);
         httpd_register_uri_handler(server, &ds);
-        httpd_register_uri_handler(server, &styles);
+        //httpd_register_uri_handler(server, &styles);
         httpd_register_uri_handler(server, &heartbeat);
         return server;
     }
