@@ -28,6 +28,7 @@
 #include "os.h"
 #include "dht.h"
 #include "ds18b20.h"
+#include "driver/adc.h"
 
 #include "driver/ledc.h"
 #include "driver/ir_rx.h"
@@ -129,13 +130,13 @@ void ReStart()
 {
         //设备重启
         printf("Restarting now.\n");
-        fflush(stdout); 
+        fflush(stdout);
         esp_restart();
 }
 
 void Taskds18b20(void *p)
 {
-        uint8_t res = Ds18b20Init();
+        uint8_t res = Ds18b20Init(GPIO_NUM_5);
         uint8_t temp = 0;
         if (res == 0)
         {
@@ -357,7 +358,7 @@ void openFromDS(gpio_num_t num, int isopen)
 void sntp_tick(struct tm *timeinfo)
 {
         ontick(timeinfo);
-        if (timeinfo->tm_sec==0)
+        if (timeinfo->tm_sec == 0)
         {
                 ESP_LOGI(tag, "Free heap size: %d\n", esp_get_free_heap_size());
         }
@@ -390,13 +391,42 @@ esp_err_t httpcallback(http_event *call)
         }
         else
         {
-                int isopen = call->open;
+                int isopen = call->open4;
+                int temp = gpio_isopen;
                 if (isopen != -1)
                 {
                         if (isopen == 1)
-                                gpio_isopen |= GPIO_Pin_4;
+                                temp |= GPIO_Pin_4;
                         else
-                                gpio_isopen &= ~GPIO_Pin_4;
+                                temp &= ~GPIO_Pin_4;
+                }
+                isopen = call->open12;
+                if (isopen != -1)
+                {
+                        if (isopen == 1)
+                                temp |= GPIO_Pin_12;
+                        else
+                                temp &= ~GPIO_Pin_12;
+                }
+                isopen = call->open13;
+                if (isopen != -1)
+                {
+                        if (isopen == 1)
+                                temp |= GPIO_Pin_13;
+                        else
+                                temp &= ~GPIO_Pin_13;
+                }
+                isopen = call->open15;
+                if (isopen != -1)
+                {
+                        if (isopen == 1)
+                                temp |= GPIO_Pin_15;
+                        else
+                                temp &= ~GPIO_Pin_15;
+                }
+                if (temp != gpio_isopen)
+                {
+                        gpio_isopen = temp;
                         gpio_input(gpio_isopen);
                         char *send = setreported("cmd", gpio_isopen);
                         mqtt_publish(send);
@@ -465,6 +495,44 @@ esp_err_t oledini()
                 oled_showStr(0, 2, "this is a test from asher 8266 !", 1);
         }
         return err;
+}
+
+static void adc_task()
+{
+        int x;
+        uint16_t adc_data[100];
+
+        while (1)
+        {
+                if (ESP_OK == adc_read(&adc_data[0]))
+                {
+                        ESP_LOGI(tag, "adc read: %d\r\n", adc_data[0]);
+                }
+
+                // ESP_LOGI(tag, "adc read fast:\r\n");
+
+                // if (ESP_OK == adc_read_fast(adc_data, 100)) {
+                //     for (x = 0; x < 100; x++) {
+                //         printf("%d\n", adc_data[x]);
+                //     }
+                // }
+
+                vTaskDelay(1000 / portTICK_RATE_MS);
+        }
+}
+
+void adc()
+{
+        adc_config_t adc_config;
+
+        // Depend on menuconfig->Component config->PHY->vdd33_const value
+        // When measuring system voltage(ADC_READ_VDD_MODE), vdd33_const must be set to 255.
+        adc_config.mode = ADC_READ_TOUT_MODE;
+        adc_config.clk_div = 8; // ADC sample collection clock = 80MHz/clk_div = 10MHz
+        ESP_ERROR_CHECK(adc_init(&adc_config));
+
+        // 2. Create a adc task to read adc value
+        xTaskCreate(adc_task, "adc_task", 1024, NULL, 5, NULL);
 }
 
 void print_sys()

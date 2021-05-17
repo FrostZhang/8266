@@ -10,17 +10,20 @@
         button {
             min-width: 180px;
         }
+
         td {
             min-width: 75px;
         }
+
         table {
             padding-left: 15%;
         }
     </style>
+
 <body id="body" onload="load()">
     <h1>Asher-Link</h1>
     <h3>控制开关</h3>
-    <form id="gpio" method="get">
+    <form id="gpio" method="post">
         <table>
             <tr>
                 <td>Gpio4:</td>
@@ -29,15 +32,15 @@
                 </td>
             </tr>
             <tr>
-                <td>Gpio2:</td>
-                <td>
-                    <button id="open2" name="open2" type="submit" value="1">开</button>
-                </td>
-            </tr>
-            <tr>
                 <td>Gpio12:</td>
                 <td>
                     <button id="open12" name="open12" type="submit" value="1">开</button>
+                </td>
+            </tr>
+            <tr>
+                <td>Gpio13:</td>
+                <td>
+                    <button id="open13" name="open13" type="submit" value="1">开</button>
                 </td>
             </tr>
             <tr>
@@ -50,11 +53,11 @@
     </form>
     <h3>MQTT（开发者平台）</h3>
     <form id="mqtt" method="post">
-        <table >
+        <table>
             <tr>
                 <td>MQTT ZZ:</td>
                 <td>
-                    <input id="mqttzz" name="mqttzz" type="Text"></input>
+                    <input id="mqttzz" name="mqttzz" type="Text" value="123213" ></input>
                 </td>
             </tr>
             <tr>
@@ -89,7 +92,6 @@
         function getXMLDoc(url, res) {
             xmlhttp.onreadystatechange = state_Change;
             xmlhttp.open("GET", url, true);
-            xml.htt
             // if (!xmlhttp.isopen) {
             //     console.log("打开失败")
             //     return;
@@ -105,19 +107,45 @@
             }
         }
         function test() {
-            getXMLDoc("https://frostzhang.github.io/Liye/", lodback);
+            getXMLDoc("/htmlData", lodback);
             function lodback() {
                 //console.log(xmlhttp.responseText)
-                var str = "open4=1,str=sadf";
-                console.log("lond call back")
-                var g4 = document.getElementById("open4");
-                var strs = str.split(',');
-                console.log(strs[0].split("=")[1])
-                g4.value = "0";
-                g4.textContent = "关";
+                var str = xmlhttp.responseText;
+                if (str != null && str.length > 0) {
+                    var strs = str.split(',');
+                    strs.forEach(s => {
+                        var kv = s.split("=");
+                        if (kv[0] == "open4") {
+                            var o = document.getElementById("open4");
+                            o.value = "0";
+                            o.textContent = "关";
+                        }
+                        if (kv[0] == "open12") {
+                            var o = document.getElementById("open12");
+                            o.value = "0";
+                            o.textContent = "关";
+                        } if (kv[0] == "open13") {
+                            var o = document.getElementById("open13");
+                            o.value = "0";
+                            o.textContent = "关";
+                        }if (kv[0] == "open15") {
+                            var o = document.getElementById("open15");
+                            o.value = "0";
+                            o.textContent = "关";
+                        }if (kv[0] == "mqttzz") {
+                            var o = document.getElementById("mqttzz");
+                            o.value = kv[1];
+                        }if (kv[0] == "mqttmm") {
+                            var o = document.getElementById("mqttmm");
+                            o.value = kv[1];
+                        }
+                    });
+
+                }
             }
         }
     </script>
 </body>
 </head>
+
 </html>

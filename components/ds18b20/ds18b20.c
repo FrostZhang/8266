@@ -20,7 +20,7 @@
 #include "esp_system.h"
 #include "ds18b20.h"
 
-int DSPORT = GPIO_NUM_13; //(为gpio14接口)
+int DSPORT = GPIO_NUM_5; //(为gpio5接口)
 
 bool isInit = true;
 
@@ -35,10 +35,10 @@ void Delay1ms(int y)
  * 输    出         : 初始化成功返回1，失败返回0
  *******************************************************************************/
 
-uint8_t Ds18b20Init()
+uint8_t Ds18b20Init(gpio_num_t num)
 {
     int i = 0;
-
+    DSPORT = num;
     if (isInit)
     {
         gpio_config_t io_conf;
@@ -134,7 +134,7 @@ uint8_t Ds18b20ReadByte()
 
 void Ds18b20ChangTemp()
 {
-    Ds18b20Init();
+    Ds18b20Init(DSPORT);
     Delay1ms(1);
     Ds18b20WriteByte(0xcc); //跳过ROM操作命令
     Ds18b20WriteByte(0x44); //温度转换命令
@@ -150,7 +150,7 @@ void Ds18b20ChangTemp()
 void Ds18b20ReadTempCom()
 {
 
-    Ds18b20Init();
+    Ds18b20Init(DSPORT);
     Delay1ms(1);
     Ds18b20WriteByte(0xcc); //跳过ROM操作命令
     Ds18b20WriteByte(0xbe); //发送读取温度命令

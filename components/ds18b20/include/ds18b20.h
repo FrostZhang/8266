@@ -12,7 +12,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-uint8_t Ds18b20Init();
+uint8_t Ds18b20Init(gpio_num_t num);
 int Ds18b20ReadTemp();
 
 #endif

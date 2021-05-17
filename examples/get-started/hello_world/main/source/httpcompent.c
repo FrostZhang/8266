@@ -1,7 +1,6 @@
 #include <esp_log.h>
 #include <esp_http_server.h>
 #include "stdlib.h"
-#include "htmlcompent.h"
 #include "httpcompent.h"
 #include <sys/param.h> //MIN
 
@@ -18,7 +17,10 @@ http_event httpevent;
 
 void reset_callback_data()
 {
-    httpevent.open = -1;
+    httpevent.open4 = -1;
+    httpevent.open12 = -1;
+    httpevent.open13 = -1;
+    httpevent.open15 = -1;
     httpevent.restart = -1;
     httpevent.bdjs = NULL;
 }
@@ -73,9 +75,21 @@ esp_err_t index_post_handler(httpd_req_t *req)
             {
                 mqttmm = value;
             }
-            if (strcmp(key, "open") == 0)
+            if (strcmp(key, "open4") == 0)
             {
-                httpevent.open = atoi(value);
+                httpevent.open4 = atoi(value);
+            }
+            if (strcmp(key, "open12") == 0)
+            {
+                httpevent.open12 = atoi(value);
+            }
+            if (strcmp(key, "open13") == 0)
+            {
+                httpevent.open13 = atoi(value);
+            }
+            if (strcmp(key, "open15") == 0)
+            {
+                httpevent.open15 = atoi(value);
             }
             //对接百度json
             if (strcmp(key, "bdjs") == 0)
@@ -94,31 +108,32 @@ esp_err_t index_post_handler(httpd_req_t *req)
     }
     //const char *resp_str = (const char *)req->user_ctx;
     // End response
-    httpd_resp_send_chunk(req, NULL, 0);
-    //httpd_resp_send(req, resp_str, strlen(resp_str));
-
-    //callback(&httpevent);
     httpcallback(&httpevent);
+
+    vTaskDelay(500 / portTICK_PERIOD_MS);
+    const char *resp_str = (const char *)req->user_ctx;
+    httpd_resp_send_chunk(req, resp_str, strlen(resp_str));
+    httpd_resp_send_chunk(req, NULL, 0);
+
+    //httpd_resp_send(req, resp_str, strlen(resp_str));
     return ESP_OK;
 }
+
+extern const char index_html_start[] asm("_binary_index_html_start");
+extern const char index_html_end[] asm("_binary_index_html_end");
 
 httpd_uri_t indexpost = {
     .uri = "/",
     .method = HTTP_POST,
     .handler = index_post_handler,
-    .user_ctx = NULL};
+    .user_ctx = index_html_start};
 
 esp_err_t indexget_handle(httpd_req_t *req)
 {
-    //char *send = htmlindex();
     const char *resp_str = (const char *)req->user_ctx;
     httpd_resp_send(req, resp_str, strlen(resp_str));
-    //httpd_resp_send(req, send, strlen(send));
-    //free(send);
     return ESP_OK;
 }
-extern const char index_html_start[] asm("_binary_index_html_start");
-extern const char index_html_end[] asm("_binary_index_html_end");
 
 httpd_uri_t indexget = {
     .uri = "/",
@@ -224,10 +239,33 @@ httpd_uri_t heartbeat = {
 
 esp_err_t htmlData_handle(httpd_req_t *req)
 {
-    extern struct tm timeinfo;
-    char strftime_buf[64];
-    strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
-    return httpd_resp_send(req, strftime_buf, strlen(strftime_buf));
+    char str[128];
+    memset(str, '\0', 128);
+    extern int gpio_isopen;
+    if (gpio_isopen & BIT4)
+    {
+        strcat(str, "open4=1,");
+    }
+    if (gpio_isopen & BIT12)
+    {
+        strcat(str, "open12=1,");
+    }
+    if (gpio_isopen & BIT13)
+    {
+        strcat(str, "open13=1,");
+    }
+    if (gpio_isopen & BIT15)
+    {
+        strcat(str, "open15=1,");
+    }
+    extern char *mqttusername;
+    extern char *mqttpassword;
+    strcat(str, "mqttzz=");
+    strcat(str, mqttusername);
+    strcat(str, ",mqttmm=");
+    strcat(str, mqttpassword);
+
+    return httpd_resp_send(req, str, strlen(str));
 }
 
 httpd_uri_t htmlData = {
@@ -239,7 +277,6 @@ httpd_uri_t htmlData = {
 httpd_handle_t start_webserver(void)
 {
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
-    begin.user_ctx = htmlindex();
 
     // Start the httpd server
     ESP_LOGI(httptag, "Starting server on port: '%d'", config.server_port);
@@ -249,7 +286,7 @@ httpd_handle_t start_webserver(void)
         ESP_LOGI(httptag, "Registering URI handlers");
         httpd_register_uri_handler(server, &indexget);
         httpd_register_uri_handler(server, &indexpost);
-        // httpd_register_uri_handler(server, &jquery);
+        httpd_register_uri_handler(server, &htmlData);
         httpd_register_uri_handler(server, &ds);
         //httpd_register_uri_handler(server, &styles);
         httpd_register_uri_handler(server, &heartbeat);
