@@ -141,38 +141,6 @@ httpd_uri_t indexget = {
     .handler = indexget_handle,
     .user_ctx = index_html_start};
 
-// extern const char jQuery_js_start[] asm("_binary_jQuery_js_start");
-// extern const char jQuery_js_end[] asm("_binary_jQuery_js_end");
-
-// esp_err_t jquery_handle(httpd_req_t *req)
-// {
-//     const char *resp_str = (const char *)req->user_ctx;
-//     httpd_resp_send(req, resp_str, strlen(resp_str));
-//     return ESP_OK;
-// }
-
-// httpd_uri_t jquery = {
-//     .uri = "/jquery",
-//     .method = HTTP_GET,
-//     .handler = jquery_handle,
-//     .user_ctx = jQuery_js_start};
-
-// extern const char style_css_start[] asm("_binary_style_css_start");
-// extern const char style_css_end[] asm("_binary_style_css_end");
-
-// esp_err_t style_handle(httpd_req_t *req)
-// {
-//     const char *resp_str = (const char *)req->user_ctx;
-//     httpd_resp_send(req, resp_str, strlen(resp_str));
-//     return ESP_OK;
-// }
-
-// httpd_uri_t styles = {
-//     .uri = "/style",
-//     .method = HTTP_GET,
-//     .handler = style_handle,
-//     .user_ctx = style_css_start};
-
 esp_err_t ds_handle(httpd_req_t *req)
 {
     char *buf;

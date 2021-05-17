@@ -92,10 +92,6 @@
         function getXMLDoc(url, res) {
             xmlhttp.onreadystatechange = state_Change;
             xmlhttp.open("GET", url, true);
-            // if (!xmlhttp.isopen) {
-            //     console.log("打开失败")
-            //     return;
-            // }
             xmlhttp.send(null);
             function state_Change() {
                 if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
