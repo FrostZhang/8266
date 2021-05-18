@@ -218,19 +218,20 @@ esp_err_t htmlData_handle(httpd_req_t *req)
 {
     char str[128];
     memset(str, '\0', 128);
-    if (gpio_isopen & BIT4)
+
+    if (gpio_bit & BIT4)
     {
         strcat(str, "open4=1,");
     }
-    if (gpio_isopen & BIT12)
+    if (gpio_bit & BIT12)
     {
         strcat(str, "open12=1,");
     }
-    if (gpio_isopen & BIT13)
+    if (gpio_bit & BIT13)
     {
         strcat(str, "open13=1,");
     }
-    if (gpio_isopen & BIT15)
+    if (gpio_bit & BIT15)
     {
         strcat(str, "open15=1,");
     }
@@ -264,7 +265,6 @@ httpd_handle_t start_webserver(void)
         httpd_register_uri_handler(server, &indexpost);
         httpd_register_uri_handler(server, &htmlData);
         httpd_register_uri_handler(server, &ds);
-        //httpd_register_uri_handler(server, &styles);
         httpd_register_uri_handler(server, &heartbeat);
         return server;
     }

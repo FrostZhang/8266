@@ -15,7 +15,7 @@
 
 #define mqttport 1883
 static const char *TAG = "mqttcompent";
-esp_mqtt_client_handle_t client;
+esp_mqtt_client_handle_t client = {0};
 
 static const char *host = "t0eff28.mqtt.iot.gz.baidubce.com";
 static const char *mainid = "t0eff28/";
@@ -24,12 +24,12 @@ static const char *getAcc = "$baidu/iot/shadow/%s/get/accepted";
 static const char *get = "$baidu/iot/shadow/%s/get";
 static const char *up = "$baidu/iot/shadow/%s/update";
 
-char *uptopic = {0};
-char *userid = {0};
+static char *uptopic = {0};
+static char *userid = {0};
 //             .username = "t0eff28/Asher8266",
 //             .password = "uEzltFewLsAaMQnZ",
-mqtt_callback_t callback;
-int isConnect;
+static mqtt_callback_t callback;
+static int isConnect;
 
 //连接成功后 注册百度相关的topic
 void regist()

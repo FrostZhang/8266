@@ -1,11 +1,4 @@
-/* Hello World Example
 
- This example code is in the Public Domain (or CC0 licensed, at your option.)
-
- Unless required by applicable law or agreed to in writing, this
- software is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
- CONDITIONS OF ANY KIND, either express or implied.
- */
 #include <stdio.h>
 #include <stdlib.h> //queue.h 依赖
 
@@ -53,7 +46,7 @@ static const char *TAG = "Main";
 #define IR_RX_IO_NUM 5
 #define IR_RX_BUF_LEN 128
 #define IR_TX_IO_NUM 14
-int gpio_isopen;
+int gpio_bit;
 
 //static xQueueHandle gpio_evt_queue = NULL;
 // static void gpio_isr_handler(void *arg)
@@ -315,32 +308,32 @@ static void ir_tx_task(void *arg)
 }
 
 //解析cmd 这是一个bit 值 包含1~32个开关 对应硬件的 gpio
-static void gpio_input(int gpiobits)
+static void gpio_input(int input)
 {
-        gpio_isopen = gpiobits;
-        if (gpiobits & GPIO_Pin_4)
+        gpio_bit = input;
+        if (input & GPIO_Pin_4)
                 gpio_set_level(GPIO_NUM_4, 1);
         else
                 gpio_set_level(GPIO_NUM_4, 0);
-        if (gpiobits & GPIO_Pin_2)
+        if (input & GPIO_Pin_2)
                 gpio_set_level(GPIO_NUM_2, 1);
         else
                 gpio_set_level(GPIO_NUM_2, 0);
-        // if (gpiobits & GPIO_Pin_5)
+        // if (input & GPIO_Pin_5)
         //         gpio_set_level(GPIO_NUM_5, 1);
         // else
         //         gpio_set_level(GPIO_NUM_5, 0);
-        if (gpiobits & GPIO_Pin_12)
+        if (input & GPIO_Pin_12)
                 gpio_set_level(GPIO_NUM_12, 1);
         else
                 gpio_set_level(GPIO_NUM_12, 0);
 
-        if (gpiobits & GPIO_Pin_13)
+        if (input & GPIO_Pin_13)
                 gpio_set_level(GPIO_NUM_13, 1);
         else
                 gpio_set_level(GPIO_NUM_13, 0);
 
-        if (gpiobits & GPIO_Pin_15)
+        if (input & GPIO_Pin_15)
                 gpio_set_level(GPIO_NUM_15, 1);
         else
                 gpio_set_level(GPIO_NUM_15, 0);
@@ -350,13 +343,13 @@ static void gpio_input(int gpiobits)
 extern void openFromDS(gpio_num_t num, int isopen)
 {
         if (isopen == 1)
-                gpio_isopen |= (1 << num);
+                gpio_bit |= (1 << num);
         else
-                gpio_isopen &= ~(1 << num);
+                gpio_bit &= ~(1 << num);
 
-        printf("openFromDS gpio_isopen %d 回调 %d isopen %d\n", gpio_isopen, num, isopen);
-        gpio_input(gpio_isopen);
-        char *send = setreported(CMD, gpio_isopen);
+        printf("openFromDS gpio_isopen %d 回调 %d isopen %d\n", gpio_bit, num, isopen);
+        gpio_input(gpio_bit);
+        char *send = setreported(CMD, gpio_bit);
         mqtt_publish(send);
         datafree(send);
 }
@@ -375,7 +368,7 @@ extern void sntp_tick(struct tm *timeinfo)
 //判断gpio的开关状态
 extern int get_isopen(gpio_num_t num)
 {
-        if (gpio_isopen & BIT(num))
+        if (gpio_bit & BIT(num))
         {
                 return 1;
         }
@@ -401,7 +394,7 @@ extern esp_err_t httpcallback(http_event *call)
         else
         {
                 int isopen = call->open4;
-                int temp = gpio_isopen;
+                int temp = gpio_bit;
                 if (isopen != -1)
                 {
                         if (isopen == 1)
@@ -433,11 +426,11 @@ extern esp_err_t httpcallback(http_event *call)
                         else
                                 temp &= ~GPIO_Pin_15;
                 }
-                if (temp != gpio_isopen)
+                if (temp != gpio_bit)
                 {
-                        gpio_isopen = temp;
-                        gpio_input(gpio_isopen);
-                        char *send = setreported(CMD, gpio_isopen);
+                        gpio_bit = temp;
+                        gpio_input(gpio_bit);
+                        char *send = setreported(CMD, gpio_bit);
                         mqtt_publish(send);
                         datafree(send);
                 }
@@ -533,7 +526,7 @@ static void adc_task()
                 vTaskDelay(1000 / portTICK_RATE_MS);
         }
 }
-
+//adc 检测
 static void adc()
 {
         adc_config_t adc_config;
@@ -547,7 +540,7 @@ static void adc()
         // 2. Create a adc task to read adc value
         xTaskCreate(adc_task, "adc_task", 1024, NULL, 5, NULL);
 }
-
+//打印系统
 static void print_sys()
 {
         /* Print chip information */

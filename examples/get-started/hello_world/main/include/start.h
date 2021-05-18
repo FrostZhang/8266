@@ -6,7 +6,7 @@
 #include "driver/gpio.h"
 #include "time.h"
 
-extern int gpio_isopen;
+extern int gpio_bit;
 void ReStart();
 esp_err_t httpcallback(http_event *call);
 int get_isopen(gpio_num_t num);
