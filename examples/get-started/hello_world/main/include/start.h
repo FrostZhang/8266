@@ -6,8 +6,8 @@
 #include "driver/gpio.h"
 #include "time.h"
 
+extern int gpio_isopen;
 void ReStart();
-void open_by_http(int res);
 esp_err_t httpcallback(http_event *call);
 int get_isopen(gpio_num_t num);
 void sntp_tick(struct tm* timeinfo);

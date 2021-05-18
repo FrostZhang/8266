@@ -1,6 +1,14 @@
 #ifndef DATACOMPENT
 #define DATACOMPENT
 
+extern const char *REPORTED;   
+extern const char *CMD;             
+extern const char *CMD1;           
+extern const char *OUTPUT0;     
+extern const char *OUTPUT1;     
+extern const char *LOCAL_IP;   
+extern const char *REQUESTID; 
+
 typedef struct data_res
 {
     int cmd; //cmd

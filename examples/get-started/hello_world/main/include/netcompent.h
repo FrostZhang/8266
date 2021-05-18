@@ -1,5 +1,8 @@
 #ifndef NETCOMPENT_H
 #define NETCOMPENT_H
+#include "esp_wifi.h"
+
+extern ip4_addr_t *LocalIP;
 
 typedef enum
 {

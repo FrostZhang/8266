@@ -9,7 +9,7 @@
 #include "udpcompent.h"
 #include "datacompent.h"
 
-const char *udptag = "udp";
+static const char *TAG = "udp";
 
 #define CONFIG_EXAMPLE_IPV4 1
 #define UDP_HELLO "{\"esp8266\":\"hello\"}"
@@ -19,22 +19,22 @@ int sock = -1;
 struct sockaddr_in destAddr = {0};
 udp_callback_t callback;
 
-void udp_client_send(const char *data)
+extern void udp_client_send(const char *data)
 {
         if (sock < 0)
         {
-                ESP_LOGE(udptag, "Error occured during sending: sock %d", sock);
+                ESP_LOGE(TAG, "Error occured during sending: sock %d", sock);
                 return;
         }
         printf("udp_client_send %s %d %d \n", data, destAddr.sin_addr.s_addr, destAddr.sin_port);
         int err = sendto(sock, data, strlen(data), 0, (struct sockaddr *)&destAddr, sizeof(destAddr));
         if (err < 0)
         {
-                ESP_LOGE(udptag, "Error occured during sending: errno %d", errno);
+                ESP_LOGE(TAG, "Error occured during sending: errno %d", errno);
         }
 }
 
-void udp_client_task(void *pvParameters)
+static void udp_client_task(void *pvParameters)
 {
         char rx_buffer[256];
         char addr_str[128];
@@ -64,10 +64,10 @@ void udp_client_task(void *pvParameters)
                 sock = socket(addr_family, SOCK_DGRAM, ip_protocol);
                 if (sock < 0)
                 {
-                        ESP_LOGE(udptag, "Unable to create socket: errno %d", errno);
+                        ESP_LOGE(TAG, "Unable to create socket: errno %d", errno);
                         break;
                 }
-                ESP_LOGI(udptag, "Socket created");
+                ESP_LOGI(TAG, "Socket created");
 
                 //char *send = setreported("test", 1);
                 //udp_client_send(send);
@@ -82,15 +82,15 @@ void udp_client_task(void *pvParameters)
                         //// Error occured during receiving
                         // if (len < 0)
                         // {
-                        //         ESP_LOGE(udptag, "recvfrom failed: errno %d", errno);
+                        //         ESP_LOGE(TAG, "recvfrom failed: errno %d", errno);
                         //         break;
                         // }
                         // // Data received
                         // else
                         // {
                         //         rx_buffer[len] = 0; // Null-terminate whatever we received and treat like a string
-                        //         ESP_LOGI(udptag, "Received %d bytes from %s:", len, addr_str);
-                        //         ESP_LOGI(udptag, "%s", rx_buffer);
+                        //         ESP_LOGI(TAG, "Received %d bytes from %s:", len, addr_str);
+                        //         ESP_LOGI(TAG, "%s", rx_buffer);
                         // }
                         callback(rx_buffer,len);
                         vTaskDelay(100 / portTICK_PERIOD_MS);
@@ -98,15 +98,15 @@ void udp_client_task(void *pvParameters)
 
                 if (sock != -1)
                 {
-                        ESP_LOGE(udptag, "Shutting down socket and restarting...");
+                        ESP_LOGE(TAG, "Shutting down socket and restarting...");
                         shutdown(sock, 0);
                         close(sock);
                 }
         }
         vTaskDelete(NULL);
 }
-
-void udpclientstart(udp_callback_t call)
+ 
+extern void udpclientstart(udp_callback_t call)
 {
         callback = call;
         xTaskCreate(udp_client_task, "udp_client", 4096, NULL, 5, NULL);

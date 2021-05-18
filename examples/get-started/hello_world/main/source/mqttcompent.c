@@ -14,15 +14,15 @@
 #include <string.h>
 
 #define mqttport 1883
-const char *mqtttag = "mqttcompent";
+static const char *TAG = "mqttcompent";
 esp_mqtt_client_handle_t client;
 
-const char *host = "t0eff28.mqtt.iot.gz.baidubce.com";
-const char *mainid = "t0eff28/";
-const char *upAcc = "$baidu/iot/shadow/%s/update/accepted";
-const char *getAcc = "$baidu/iot/shadow/%s/get/accepted";
-const char *get = "$baidu/iot/shadow/%s/get";
-const char *up = "$baidu/iot/shadow/%s/update";
+static const char *host = "t0eff28.mqtt.iot.gz.baidubce.com";
+static const char *mainid = "t0eff28/";
+static const char *upAcc = "$baidu/iot/shadow/%s/update/accepted";
+static const char *getAcc = "$baidu/iot/shadow/%s/get/accepted";
+static const char *get = "$baidu/iot/shadow/%s/get";
+static const char *up = "$baidu/iot/shadow/%s/update";
 
 char *uptopic = {0};
 char *userid = {0};
@@ -34,24 +34,6 @@ int isConnect;
 //连接成功后 注册百度相关的topic
 void regist()
 {
-        // extern char *mqttusername;
-        // char userid[32] = {0};
-        // if (strncmp(mqttusername, mainid, strlen(mainid)) == 0)
-        // {
-        //         int n = 0;
-        //         for (size_t i = strlen(mainid); i < strlen(mqttusername); i++)
-        //         {
-        //                 userid[n] = mqttusername[i];
-        //                 n++;
-        //         }
-        //         userid[strlen(mqttusername) - strlen(mainid)] = '\0';
-        // }
-        // else
-        // {
-        //         strcpy(userid, mqttusername);
-        //         userid[strlen(mqttusername)] = '\0';
-        // }
-        //printf("mqtt userid %s", userid);
         char sub[56] = {0};
         memset(sub, '\0', 56);
         sprintf(sub, upAcc, userid);
@@ -68,14 +50,9 @@ void regist()
         datafree(send);
 
         vTaskDelay(50 / portTICK_RATE_MS);
-        extern ip4_addr_t *localIP;
-        send = setreported2("local_ip", ip4addr_ntoa(localIP));
-        ESP_LOGI(mqtttag, "send ip %s", send);
-        // memset(sub, '\0', 56);
-        // sprintf(sub, up, userid);
-        // uptopic = os_malloc(strlen(sub) + 1);
-        // strncpy(uptopic, sub, strlen(sub));
-        // uptopic[strlen(sub)] = '\0';
+        //extern ip4_addr_t *localIP;
+        send = setreported2(LOCAL_IP, ip4addr_ntoa(LocalIP));
+        ESP_LOGI(TAG, "send ip %s", send);
         esp_mqtt_client_publish(client, uptopic, send, 0, 0, 0);
         datafree(send);
         datafree(userid);
@@ -83,29 +60,28 @@ void regist()
 
 static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
 {
-        esp_mqtt_client_handle_t client = event->client;
-
+        //esp_mqtt_client_handle_t client = event->client;
         //int msg_id;
         // your_context_t *context = event->context;
         switch (event->event_id)
         {
         case MQTT_EVENT_CONNECTED:
-                ESP_LOGI(mqtttag, "MQTT_EVENT_CONNECTED");
+                ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
                 regist();
                 isConnect = 1;
                 break;
         case MQTT_EVENT_DISCONNECTED:
                 isConnect = 0;
-                ESP_LOGI(mqtttag, "MQTT_EVENT_DISCONNECTED");
+                ESP_LOGI(TAG, "MQTT_EVENT_DISCONNECTED");
                 break;
         case MQTT_EVENT_SUBSCRIBED:
 
                 break;
         case MQTT_EVENT_UNSUBSCRIBED:
-                ESP_LOGI(mqtttag, "MQTT_EVENT_UNSUBSCRIBED, msg_id=%d", event->msg_id);
+                ESP_LOGI(TAG, "MQTT_EVENT_UNSUBSCRIBED, msg_id=%d", event->msg_id);
                 break;
         case MQTT_EVENT_PUBLISHED:
-                //ESP_LOGI(mqtttag, "MQTT_EVENT_PUBLISHED, msg_id=%d", event->msg_id);
+                //ESP_LOGI(TAG, "MQTT_EVENT_PUBLISHED, msg_id=%d", event->msg_id);
                 break;
         case MQTT_EVENT_DATA:
                 //printf("TOPIC=%.*s\r\n", event->topic_len, event->topic);
@@ -113,7 +89,7 @@ static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
                 callback(event->data);
                 break;
         case MQTT_EVENT_ERROR:
-                ESP_LOGI(mqtttag, "MQTT_EVENT_ERROR");
+                ESP_LOGI(TAG, "MQTT_EVENT_ERROR");
                 break;
         }
         return ESP_OK;
@@ -138,7 +114,7 @@ void mqtt_stop()
         }
 }
 
-//初始化userid 和 uptopic 作为遗嘱
+//初始化userid 和 uptopic 作为遗嘱 userid需要释放
 void ini_mqtt_baidu(const char *mqttusername)
 {
         userid = os_malloc(32);
@@ -157,7 +133,7 @@ void ini_mqtt_baidu(const char *mqttusername)
                 strcpy(userid, mqttusername);
                 userid[strlen(mqttusername)] = '\0';
         }
-        ESP_LOGI(mqtttag, "ini uptopic");
+        ESP_LOGI(TAG, "ini uptopic");
         char sub[56] = {0};
         memset(sub, '\0', 56);
         sprintf(sub, up, userid);
@@ -174,17 +150,17 @@ esp_err_t mqtt_app_start(mqtt_callback_t call)
         extern char *mqttpassword;
         if (mqttusername == NULL || mqttpassword == NULL)
         {
-                ESP_LOGE(mqtttag, "mqtt not config (baidu)");
+                ESP_LOGE(TAG, "mqtt not config (baidu)");
                 return ESP_FAIL;
         }
         callback = call;
 
-        ESP_LOGI(mqtttag, "mqttusername %s %d", mqttusername, strlen(mqttusername));
-        ESP_LOGI(mqtttag, "mqttpassword %s %d", mqttpassword, strlen(mqttpassword));
+        ESP_LOGI(TAG, "mqttusername %s %d", mqttusername, strlen(mqttusername));
+        ESP_LOGI(TAG, "mqttpassword %s %d", mqttpassword, strlen(mqttpassword));
         ini_mqtt_baidu(mqttusername);
 
         //xEventGroupWaitBits(wifi_event_group, Net_SUCCESS,true, true, portMAX_DELAY);
-        char *lwt_ms = setreported2("local_ip", "0.0.0.0");
+        char *lwt_ms = setreported2(LOCAL_IP, "0.0.0.0");
 
         esp_mqtt_client_config_t mqtt_cfg = {
             .event_handle = mqtt_event_handler,

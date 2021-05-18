@@ -44,7 +44,7 @@
 #include "dscompent.h"
 #include "iot_button.h"
 
-const char *tag = "main";
+static const char *TAG = "Main";
 
 #define LEDC_TEST_DUTY (4096)
 #define LEDC_TEST_FADE_TIME (1500)
@@ -55,14 +55,12 @@ const char *tag = "main";
 #define IR_TX_IO_NUM 14
 int gpio_isopen;
 
-static xQueueHandle gpio_evt_queue = NULL;
-
+//static xQueueHandle gpio_evt_queue = NULL;
 // static void gpio_isr_handler(void *arg)
 // {
 //         uint32_t gpio_num = (uint32_t)arg;
 //         xQueueSendFromISR(gpio_evt_queue, &gpio_num, NULL);
 // }
-
 // static void gpio_task_example(void *arg)
 // {
 //         uint32_t io_num;
@@ -70,21 +68,23 @@ static xQueueHandle gpio_evt_queue = NULL;
 //         {
 //                 if (xQueueReceive(gpio_evt_queue, &io_num, portMAX_DELAY))
 //                 {
-//                         ESP_LOGI(tag, "GPIO[%d] intr, val: %d\n", io_num, gpio_get_level(io_num));
+//                         ESP_LOGI(TAG, "GPIO[%d] intr, val: %d\n", io_num, gpio_get_level(io_num));
 //                 }
 //         }
 // }
 
-void button_press_5s_cb(void *arg)
+static void button_press_5s_cb(void *arg)
 {
-        ESP_LOGI(tag, "press 5s, heap: %d\n", esp_get_free_heap_size());
+        ESP_LOGI(TAG, "press 5s, heap: %d\n", esp_get_free_heap_size());
 }
 
-void sys_light(int is_on)
+//2号系统灯
+extern void sys_light(int is_on)
 {
         gpio_set_level(GPIO_NUM_2, is_on);
 }
 
+//初始化gpio
 static void GpioIni(void)
 {
         //灯显
@@ -126,21 +126,22 @@ static void GpioIni(void)
         // gpio_isr_handler_add(GPIO_NUM_0, gpio_isr_handler, (void *)GPIO_NUM_0);
 }
 
-void ReStart()
+//设备重启
+extern void ReStart()
 {
-        //设备重启
         printf("Restarting now.\n");
         fflush(stdout);
         esp_restart();
 }
 
-void Taskds18b20(void *p)
+//ds18b20
+static void Taskds18b20(void *p)
 {
         uint8_t res = Ds18b20Init(GPIO_NUM_5);
         uint8_t temp = 0;
         if (res == 0)
         {
-                ESP_LOGE(tag, "18b20 ini failed");
+                ESP_LOGE(TAG, "18b20 ini failed");
                 vTaskDelete(NULL);
         }
         while (1)
@@ -150,9 +151,9 @@ void Taskds18b20(void *p)
                 printf("ds18b20采集的温度: %d \n\n", temp);
                 cJSON *jsonSend = cJSON_CreateObject();
                 //cJSON_AddItemToObject(jsonSend, "reported", cJSON_CreateNumber(localIP->addr));
-                cJSON *reported = cJSON_CreateObject();
-                cJSON_AddItemToObject(jsonSend, "reported", reported);
-                cJSON_AddItemToObject(reported, "temp", cJSON_CreateNumber(temp));
+                cJSON *rep = cJSON_CreateObject();
+                cJSON_AddItemToObject(jsonSend, REPORTED, rep);
+                cJSON_AddItemToObject(rep, "temp", cJSON_CreateNumber(temp));
                 char *sendstr = cJSON_PrintUnformatted(jsonSend);
                 udp_client_send(sendstr);
                 if (NULL != sendstr)
@@ -163,27 +164,28 @@ void Taskds18b20(void *p)
         }
 }
 
-void TaskCreatDht11(void *p)
+//Dht11
+static void TaskCreatDht11(void *p)
 {
         uint8_t curTem = 0;
         uint8_t curHum = 0;
         uint8_t res = dh11Init();
         if (res == 0)
         {
-                ESP_LOGE(tag, "dh11Init failed");
+                ESP_LOGE(TAG, "dh11Init failed");
                 vTaskDelete(NULL);
         }
         while (1)
         {
                 vTaskDelay(5000 / portTICK_RATE_MS);
                 dh11Read(&curTem, &curHum);
-                ESP_LOGI(tag, "Temperature : %d , Humidity : %d", curTem, curHum);
+                ESP_LOGI(TAG, "Temperature : %d , Humidity : %d", curTem, curHum);
                 cJSON *jsonSend = cJSON_CreateObject();
                 //cJSON_AddItemToObject(jsonSend, "reported", cJSON_CreateNumber(localIP->addr));
-                cJSON *reported = cJSON_CreateObject();
-                cJSON_AddItemToObject(jsonSend, "reported", reported);
-                cJSON_AddItemToObject(reported, "temp", cJSON_CreateNumber(curTem));
-                cJSON_AddItemToObject(reported, "hum", cJSON_CreateNumber(curHum));
+                cJSON *rep = cJSON_CreateObject();
+                cJSON_AddItemToObject(jsonSend, REPORTED, rep);
+                cJSON_AddItemToObject(rep, "temp", cJSON_CreateNumber(curTem));
+                cJSON_AddItemToObject(rep, "hum", cJSON_CreateNumber(curHum));
                 char *sendstr = cJSON_PrintUnformatted(jsonSend);
                 udp_client_send(sendstr);
                 if (NULL != sendstr)
@@ -195,7 +197,8 @@ void TaskCreatDht11(void *p)
         vTaskDelete(NULL);
 }
 
-void LEDC(void *p)
+//呼吸灯
+static void LEDC(void *p)
 {
         ledc_timer_config_t ledc_timer = {
             .duty_resolution = LEDC_TIMER_13_BIT, // resolution of PWM duty
@@ -246,7 +249,8 @@ static esp_err_t ir_rx_nec_code_check(ir_rx_nec_data_t nec_code)
         return ESP_OK;
 }
 
-void ir_rx_task(void *arg)
+//红外接收
+static void ir_rx_task(void *arg)
 {
         ir_rx_nec_data_t ir_data;
         ir_rx_config_t ir_rx_config = {
@@ -258,22 +262,23 @@ void ir_rx_task(void *arg)
         {
                 ir_data.val = 0;
                 ir_rx_recv_data(&ir_data, 1, portMAX_DELAY);
-                ESP_LOGI(tag, "addr1: 0x%x, addr2: 0x%x, cmd1: 0x%x, cmd2: 0x%x", ir_data.addr1, ir_data.addr2, ir_data.cmd1, ir_data.cmd2);
+                ESP_LOGI(TAG, "addr1: 0x%x, addr2: 0x%x, cmd1: 0x%x, cmd2: 0x%x", ir_data.addr1, ir_data.addr2, ir_data.cmd1, ir_data.cmd2);
 
                 if (ESP_OK == ir_rx_nec_code_check(ir_data))
                 {
-                        ESP_LOGI(tag, "ir rx nec data:  0x%x", ir_data.cmd1);
+                        ESP_LOGI(TAG, "ir rx nec data:  0x%x", ir_data.cmd1);
                 }
                 else
                 {
-                        ESP_LOGI(tag, "Non-standard nec infrared protocol");
+                        ESP_LOGI(TAG, "Non-standard nec infrared protocol");
                 }
         }
 
         vTaskDelete(NULL);
 }
 
-void ir_tx_task(void *arg)
+//红外发射
+static void ir_tx_task(void *arg)
 {
         ir_tx_config_t ir_tx_config = {
             .io_num = IR_TX_IO_NUM,
@@ -300,7 +305,7 @@ void ir_tx_task(void *arg)
                         ir_data[x] = ir_data[0];
                 }
                 ir_tx_send_data(ir_data, 5, portMAX_DELAY);
-                ESP_LOGI(tag, "ir tx nec: addr:%02xh;cmd:%02xh;repeat:%d", ir_data[0].addr1, ir_data[0].cmd1, 4);
+                ESP_LOGI(TAG, "ir tx nec: addr:%02xh;cmd:%02xh;repeat:%d", ir_data[0].addr1, ir_data[0].cmd1, 4);
                 ir_data[0].cmd1++;
                 ir_data[0].cmd2 = ir_data[0].cmd1 + 1;
                 vTaskDelay(1000 / portTICK_RATE_MS);
@@ -309,7 +314,8 @@ void ir_tx_task(void *arg)
         vTaskDelete(NULL);
 }
 
-void gpio_input(int gpiobits)
+//解析cmd 这是一个bit 值 包含1~32个开关 对应硬件的 gpio
+static void gpio_input(int gpiobits)
 {
         gpio_isopen = gpiobits;
         if (gpiobits & GPIO_Pin_4)
@@ -340,8 +346,8 @@ void gpio_input(int gpiobits)
                 gpio_set_level(GPIO_NUM_15, 0);
 }
 
-//被定时器 回调
-void openFromDS(gpio_num_t num, int isopen)
+//定时器 回调
+extern void openFromDS(gpio_num_t num, int isopen)
 {
         if (isopen == 1)
                 gpio_isopen |= (1 << num);
@@ -350,22 +356,24 @@ void openFromDS(gpio_num_t num, int isopen)
 
         printf("openFromDS gpio_isopen %d 回调 %d isopen %d\n", gpio_isopen, num, isopen);
         gpio_input(gpio_isopen);
-        char *send = setreported("cmd", gpio_isopen);
+        char *send = setreported(CMD, gpio_isopen);
         mqtt_publish(send);
         datafree(send);
 }
 
-void sntp_tick(struct tm *timeinfo)
+//时钟每秒回调
+extern void sntp_tick(struct tm *timeinfo)
 {
         ontick(timeinfo);
         if (timeinfo->tm_sec == 0)
         {
-                ESP_LOGI(tag, "Free heap size: %d\n", esp_get_free_heap_size());
+                ESP_LOGI(TAG, "Free heap size: %d\n", esp_get_free_heap_size());
         }
         return;
 }
 
-int get_isopen(gpio_num_t num)
+//判断gpio的开关状态
+extern int get_isopen(gpio_num_t num)
 {
         if (gpio_isopen & BIT(num))
         {
@@ -374,17 +382,18 @@ int get_isopen(gpio_num_t num)
         return 0;
 }
 
-esp_err_t httpcallback(http_event *call)
+//http收到控制信息回调
+extern esp_err_t httpcallback(http_event *call)
 {
         if (call->bdjs != NULL)
         {
-                ESP_LOGI(tag, "HTTP REC %s", call->bdjs);
+                ESP_LOGI(TAG, "HTTP REC %s", call->bdjs);
                 data_res *ans = getreported(call->bdjs);
                 if (ans->cmd != -1)
                 {
                         printf("HTTP get switchdata %d \n", ans->cmd);
                         gpio_input(ans->cmd);
-                        char *send = setreported("cmd", ans->cmd);
+                        char *send = setreported(CMD, ans->cmd);
                         mqtt_publish(send);
                         datafree(send);
                 }
@@ -428,7 +437,7 @@ esp_err_t httpcallback(http_event *call)
                 {
                         gpio_isopen = temp;
                         gpio_input(gpio_isopen);
-                        char *send = setreported("cmd", gpio_isopen);
+                        char *send = setreported(CMD, gpio_isopen);
                         mqtt_publish(send);
                         datafree(send);
                 }
@@ -440,7 +449,8 @@ esp_err_t httpcallback(http_event *call)
         return ESP_OK;
 }
 
-esp_err_t mqttcallback(char *rec)
+//mqtt回调
+static esp_err_t mqttcallback(char *rec)
 {
         data_res *ans = getreported(rec);
         if (ans->cmd != -1)
@@ -450,7 +460,8 @@ esp_err_t mqttcallback(char *rec)
         return ESP_OK;
 }
 
-esp_err_t sntpCallback(sntp_event *call)
+//成功连接网络并设定时间  回调
+static esp_err_t sntpCallback(sntp_event *call)
 {
         if (call->mestype == SNTP_EVENT_SUCCESS)
         {
@@ -459,11 +470,12 @@ esp_err_t sntpCallback(sntp_event *call)
         return ESP_OK;
 }
 
-esp_err_t udpcallback(char *rec, uint len)
+//udp收到信息 回调
+extern esp_err_t udpcallback(char *rec, uint len)
 {
         char *data = os_malloc(len);
         strncpy(data, rec, len);
-        ESP_LOGI(tag, "UDP REC %s", data);
+        ESP_LOGI(TAG, "UDP REC %s", data);
         data_res *ans = getreported(data);
         if (ans->cmd != -1)
         {
@@ -474,20 +486,21 @@ esp_err_t udpcallback(char *rec, uint len)
         return ESP_OK;
 }
 
-esp_err_t netcall(net_callback call)
+//wifi连接成功 回调
+static esp_err_t netcall(net_callback call)
 {
         if (call == NET_CONNNECT)
         {
                 datacompentini();
-                sntpstart(sntpCallback);
                 http_start();
+                sntpstart(sntpCallback);
                 //udpclientstart(udpcallback);
         }
         return ESP_OK;
 }
 
 //io14 io2
-esp_err_t oledini()
+static esp_err_t oledini()
 {
         esp_err_t err = oled_ini();
         if (err == ESP_OK)
@@ -499,17 +512,17 @@ esp_err_t oledini()
 
 static void adc_task()
 {
-        int x;
+        //int x;
         uint16_t adc_data[100];
 
         while (1)
         {
                 if (ESP_OK == adc_read(&adc_data[0]))
                 {
-                        ESP_LOGI(tag, "adc read: %d\r\n", adc_data[0]);
+                        ESP_LOGI(TAG, "adc read: %d\r\n", adc_data[0]);
                 }
 
-                // ESP_LOGI(tag, "adc read fast:\r\n");
+                // ESP_LOGI(TAG, "adc read fast:\r\n");
 
                 // if (ESP_OK == adc_read_fast(adc_data, 100)) {
                 //     for (x = 0; x < 100; x++) {
@@ -521,12 +534,12 @@ static void adc_task()
         }
 }
 
-void adc()
+static void adc()
 {
         adc_config_t adc_config;
 
         // Depend on menuconfig->Component config->PHY->vdd33_const value
-        // When measuring system voltage(ADC_READ_VDD_MODE), vdd33_const must be set to 255.
+        // When measuring system volTAGe(ADC_READ_VDD_MODE), vdd33_const must be set to 255.
         adc_config.mode = ADC_READ_TOUT_MODE;
         adc_config.clk_div = 8; // ADC sample collection clock = 80MHz/clk_div = 10MHz
         ESP_ERROR_CHECK(adc_init(&adc_config));
@@ -535,7 +548,7 @@ void adc()
         xTaskCreate(adc_task, "adc_task", 1024, NULL, 5, NULL);
 }
 
-void print_sys()
+static void print_sys()
 {
         /* Print chip information */
         esp_chip_info_t chip_info;
@@ -546,7 +559,7 @@ void print_sys()
 
         printf("%dMB %s flash\n", spi_flash_get_chip_size() / (1024 * 1024),
                (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded" : "external");
-        ESP_LOGI(tag, "Free heap size: %d\n", esp_get_free_heap_size());
+        ESP_LOGI(TAG, "Free heap size: %d\n", esp_get_free_heap_size());
 }
 
 void app_main()

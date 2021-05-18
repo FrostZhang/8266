@@ -4,6 +4,7 @@
 #include "esp_err.h"
 
 #include "time.h"
+extern struct tm timeinfo;
 
 typedef enum
 {

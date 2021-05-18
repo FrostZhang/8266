@@ -51,7 +51,7 @@ const int IPV6_GOTIP_BIT = BIT1;
 
 static const char *TAG = "example";
 static const char *payload = "Message from ESP32 ";
-ip4_addr_t *localIP;
+ip4_addr_t *sta_IP;
 static esp_err_t event_handler(void *ctx, system_event_t *event)
 {
     /* For accessing reason codes in case of disconnection */
@@ -72,7 +72,7 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
     case SYSTEM_EVENT_STA_GOT_IP:
         xEventGroupSetBits(wifi_event_group, IPV4_GOTIP_BIT);
         ESP_LOGI(TAG, "SYSTEM_EVENT_STA_GOT_IP");
-        localIP = &info->got_ip.ip_info.ip;
+        sta_IP = &info->got_ip.ip_info.ip;
         break;
     case SYSTEM_EVENT_STA_DISCONNECTED:
         ESP_LOGE(TAG, "Disconnect reason : %d", info->disconnected.reason);
@@ -156,7 +156,7 @@ static void gpio_task_example(void *arg)
             ESP_LOGI(TAG, "GPIO[%d] intr, val: %d\n", io_num, gpio_get_level(io_num));
 
             cJSON *jsonSend = cJSON_CreateObject();
-            cJSON_AddItemToObject(jsonSend, "local ip", cJSON_CreateNumber(localIP->addr));
+            cJSON_AddItemToObject(jsonSend, "local ip", cJSON_CreateNumber(sta_IP->addr));
             // cJSON *jsonSendprop = cJSON_CreateObject();
             // cJSON_AddItemToObject(jsonSend, "prop", jsonSendprop);
             // cJSON_AddItemToObject(jsonSendprop, "ip", cJSON_CreateString("192.168.1.1"));
