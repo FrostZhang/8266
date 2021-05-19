@@ -1,5 +1,5 @@
-#include "stdlib.h"
-#include <string.h>
+
+#include "application.h"
 #include "driver/gpio.h"
 #include "esp_system.h"
 
