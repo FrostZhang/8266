@@ -106,12 +106,11 @@ static esp_err_t index_post_handler(httpd_req_t *req)
             {
                 httpevent.restart = 1;
             }
-            //对接百度json  方法好像没使用
+            //设备直连
             if (strcmp(key, BDJS) == 0)
             {
                 httpevent.bdjs = value;
                 httpevent.bdjs[strlen(value)] = '\0';
-                httpd_resp_send_chunk(req, "bdjsok", 2);
             }
             ptr = strtok_r(NULL, "&", &p);
         }

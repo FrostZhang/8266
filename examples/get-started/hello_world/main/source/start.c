@@ -439,7 +439,6 @@ static esp_err_t sntp_connect_callback(sntp_event *call)
         else if (call->mestype == SNTP_EVENT_TIMING)
         {
                 ds_check(call->timeinfo);
-                printf("sntp_tick %d (if normal can delete debug)", call->timeinfo->tm_sec);
                 if (call->timeinfo->tm_sec == 0)
                 {
                         print_free_heap_size();

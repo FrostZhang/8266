@@ -9,7 +9,7 @@
 
 static const char *TAG = "udp";
 
-// #define CONFIG_EXAMPLE_IPV4 1
+#define CONFIG_EXAMPLE_IPV4 1
 static const char *HOST_IP_ADDR = "255.255.255.255";
 u16_t PORT = 8266;
 int sock = -1;
