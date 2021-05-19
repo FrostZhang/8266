@@ -13,7 +13,7 @@ static const char *TAG = "udp";
 
 #define CONFIG_EXAMPLE_IPV4 1
 #define UDP_HELLO "{\"esp8266\":\"hello\"}"
-char *HOST_IP_ADDR = "255.255.255.255";
+static const char *HOST_IP_ADDR = "255.255.255.255";
 u16_t PORT = 8266;
 int sock = -1;
 struct sockaddr_in destAddr = {0};
@@ -68,10 +68,6 @@ static void udp_client_task(void *pvParameters)
                         break;
                 }
                 ESP_LOGI(TAG, "Socket created");
-
-                //char *send = setreported("test", 1);
-                //udp_client_send(send);
-
                 while (1)
                 {
 
@@ -93,7 +89,7 @@ static void udp_client_task(void *pvParameters)
                         //         ESP_LOGI(TAG, "%s", rx_buffer);
                         // }
                         callback(rx_buffer,len);
-                        vTaskDelay(100 / portTICK_PERIOD_MS);
+                        vTaskDelay(200 / portTICK_PERIOD_MS);
                 }
 
                 if (sock != -1)
@@ -106,7 +102,7 @@ static void udp_client_task(void *pvParameters)
         vTaskDelete(NULL);
 }
  
-extern void udpclientstart(udp_callback_t call)
+extern void udp_client_start(udp_callback_t call)
 {
         callback = call;
         xTaskCreate(udp_client_task, "udp_client", 4096, NULL, 5, NULL);

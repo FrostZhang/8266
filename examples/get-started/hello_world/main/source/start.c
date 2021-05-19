@@ -4,9 +4,7 @@
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "freertos/queue.h"
-
-#include "esp_system.h"
+//#include "freertos/queue.h"
 #include "esp_spi_flash.h"
 #include "cJSON.h"
 #include "esp_log.h"
@@ -14,8 +12,6 @@
 
 #include "driver/i2c.h"
 #include "driver/spi.h"
-
-#include "lwip/apps/sntp.h"
 
 #include "mqtt_client.h"
 #include "os.h"
@@ -29,13 +25,14 @@
 #include "sh1106_s.h"
 #include "udpcompent.h"
 #include "sntpcompent.h"
-#include "netcompent.h"
+#include "wificompent.h"
 #include "datacompent.h"
 #include "navcompent.h"
 #include "mqttcompent.h"
 #include "httpcompent.h"
 #include "dscompent.h"
 #include "iot_button.h"
+#include "application.h"
 
 static const char *TAG = "Main";
 
@@ -46,7 +43,8 @@ static const char *TAG = "Main";
 #define IR_RX_IO_NUM 5
 #define IR_RX_BUF_LEN 128
 #define IR_TX_IO_NUM 14
-int gpio_bit;
+
+static int gpio_bit;
 
 //static xQueueHandle gpio_evt_queue = NULL;
 // static void gpio_isr_handler(void *arg)
@@ -68,13 +66,7 @@ int gpio_bit;
 
 static void button_press_5s_cb(void *arg)
 {
-        ESP_LOGI(TAG, "press 5s, heap: %d\n", esp_get_free_heap_size());
-}
-
-//2号系统灯
-extern void sys_light(int is_on)
-{
-        gpio_set_level(GPIO_NUM_2, is_on);
+        print_free_heap_size();
 }
 
 //初始化gpio
@@ -117,14 +109,6 @@ static void GpioIni(void)
         // xTaskCreate(gpio_task_example, "gpio_task_example", 1024, NULL, 10, NULL);
 
         // gpio_isr_handler_add(GPIO_NUM_0, gpio_isr_handler, (void *)GPIO_NUM_0);
-}
-
-//设备重启
-extern void ReStart()
-{
-        printf("Restarting now.\n");
-        fflush(stdout);
-        esp_restart();
 }
 
 //ds18b20
@@ -340,33 +324,29 @@ static void gpio_input(int input)
 }
 
 //定时器 回调
-extern void openFromDS(gpio_num_t num, int isopen)
+extern void system_ds_callback(gpio_num_t num, int isopen)
 {
         if (isopen == 1)
-                gpio_bit |= (1 << num);
+                gpio_bit |= BIT(num);
         else
-                gpio_bit &= ~(1 << num);
+                gpio_bit &= ~BIT(num);
 
-        printf("openFromDS gpio_isopen %d 回调 %d isopen %d\n", gpio_bit, num, isopen);
+        printf("ds callback %d 回调 %d isopen %d\n", gpio_bit, num, isopen);
         gpio_input(gpio_bit);
-        char *send = setreported(CMD, gpio_bit);
+        char *send = data_bdjs_reported(CMD, gpio_bit);
         mqtt_publish(send);
-        datafree(send);
+        data_free(send);
 }
 
 //时钟每秒回调
-extern void sntp_tick(struct tm *timeinfo)
+extern void system_sntp_callback(struct tm *timeinfo)
 {
-        ontick(timeinfo);
-        if (timeinfo->tm_sec == 0)
-        {
-                ESP_LOGI(TAG, "Free heap size: %d\n", esp_get_free_heap_size());
-        }
+
         return;
 }
 
 //判断gpio的开关状态
-extern int get_isopen(gpio_num_t num)
+extern int system_get_gpio_state(gpio_num_t num)
 {
         if (gpio_bit & BIT(num))
         {
@@ -376,19 +356,19 @@ extern int get_isopen(gpio_num_t num)
 }
 
 //http收到控制信息回调
-extern esp_err_t httpcallback(http_event *call)
+extern esp_err_t system_http_callback(http_event *call)
 {
         if (call->bdjs != NULL)
         {
                 ESP_LOGI(TAG, "HTTP REC %s", call->bdjs);
-                data_res *ans = getreported(call->bdjs);
+                data_res *ans = data_decode_bdjs(call->bdjs);
                 if (ans->cmd != -1)
                 {
                         printf("HTTP get switchdata %d \n", ans->cmd);
                         gpio_input(ans->cmd);
-                        char *send = setreported(CMD, ans->cmd);
+                        char *send = data_bdjs_reported(CMD, ans->cmd);
                         mqtt_publish(send);
-                        datafree(send);
+                        data_free(send);
                 }
         }
         else
@@ -430,14 +410,14 @@ extern esp_err_t httpcallback(http_event *call)
                 {
                         gpio_bit = temp;
                         gpio_input(gpio_bit);
-                        char *send = setreported(CMD, gpio_bit);
+                        char *send = data_bdjs_reported(CMD, gpio_bit);
                         mqtt_publish(send);
-                        datafree(send);
+                        data_free(send);
                 }
         }
         if (call->restart == 1)
         {
-                ReStart();
+                system_restart();
         }
         return ESP_OK;
 }
@@ -445,7 +425,7 @@ extern esp_err_t httpcallback(http_event *call)
 //mqtt回调
 static esp_err_t mqttcallback(char *rec)
 {
-        data_res *ans = getreported(rec);
+        data_res *ans = data_decode_bdjs(rec);
         if (ans->cmd != -1)
         {
                 gpio_input(ans->cmd);
@@ -453,13 +433,29 @@ static esp_err_t mqttcallback(char *rec)
         return ESP_OK;
 }
 
-//成功连接网络并设定时间  回调
-static esp_err_t sntpCallback(sntp_event *call)
+//时钟回调
+static esp_err_t sntp_connect_callback(sntp_event *call)
 {
         if (call->mestype == SNTP_EVENT_SUCCESS)
         {
                 mqtt_app_start(mqttcallback);
         }
+        else if (call->mestype == SNTP_EVENT_TIMING)
+        {
+                ds_check(call->timeinfo);
+                printf("sntp_tick %d (if normal can delete debug)",call->timeinfo->tm_sec);
+                if (call->timeinfo->tm_sec == 0)
+                {
+                        print_free_heap_size();
+                }
+        }
+        else if(call->mestype == SNTP_EVENT_CONNNECTFAILED)
+        {
+                printf("sntp_connect_failed after 5mis restart");
+                vTaskDelay(5000 / portTICK_RATE_MS);
+                system_restart();
+        }
+        
         return ESP_OK;
 }
 
@@ -469,7 +465,7 @@ extern esp_err_t udpcallback(char *rec, uint len)
         char *data = os_malloc(len);
         strncpy(data, rec, len);
         ESP_LOGI(TAG, "UDP REC %s", data);
-        data_res *ans = getreported(data);
+        data_res *ans = data_decode_bdjs(data);
         if (ans->cmd != -1)
         {
                 printf("udp get switchdata %d \n", ans->cmd);
@@ -480,13 +476,13 @@ extern esp_err_t udpcallback(char *rec, uint len)
 }
 
 //wifi连接成功 回调
-static esp_err_t netcall(net_callback call)
+static esp_err_t wifi_callback(net_callback call)
 {
-        if (call == NET_CONNNECT)
+        if (call == WIFI_CONNNECT)
         {
-                datacompentini();
-                http_start();
-                sntpstart(sntpCallback);
+                data_initialize();
+                http_server_start();
+                sntp_start(sntp_connect_callback);
                 //udpclientstart(udpcallback);
         }
         return ESP_OK;
@@ -560,8 +556,8 @@ void app_main()
         print_sys();
         GpioIni();
 
-        loadconfig();
-        netstart(netcall);
+        nav_load_custom_data();
+        wifi_connect_start(wifi_callback);
 
         //xTaskCreate(TaskCreatDht11, "TaskCreatDht11", 2048, NULL, 4, NULL);
         //xTaskCreate(Taskds18b20, "Taskds18b20", 2048, NULL, 3, NULL);

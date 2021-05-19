@@ -1,9 +1,11 @@
 #include "stdlib.h"
 #include <string.h>
+#include "driver/gpio.h"
+#include "esp_system.h"
 
 #define BURSIZE 2048
 
-int hex2dec(char c)
+static int hex2dec(char c)
 {
     if ('0' <= c && c <= '9')
     {
@@ -23,7 +25,7 @@ int hex2dec(char c)
     }
 }
 
-char dec2hex(short int c)
+static char dec2hex(short int c)
 {
     if (0 <= c && c <= 9)
     {
@@ -40,7 +42,7 @@ char dec2hex(short int c)
 }
 
 //编码一个url
-void urlencode(char url[])
+extern void http_url_encode(char url[])
 {
     int i = 0;
     int len = strlen(url);
@@ -74,7 +76,7 @@ void urlencode(char url[])
 }
 
 // 解码url
-void urldecode(char url[])
+extern void http_url_decode(char url[])
 {
     int i = 0;
     int len = strlen(url);
@@ -100,3 +102,21 @@ void urldecode(char url[])
     strcpy(url, res);
 }
 
+//设备重启
+extern void system_restart()
+{
+    printf("Restarting now.\n");
+    fflush(stdout);
+    esp_restart();
+}
+
+//指示灯 gpio2
+extern void system_pilot_light(int is_on)
+{
+    gpio_set_level(GPIO_NUM_2, is_on);
+}
+
+extern void print_free_heap_size()
+{
+    printf("esp_system free heap size: %d\n", esp_get_free_heap_size());
+}

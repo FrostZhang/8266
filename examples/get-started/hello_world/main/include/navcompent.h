@@ -11,8 +11,8 @@ extern char *wifipassword;
 extern char *mqttusername;
 extern char *mqttpassword;
 
-void loadconfig();
-esp_err_t write_wifi(char ssid[32], char pass[64]);
-esp_err_t write_mqtt_baidu(char ssid[32], char pass[64]);
-esp_err_t write_ds(char dso[32], int num);
+void nav_load_custom_data();
+esp_err_t nav_write_wifi(char ssid[32], char pass[64]);
+esp_err_t nav_write_mqtt_baidu_account(char ssid[32], char pass[64]);
+esp_err_t nav_write_ds(char dso[32], int num);
 #endif

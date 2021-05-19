@@ -16,11 +16,11 @@ typedef struct data_res
 }data_res;
 
 //ini data then mqtt http udp and...
-void datacompentini();
-char* setreported(const char *key,int number);
-char* setreported2(const char *key,const char* number);
-void datafree(void *object);
-data_res* getreported(char *data);
-char *setrequest(const char* id);
+void data_initialize();
+char* data_bdjs_reported(const char *key,int number);
+char* data_bdjs_reported_string(const char *key,const char* number);
+void data_free(void *object);
+data_res* data_decode_bdjs(char *data);
+char *data_bdjs_request(const char* id);
 
 #endif

@@ -6,11 +6,8 @@
 #include "driver/gpio.h"
 #include "time.h"
 
-extern int gpio_bit;
-void ReStart();
-esp_err_t httpcallback(http_event *call);
-int get_isopen(gpio_num_t num);
-void sntp_tick(struct tm* timeinfo);
-void openFromDS(gpio_num_t num,int isopen);
-void sys_light(int is_on);
+esp_err_t system_http_callback(http_event *call);
+int system_get_gpio_state(gpio_num_t num);
+void system_sntp_callback(struct tm* timeinfo);
+void system_ds_callback(gpio_num_t num,int isopen);
 #endif

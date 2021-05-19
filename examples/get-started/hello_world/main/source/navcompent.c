@@ -6,12 +6,13 @@
 #include "esp_log.h"
 #include "navcompent.h"
 
-static const char *NAVTAG = "flash";
+static const char *TAG = "flash";
 
 char *wifissid = {0};
 char *wifipassword = {0};
 char *mqttusername = {0};
 char *mqttpassword = {0};
+
 //定时
 //0 1234567 89 1011 1213 14   16 17-23   2425 2627 2829 30
 //1 0123456 12 30   04   1    0  0123456 0 8  3 0  0 4  1 
@@ -38,7 +39,7 @@ static void read_wifi()
             //wifissid = ssid;
             wifissid = malloc(sizeof(ssid));
             strncpy(wifissid, ssid, sizeof(ssid));
-            ESP_LOGI(NAVTAG, "get str ssid = %s ", wifissid);
+            ESP_LOGI(TAG, "get str ssid = %s ", wifissid);
         }
 
         char pass[64] = {0};
@@ -48,7 +49,7 @@ static void read_wifi()
         {
             wifipassword = malloc(sizeof(pass));
             strncpy(wifipassword, pass, sizeof(pass));
-            ESP_LOGI(NAVTAG, "get str pass = %s", wifipassword);
+            ESP_LOGI(TAG, "get str pass = %s", wifipassword);
         }
     }
     nvs_close(mHandleNvsRead);
@@ -67,7 +68,7 @@ static void read_mqtt_baidu()
         {
             mqttusername = malloc(sizeof(username));
             strncpy(mqttusername, username, sizeof(username));
-            ESP_LOGI(NAVTAG, "get str mqttzz = %s", mqttusername);
+            ESP_LOGI(TAG, "get str mqttzz = %s", mqttusername);
         }
 
         char password[64] = {0};
@@ -77,7 +78,7 @@ static void read_mqtt_baidu()
         {
             mqttpassword = malloc(sizeof(password));
             strncpy(mqttpassword, password, sizeof(password));
-            ESP_LOGI(NAVTAG, "get str mqttmm = %s", mqttpassword);
+            ESP_LOGI(TAG, "get str mqttmm = %s", mqttpassword);
         }
     }
     nvs_close(mHandleNvsRead);
@@ -98,33 +99,33 @@ static void read_ds()
         {
             strncpy(dsdata, open, sizeof(open));
             dsdata[sizeof(open)] = '\0';
-            ESP_LOGI(NAVTAG, "get str dsdata = %s ", dsdata);
+            ESP_LOGI(TAG, "get str dsdata = %s ", dsdata);
         }
         else
         {
-            ESP_LOGE(NAVTAG, "dsdata err %d", err);
+            ESP_LOGE(TAG, "dsdata err %d", err);
         }
         err = nvs_get_str(mHandleNvsRead, "dsdata1", open, &len);
         if (err == ESP_OK)
         {
             strncpy(dsdata1, open, sizeof(open));
             dsdata1[sizeof(open)] = '\0';
-            ESP_LOGI(NAVTAG, "get str dsdata1 = %s ", dsdata1);
+            ESP_LOGI(TAG, "get str dsdata1 = %s ", dsdata1);
         }
         else
         {
-            ESP_LOGE(NAVTAG, "dsdata1 err %d", err);
+            ESP_LOGE(TAG, "dsdata1 err %d", err);
         }
         err = nvs_get_str(mHandleNvsRead, "dsdata2", open, &len);
         if (err == ESP_OK)
         {
             strncpy(dsdata2, open, sizeof(open));
             dsdata2[sizeof(open)] = '\0';
-            ESP_LOGI(NAVTAG, "get str dsdata2 = %s ", dsdata2);
+            ESP_LOGI(TAG, "get str dsdata2 = %s ", dsdata2);
         }
         else
         {
-            ESP_LOGE(NAVTAG, "dsdata2 err %d", err);
+            ESP_LOGE(TAG, "dsdata2 err %d", err);
         }
 
         err = nvs_get_str(mHandleNvsRead, "dsdata3", open, &len);
@@ -132,22 +133,22 @@ static void read_ds()
         {
             strncpy(dsdata3, open, sizeof(open));
             dsdata3[sizeof(open)] = '\0';
-            ESP_LOGI(NAVTAG, "get str dsdata3 = %s ", dsdata3);
+            ESP_LOGI(TAG, "get str dsdata3 = %s ", dsdata3);
         }
         else
         {
-            ESP_LOGE(NAVTAG, "dsdata3 err %d", err);
+            ESP_LOGE(TAG, "dsdata3 err %d", err);
         }
     }
     else
     {
-        ESP_LOGE(NAVTAG, "nvs_open err %d", err);
+        ESP_LOGE(TAG, "nvs_open err %d", err);
     }
 
     nvs_close(mHandleNvsRead);
 }
 
-extern esp_err_t write_wifi(char issid[32], char ipass[64])
+extern esp_err_t nav_write_wifi(char issid[32], char ipass[64])
 {
     nvs_handle mHandleNvsRead;
     //将airkiss获取的wifi写入内存
@@ -166,7 +167,7 @@ extern esp_err_t write_wifi(char issid[32], char ipass[64])
     return err;
 }
 
-extern esp_err_t write_mqtt_baidu(char ssid[32], char pass[64])
+extern esp_err_t nav_write_mqtt_baidu_account(char ssid[32], char pass[64])
 {
     nvs_handle mHandleNvsRead;
 
@@ -185,7 +186,7 @@ extern esp_err_t write_mqtt_baidu(char ssid[32], char pass[64])
     return err;
 }
 
-extern esp_err_t write_ds(char dso[32], int num)
+extern esp_err_t nav_write_ds(char dso[32], int num)
 {
     nvs_handle mHandleNvsRead;
     //将airkiss获取的wifi写入内存
@@ -201,32 +202,32 @@ extern esp_err_t write_ds(char dso[32], int num)
             err = nvs_set_str(mHandleNvsRead, "dsdata", open);
             strncpy(dsdata, open, 32);
             dsdata[32] = '\0';
-            ESP_LOGI(NAVTAG, "write_ds dsdata = %s", open);
+            ESP_LOGI(TAG, "write_ds dsdata = %s", open);
         }
         else if (num == 12)
         {
             err = nvs_set_str(mHandleNvsRead, "dsdata1", open);
             strncpy(dsdata1, open, 32);
             dsdata1[32] = '\0';
-            ESP_LOGI(NAVTAG, "write_ds dsdata1 = %s", open);
+            ESP_LOGI(TAG, "write_ds dsdata1 = %s", open);
         }
         else if (num == 13)
         {
             err = nvs_set_str(mHandleNvsRead, "dsdata2", open);
             strncpy(dsdata2, open, 32);
             dsdata2[32] = '\0';
-            ESP_LOGI(NAVTAG, "write_ds dsdata2 = %s", open);
+            ESP_LOGI(TAG, "write_ds dsdata2 = %s", open);
         }
         else if (num == 15)
         {
             err = nvs_set_str(mHandleNvsRead, "dsdata3", open);
             strncpy(dsdata3, open, 32);
             dsdata3[32] = '\0';
-            ESP_LOGI(NAVTAG, "write_ds dsdata3 = %s", open);
+            ESP_LOGI(TAG, "write_ds dsdata3 = %s", open);
         }
         else
         {
-            ESP_LOGI(NAVTAG, "write_ds dsdata err num = %d", num);
+            ESP_LOGI(TAG, "write_ds dsdata err num = %d", num);
         }
     }
     nvs_commit(mHandleNvsRead);
@@ -234,7 +235,7 @@ extern esp_err_t write_ds(char dso[32], int num)
     return err;
 }
 
-extern void loadconfig()
+extern void nav_load_custom_data()
 {
     esp_err_t err = nvs_flash_init();
     if (err == ESP_ERR_NVS_NO_FREE_PAGES)

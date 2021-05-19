@@ -2,13 +2,19 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "driver/gpio.h"
-#include "start.h"
 
 #include "dscompent.h"
+#include "start.h"
+
+typedef struct
+{
+    int is_on;
+    gpio_num_t gpio;
+}dsres;
 
 dsres back = {0};
 
-dsres *readdata(char *ds_data, struct tm *timeinfo)
+static dsres *readdata(char *ds_data, struct tm *timeinfo)
 {
     int wday = timeinfo->tm_wday;
     back.gpio = 0;
@@ -48,7 +54,7 @@ dsres *readdata(char *ds_data, struct tm *timeinfo)
                         //定时开
                         int gpio = (ds_data[12] - '0') * 10 + (ds_data[13] - '0');
                         ds_data[0] = '0';
-                        write_ds(ds_data, 0);
+                        nav_write_ds(ds_data, 0);
                         back.is_on = 2;
                         back.gpio = gpio;
                         // return back;
@@ -91,7 +97,7 @@ dsres *readdata(char *ds_data, struct tm *timeinfo)
                         //定时关
                         int gpio = (ds_data[28] - '0') * 10 + (ds_data[29] - '0');
                         ds_data[16] = '0';
-                        write_ds(ds_data, 0);
+                        nav_write_ds(ds_data, 0);
                         back.is_on = 1;
                         back.gpio = gpio;
                         // return back;
@@ -104,19 +110,20 @@ dsres *readdata(char *ds_data, struct tm *timeinfo)
     return &back;
 }
 
-void ontick(struct tm *timeinfo)
+//检测定时器 是否到点
+extern void ds_check(struct tm *timeinfo)
 {
-    extern char dsdata[33];
-    extern char dsdata1[33];
-    extern char dsdata2[33];
-    extern char dsdata3[33];
+    // extern char dsdata[33];
+    // extern char dsdata1[33];
+    // extern char dsdata2[33];
+    // extern char dsdata3[33];
     int len = sizeof(dsdata);
     if (len > 30)
     {
         dsres *read = readdata(dsdata, timeinfo);
         if (read->is_on != 0)
         {
-            openFromDS(read->gpio, read->is_on - 1);
+            system_ds_callback(read->gpio, read->is_on - 1);
         }
     }
     len = sizeof(dsdata1);
@@ -125,7 +132,7 @@ void ontick(struct tm *timeinfo)
         dsres *read = readdata(dsdata1, timeinfo);
         if (read->is_on != 0)
         {
-            openFromDS(read->gpio, read->is_on - 1);
+            system_ds_callback(read->gpio, read->is_on - 1);
         }
     }
     len = sizeof(dsdata2);
@@ -134,7 +141,7 @@ void ontick(struct tm *timeinfo)
         dsres *read = readdata(dsdata2, timeinfo);
         if (read->is_on != 0)
         {
-            openFromDS(read->gpio, read->is_on - 1);
+            system_ds_callback(read->gpio, read->is_on - 1);
         }
     }
     len = sizeof(dsdata3);
@@ -143,7 +150,7 @@ void ontick(struct tm *timeinfo)
         dsres *read = readdata(dsdata3, timeinfo);
         if (read->is_on != 0)
         {
-            openFromDS(read->gpio, read->is_on - 1);
+            system_ds_callback(read->gpio, read->is_on - 1);
         }
     }
 }

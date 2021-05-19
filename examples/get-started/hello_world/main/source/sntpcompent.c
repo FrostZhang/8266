@@ -1,18 +1,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-
-#include "lwip/apps/sntp.h"
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-//#include "freertos/queue.h"
-//#include "freertos/event_groups.h"
 #include "esp_log.h"
-
 #include "sntpcompent.h"
-#include "start.h"
 
-static const char *TAG = "sntpcompent";
+static const char *TAG = "sntp";
 static time_t now = 0;
 struct tm timeinfo = {0};
 
@@ -29,9 +23,6 @@ static void initialize_sntp(void)
 static void obtain_time(void)
 {
     initialize_sntp();
-
-    // wait for time to be set
-
     int retry = 0;
     const int retry_count = 10;
 
@@ -82,17 +73,18 @@ static void sntp_task(void *arg)
         strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
         ESP_LOGI(TAG, "The current date/time in Shanghai is: %s", strftime_buf);
         //ESP_LOGI(TAG, "Free heap size: %d\n", esp_get_free_heap_size());
-        event_t.timeinfo = timeinfo;
+        event_t.timeinfo = &timeinfo;
         event_t.mestype = SNTP_EVENT_SUCCESS;
         callback(&event_t);
+        event_t.mestype = SNTP_EVENT_TIMING;
         while (true)
         {
             time(&now);
             localtime_r(&now, &timeinfo);
-            //struct tm* t= &timeinfo;
             // strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
             // ESP_LOGI(TAG, "The current date/time in Shanghai is: %s", strftime_buf);
-            sntp_tick(&timeinfo);
+            //system_sntp_callback(&timeinfo);
+            callback(&event_t);
             vTaskDelay(1000 / portTICK_PERIOD_MS);
         }
     }
@@ -100,7 +92,7 @@ static void sntp_task(void *arg)
 }
 
 //获取时间 也是在检测是否能连接互联网
-extern void sntpstart(sntp_event_callback_t event_handle)
+extern void sntp_start(sntp_event_callback_t event_handle)
 {
     xTaskCreate(sntp_task, "sntptask", 2048, event_handle, 8, NULL);
 }

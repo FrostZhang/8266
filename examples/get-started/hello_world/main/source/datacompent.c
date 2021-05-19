@@ -14,17 +14,18 @@ const char *REQUESTID = "requestId"; //requestId
 
 static const char *TAG = "data";
 
-cJSON *jsonSender;
-data_res callback_data;
+static cJSON *jsonSender;
+static data_res callback_data;
 
 //malloc data_res. creat josn
-void datacompentini()
+extern void data_initialize()
 {
     jsonSender = cJSON_CreateObject();
+    ESP_LOGD(TAG, "data_initialize");
 }
 
 //得到json {"reported":{key:number}} 用完后请调用 datafree
-char *setreported(const char *key, int number)
+extern char *data_bdjs_reported(const char *key, int number)
 {
     cJSON *reporter = cJSON_CreateObject();
     cJSON_AddItemToObject(jsonSender, REPORTED, reporter);
@@ -35,7 +36,7 @@ char *setreported(const char *key, int number)
 }
 
 //得到json {"reported":{key:value}} 用完后请调用 datafree
-char *setreported2(const char *key, const char *value)
+extern char *data_bdjs_reported_string(const char *key, const char *value)
 {
     cJSON *reporter = cJSON_CreateObject();
     cJSON_AddItemToObject(jsonSender, REPORTED, reporter);
@@ -46,7 +47,7 @@ char *setreported2(const char *key, const char *value)
 }
 
 //得到json {"requestId":id} 用完后请调用 datafree
-char *setrequest(const char *id)
+extern char *data_bdjs_request(const char *id)
 {
     cJSON_AddItemToObject(jsonSender, REQUESTID, cJSON_CreateString(id));
     char *res = cJSON_PrintUnformatted(jsonSender);
@@ -55,13 +56,13 @@ char *setrequest(const char *id)
 }
 
 //释放json生成的char*
-void datafree(void *object)
+extern void data_free(void *object)
 {
     cJSON_free(object);
 }
 
 //将类似{"reported":{"key":value,"key2":value}} 解析成 data_res
-data_res *getreported(char *data)
+extern data_res *data_decode_bdjs(char *data)
 {
     cJSON *json = cJSON_Parse(data);
     callback_data.cmd = -1;

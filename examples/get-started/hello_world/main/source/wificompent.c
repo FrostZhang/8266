@@ -11,13 +11,12 @@
 
 #include <stdio.h>
 #include <string.h>
-//#include <stdlib.h> //queue.h 依赖
 
-#include "netcompent.h"
+#include "wificompent.h"
 #include "navcompent.h"
-#include "start.h"
+#include "application.h"
 
-static const char *TAG = "netcompent";
+static const char *TAG = "wifi";
 
 static u8_t wifiretry = 0;
 static char isSCini = 0;
@@ -28,7 +27,7 @@ static const int ESPTOUCH_DONE_BIT = BIT1;
 static const int CONNECTED_FIELD = BIT2;
 static const int Net_SUCCESS = BIT3;
 
-net_event_callback_t callback;
+static net_event_callback_t callback;
 ip4_addr_t *LocalIP;
 
 static void smartconfig_callback(smartconfig_status_t status, void *pdata)
@@ -49,25 +48,11 @@ static void smartconfig_callback(smartconfig_status_t status, void *pdata)
                 wifi_config_t *wifi_config = pdata;
                 ESP_LOGI(TAG, "SSID:%s", wifi_config->sta.ssid);
                 ESP_LOGI(TAG, "PASSWORD:%s", wifi_config->sta.password);
-                //nvs_handle mHandleNvsRead;
-                // //将airkiss获取的wifi写入内存
-                // esp_err_t err = nvs_open("wifi", NVS_READWRITE, &mHandleNvsRead);
-                // if (err == ESP_OK)
-                // {
-                //         char ssid[32] = {0};
-                //         strcpy(ssid, (char *)wifi_config->sta.ssid);
-                //         nvs_set_str(mHandleNvsRead, "ssid", ssid);
-                //         char pass[64] = {0};
-                //         strcpy(pass, (char *)wifi_config->sta.password);
-                //         nvs_set_str(mHandleNvsRead, "pass", pass);
-                // }
-                // nvs_close(mHandleNvsRead);
                 char ssid[32] = {0};
                 strcpy(ssid, (char *)wifi_config->sta.ssid);
                 char pass[64] = {0};
                 strcpy(pass, (char *)wifi_config->sta.password);
-
-                write_wifi(ssid, pass);
+                nav_write_wifi(ssid, pass);
                 ESP_ERROR_CHECK(esp_wifi_disconnect());
                 ESP_ERROR_CHECK(esp_wifi_set_config(ESP_IF_WIFI_STA, wifi_config));
                 ESP_ERROR_CHECK(esp_wifi_connect());
@@ -107,7 +92,7 @@ static void smartconfig_task(void *parm)
         isSCini++;
         while (1)
         {
-                sys_light((cot++) % 2);
+                system_pilot_light((cot++) % 2);
                 uxBits = xEventGroupWaitBits(wifi_event_group, CONNECTED_FIELD | CONNECTED_BIT | ESPTOUCH_DONE_BIT, true, false, 100); //portMAX_DELAY
                 if (uxBits & CONNECTED_BIT)
                 {
@@ -118,7 +103,7 @@ static void smartconfig_task(void *parm)
                         ESP_LOGI(TAG, "smartconfig over");
                         esp_smartconfig_stop();
                         isSCini = 0;
-                        sys_light(1);
+                        system_pilot_light(1);
                         vTaskDelete(NULL);
                 }
                 else if (uxBits & CONNECTED_FIELD)
@@ -129,11 +114,10 @@ static void smartconfig_task(void *parm)
                         ESP_ERROR_CHECK(esp_smartconfig_start(smartconfig_callback));
                 }
                 //长时间匹配不上  重启设备
-                if (cot>100)
+                if (cot > 100)
                 {
-                        ReStart();
+                        system_restart();
                 }
-                
         }
 }
 
@@ -152,13 +136,11 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
                 xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);
                 xEventGroupClearBits(wifi_event_group, CONNECTED_FIELD);
                 wifiretry = 0;
-
                 //callback connect
                 if (callback != NULL)
                 {
-                        callback(NET_CONNNECT);
+                        callback(WIFI_CONNNECT);
                 }
-
                 break;
         case SYSTEM_EVENT_STA_DISCONNECTED:
                 ESP_LOGE(TAG, "Disconnect reason : %d", info->disconnected.reason);
@@ -190,7 +172,7 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
                         }
                         if (callback != NULL)
                         {
-                                callback(NET_Disconnect);
+                                callback(WIFI_Disconnect);
                         }
                 }
                 break;
@@ -204,8 +186,8 @@ static void initialise_wifi(void)
 {
         wifi_config_t wifi_config = {0};
         //navcompent ini wifi custom data
-        extern char *wifissid;
-        extern char *wifipassword;
+        // extern char *wifissid;
+        // extern char *wifipassword;
         if (wifissid != NULL)
         {
                 strncpy((char *)wifi_config.sta.ssid, wifissid, sizeof(wifi_config.sta.ssid));
@@ -241,7 +223,7 @@ static void initialise_wifi(void)
         ESP_ERROR_CHECK(esp_wifi_start());
 }
 
-extern void netstart(net_event_callback_t back)
+extern void wifi_connect_start(net_event_callback_t back)
 {
         callback = back;
         wifi_event_group = xEventGroupCreate();

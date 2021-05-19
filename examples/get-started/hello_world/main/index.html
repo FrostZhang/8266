@@ -57,7 +57,7 @@
             <tr>
                 <td>MQTT ZZ:</td>
                 <td>
-                    <input id="mqttzz" name="mqttzz" type="Text" value="123213" ></input>
+                    <input id="mqttzz" name="mqttzz" type="Text"></input>
                 </td>
             </tr>
             <tr>
@@ -69,7 +69,18 @@
             <tr>
                 <td></td>
                 <td>
-                    <button type="submit">更新MQTT配置</button>
+                    <button type="submit">更新配置</button>
+                </td>
+            </tr>
+        </table>
+    </form>
+    <h3>重启设备</h3>
+    <form id="restart" method="post">
+        <table>
+            <tr>
+                <td></td>
+                <td>
+                    <button id="restart" name="restart" type="submit" value="1">点我重启</button>
                 </td>
             </tr>
         </table>

@@ -8,7 +8,7 @@
 #include "start.h"
 #include <string.h>
 #include "sntpcompent.h"
-#include "help.h"
+#include "application.h"
 
 static const char *MQTTZZ = "mqttzz";
 static const char *MQTTMM = "mqttmm";
@@ -16,16 +16,17 @@ static const char *OPEN4 = "open4";
 static const char *OPEN12 = "open12";
 static const char *OPEN13 = "open13";
 static const char *OPEN15 = "open15";
+static const char *RESTART = "restart";
 static const char *BDJS = "bdjs";
 static const char *DATA = "data";
 static const char *SPACE = " ";
 
 static const char *TAG = "http";
 
-httpd_handle_t server = NULL;
-http_event httpevent;
+static httpd_handle_t server = NULL;
+static http_event httpevent;
 
-void reset_callback_data()
+static void reset_callback_data()
 {
     httpevent.open4 = -1;
     httpevent.open12 = -1;
@@ -35,7 +36,7 @@ void reset_callback_data()
     httpevent.bdjs = NULL;
 }
 
-esp_err_t index_post_handler(httpd_req_t *req)
+static esp_err_t index_post_handler(httpd_req_t *req)
 {
     char buf[100];
     int ret, remaining = req->content_len;
@@ -63,7 +64,7 @@ esp_err_t index_post_handler(httpd_req_t *req)
         ESP_LOGI(TAG, "RECEIVED DATA %.*s", ret, buf);
         // ESP_LOGI(httptag, "====================================");
         buf[ret] = '\0';
-        urldecode(buf);
+        http_url_decode(buf);
 
         char *mqttzz = NULL;
         char *mqttmm = NULL;
@@ -101,7 +102,11 @@ esp_err_t index_post_handler(httpd_req_t *req)
             {
                 httpevent.open15 = atoi(value);
             }
-            //对接百度json
+            if (strcmp(key, RESTART) == 0)
+            {
+                httpevent.restart = 1;
+            }
+            //对接百度json  方法好像没使用
             if (strcmp(key, BDJS) == 0)
             {
                 httpevent.bdjs = value;
@@ -112,13 +117,13 @@ esp_err_t index_post_handler(httpd_req_t *req)
         }
         if (mqttzz != NULL && mqttmm != NULL)
         {
-            write_mqtt_baidu(mqttzz, mqttmm);
+            nav_write_mqtt_baidu_account(mqttzz, mqttmm);
             httpevent.restart = 1;
         }
     }
     //const char *resp_str = (const char *)req->user_ctx;
     // End response
-    httpcallback(&httpevent);
+    system_http_callback(&httpevent);
 
     vTaskDelay(500 / portTICK_PERIOD_MS);
     const char *resp_str = (const char *)req->user_ctx;
@@ -132,26 +137,26 @@ esp_err_t index_post_handler(httpd_req_t *req)
 extern const char index_html_start[] asm("_binary_index_html_start");
 extern const char index_html_end[] asm("_binary_index_html_end");
 
-httpd_uri_t indexpost = {
+static httpd_uri_t indexpost = {
     .uri = "/",
     .method = HTTP_POST,
     .handler = index_post_handler,
     .user_ctx = index_html_start};
 
-esp_err_t indexget_handle(httpd_req_t *req)
+static esp_err_t indexget_handle(httpd_req_t *req)
 {
     const char *resp_str = (const char *)req->user_ctx;
     httpd_resp_send(req, resp_str, strlen(resp_str));
     return ESP_OK;
 }
 
-httpd_uri_t indexget = {
+static httpd_uri_t indexget = {
     .uri = "/",
     .method = HTTP_GET,
     .handler = indexget_handle,
     .user_ctx = index_html_start};
 
-esp_err_t ds_handle(httpd_req_t *req)
+static esp_err_t ds_handle(httpd_req_t *req)
 {
     char *buf;
     size_t buf_len;
@@ -168,7 +173,7 @@ esp_err_t ds_handle(httpd_req_t *req)
             {
                 buf[buf_len] = '\0';
                 int gpio = (buf[12] - '0') * 10 + (buf[13] - '0');
-                write_ds(buf, gpio);
+                nav_write_ds(buf, gpio);
             }
         }
         free(buf);
@@ -194,13 +199,13 @@ esp_err_t ds_handle(httpd_req_t *req)
     return ESP_OK;
 }
 
-httpd_uri_t ds = {
+static httpd_uri_t ds = {
     .uri = "/ds",
     .method = HTTP_GET,
     .handler = ds_handle,
     .user_ctx = NULL};
 
-esp_err_t heartbeat_handle(httpd_req_t *req)
+static esp_err_t heartbeat_handle(httpd_req_t *req)
 {
     //struct tm timeinfo;
     char strftime_buf[64];
@@ -208,35 +213,33 @@ esp_err_t heartbeat_handle(httpd_req_t *req)
     return httpd_resp_send(req, strftime_buf, strlen(strftime_buf));
 }
 
-httpd_uri_t heartbeat = {
+static httpd_uri_t heartbeat = {
     .uri = "/heartbeat",
     .method = HTTP_GET,
     .handler = heartbeat_handle,
     .user_ctx = NULL};
 
-esp_err_t htmlData_handle(httpd_req_t *req)
+static esp_err_t htmlData_handle(httpd_req_t *req)
 {
     char str[128];
     memset(str, '\0', 128);
 
-    if (gpio_bit & BIT4)
+    if (system_get_gpio_state(GPIO_NUM_4))
     {
         strcat(str, "open4=1,");
     }
-    if (gpio_bit & BIT12)
+    if (system_get_gpio_state(GPIO_NUM_12))
     {
         strcat(str, "open12=1,");
     }
-    if (gpio_bit & BIT13)
+    if (system_get_gpio_state(GPIO_NUM_13))
     {
         strcat(str, "open13=1,");
     }
-    if (gpio_bit & BIT15)
+    if (system_get_gpio_state(GPIO_NUM_15))
     {
         strcat(str, "open15=1,");
     }
-    // extern char *mqttusername;
-    // extern char *mqttpassword;
     strcat(str, "mqttzz=");
     strcat(str, mqttusername);
     strcat(str, ",mqttmm=");
@@ -245,13 +248,13 @@ esp_err_t htmlData_handle(httpd_req_t *req)
     return httpd_resp_send(req, str, strlen(str));
 }
 
-httpd_uri_t htmlData = {
+static httpd_uri_t htmlData = {
     .uri = "/htmlData",
     .method = HTTP_GET,
     .handler = htmlData_handle,
     .user_ctx = NULL};
 
-httpd_handle_t start_webserver(void)
+static httpd_handle_t start_webserver(void)
 {
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
 
@@ -273,14 +276,14 @@ httpd_handle_t start_webserver(void)
     return NULL;
 }
 
-esp_err_t stop_webserver(httpd_handle_t server)
+static esp_err_t stop_webserver(httpd_handle_t server)
 {
     // Stop the httpd server
     return httpd_stop(server);
 }
 
 //开启 http server
-esp_err_t http_start()
+extern esp_err_t http_server_start()
 {
     httpd_handle_t handle = start_webserver();
     if (handle != NULL)
@@ -291,7 +294,7 @@ esp_err_t http_start()
 }
 
 //关闭 http server
-esp_err_t http_end()
+extern esp_err_t http_server_end()
 {
     if (server != NULL)
     {

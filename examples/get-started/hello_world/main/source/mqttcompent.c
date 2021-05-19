@@ -7,7 +7,7 @@
 #include "freertos/event_groups.h"
 #include "mqttcompent.h"
 #include "datacompent.h"
-#include "netcompent.h"
+#include "wificompent.h"
 #include "lwip/ip4_addr.h"
 
 #include "nvs_flash.h" //载入资料
@@ -32,7 +32,7 @@ static mqtt_callback_t callback;
 static int isConnect;
 
 //连接成功后 注册百度相关的topic
-void regist()
+static void regist()
 {
         char sub[56] = {0};
         memset(sub, '\0', 56);
@@ -42,20 +42,20 @@ void regist()
         sprintf(sub, getAcc, userid);
         esp_mqtt_client_subscribe(client, sub, 0);
         vTaskDelay(50 / portTICK_RATE_MS);
-        char *send = setrequest(userid);
+        char *send = data_bdjs_request(userid);
         memset(sub, '\0', 56);
         sprintf(sub, get, userid);
         //esp_mqtt_client_subscribe(client, sub, 0);
         esp_mqtt_client_publish(client, sub, send, 0, 0, 0);
-        datafree(send);
+        data_free(send);
 
         vTaskDelay(50 / portTICK_RATE_MS);
         //extern ip4_addr_t *localIP;
-        send = setreported2(LOCAL_IP, ip4addr_ntoa(LocalIP));
+        send = data_bdjs_reported_string(LOCAL_IP, ip4addr_ntoa(LocalIP));
         ESP_LOGI(TAG, "send ip %s", send);
         esp_mqtt_client_publish(client, uptopic, send, 0, 0, 0);
-        datafree(send);
-        datafree(userid);
+        data_free(send);
+        data_free(userid);
 }
 
 static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
@@ -95,7 +95,7 @@ static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
         return ESP_OK;
 }
 
-int mqtt_publish(const char *send)
+extern int mqtt_publish(const char *send)
 {
         if (isConnect == 0 || uptopic == NULL)
         {
@@ -104,7 +104,7 @@ int mqtt_publish(const char *send)
         return esp_mqtt_client_publish(client, uptopic, send, 0, 0, 0);
 }
 
-void mqtt_stop()
+extern void mqtt_stop()
 {
         if (client != NULL)
         {
@@ -115,7 +115,7 @@ void mqtt_stop()
 }
 
 //初始化userid 和 uptopic 作为遗嘱 userid需要释放
-void ini_mqtt_baidu(const char *mqttusername)
+static void ini_mqtt_baidu(const char *mqttusername)
 {
         userid = os_malloc(32);
         if (strncmp(mqttusername, mainid, strlen(mainid)) == 0)
@@ -142,7 +142,7 @@ void ini_mqtt_baidu(const char *mqttusername)
         uptopic[strlen(sub)] = '\0';
 }
 
-esp_err_t mqtt_app_start(mqtt_callback_t call)
+extern esp_err_t mqtt_app_start(mqtt_callback_t call)
 {
         mqtt_stop();
 
@@ -160,7 +160,7 @@ esp_err_t mqtt_app_start(mqtt_callback_t call)
         ini_mqtt_baidu(mqttusername);
 
         //xEventGroupWaitBits(wifi_event_group, Net_SUCCESS,true, true, portMAX_DELAY);
-        char *lwt_ms = setreported2(LOCAL_IP, "0.0.0.0");
+        char *lwt_ms = data_bdjs_reported_string(LOCAL_IP, "0.0.0.0");
 
         esp_mqtt_client_config_t mqtt_cfg = {
             .event_handle = mqtt_event_handler,
@@ -181,6 +181,6 @@ esp_err_t mqtt_app_start(mqtt_callback_t call)
                 esp_mqtt_client_destroy(client);
                 client = NULL;
         }
-        datafree(lwt_ms);
+        data_free(lwt_ms);
         return err;
 }
