@@ -15,12 +15,15 @@ char *mqttpassword = {0};
 
 //定时
 //0 1234567 89 1011 1213 14   16 17-23   2425 2627 2829 30
-//1 0123456 12 30   04   1    0  0123456 0 8  3 0  0 4  1 
+//1 0123456 12 30   04   1    0  0123456 0 8  3 0  0 4  1
 //启用 周 时 分 gpio 循        关 周       时   分   gpio 循
 char dsdata[33];
 char dsdata1[33];
 char dsdata2[33];
 char dsdata3[33];
+
+//ota 升级地址 通常是 http://xxx.xxx/xxx
+char *ota_url = {0};
 
 static void read_wifi()
 {
@@ -148,6 +151,26 @@ static void read_ds()
     nvs_close(mHandleNvsRead);
 }
 
+static void read_ota_config()
+{
+    nvs_handle mHandleNvsRead;
+    esp_err_t err = nvs_open("ota", NVS_READWRITE, &mHandleNvsRead);
+    if (err == ESP_OK)
+    {
+        char ota_url_temp[128] = {0};
+        uint32_t len = sizeof(ota_url_temp);
+        err = nvs_get_str(mHandleNvsRead, "ota_url", ota_url_temp, &len);
+        if (err == ESP_OK)
+        {
+            ota_url = malloc(sizeof(ota_url_temp));
+            strncpy(ota_url, ota_url_temp, sizeof(ota_url_temp));
+            ESP_LOGI(TAG, "get str ota_url = %s", ota_url);
+        }
+    }
+    nvs_close(mHandleNvsRead);
+}
+
+//写入 WiFi 账号 密码
 extern esp_err_t nav_write_wifi(char issid[32], char ipass[64])
 {
     nvs_handle mHandleNvsRead;
@@ -167,6 +190,7 @@ extern esp_err_t nav_write_wifi(char issid[32], char ipass[64])
     return err;
 }
 
+//写入 对接 百度mqtt 的账号 密码
 extern esp_err_t nav_write_mqtt_baidu_account(char ssid[32], char pass[64])
 {
     nvs_handle mHandleNvsRead;
@@ -186,16 +210,16 @@ extern esp_err_t nav_write_mqtt_baidu_account(char ssid[32], char pass[64])
     return err;
 }
 
+//写入gpio定时
 extern esp_err_t nav_write_ds(char dso[32], int num)
 {
     nvs_handle mHandleNvsRead;
-    //将airkiss获取的wifi写入内存
     esp_err_t err = nvs_open("dstime", NVS_READWRITE, &mHandleNvsRead);
     if (err == ESP_OK)
     {
         char open[33] = {0};
         strncpy(open, dso, 32);
-        //恰好32位数字  所以最后补个0
+        //补个0
         open[32] = '\0';
         if (num == 4)
         {
@@ -231,6 +255,28 @@ extern esp_err_t nav_write_ds(char dso[32], int num)
         }
     }
     nvs_commit(mHandleNvsRead);
+    nvs_close(mHandleNvsRead);
+    return err;
+}
+
+//写入 ota 升级地址 不要超过 127个字
+extern esp_err_t nav_write_ota(char otapath[128])
+{
+    nvs_handle mHandleNvsRead;
+    //将airkiss获取的wifi写入内存
+    esp_err_t err = nvs_open("ota", NVS_READWRITE, &mHandleNvsRead);
+    if (err == ESP_OK)
+    {
+        char ota_url_temp[128] = {0};
+        strcpy(ota_url_temp, otapath);
+        ota_url_temp[strnlen(otapath, sizeof(otapath)-1)] = '\0';
+        err = nvs_set_str(mHandleNvsRead, "ota_url", ota_url_temp);
+
+        if (ota_url != NULL)
+            free(ota_url);
+        ota_url = malloc(128);
+        strcpy(ota_url, ota_url_temp);
+    }
     nvs_close(mHandleNvsRead);
     return err;
 }

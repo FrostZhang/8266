@@ -33,6 +33,7 @@
 #include "dscompent.h"
 #include "iot_button.h"
 #include "application.h"
+#include "otacompent.h"
 
 static const char *TAG = "Main";
 
@@ -443,26 +444,25 @@ static esp_err_t sntp_connect_callback(sntp_event *call)
         else if (call->mestype == SNTP_EVENT_TIMING)
         {
                 ds_check(call->timeinfo);
-                printf("sntp_tick %d (if normal can delete debug)",call->timeinfo->tm_sec);
+                printf("sntp_tick %d (if normal can delete debug)", call->timeinfo->tm_sec);
                 if (call->timeinfo->tm_sec == 0)
                 {
                         print_free_heap_size();
                 }
         }
-        else if(call->mestype == SNTP_EVENT_CONNNECTFAILED)
+        else if (call->mestype == SNTP_EVENT_CONNNECTFAILED)
         {
                 printf("sntp_connect_failed after 5mis restart");
                 vTaskDelay(5000 / portTICK_RATE_MS);
                 system_restart();
         }
-        
         return ESP_OK;
 }
 
 //udp收到信息 回调
 extern esp_err_t udpcallback(char *rec, uint len)
 {
-        char *data = os_malloc(len);
+        char *data = malloc(len);
         strncpy(data, rec, len);
         ESP_LOGI(TAG, "UDP REC %s", data);
         data_res *ans = data_decode_bdjs(data);
@@ -471,7 +471,16 @@ extern esp_err_t udpcallback(char *rec, uint len)
                 printf("udp get switchdata %d \n", ans->cmd);
                 gpio_input(ans->cmd);
         }
-        os_free(data);
+        data_free(data);
+        return ESP_OK;
+}
+
+static esp_err_t ota_callback_handel()
+{
+        ESP_LOGI(TAG, "ota end");
+        http_server_start();
+        sntp_start(sntp_connect_callback);
+        //udpclientstart(udpcallback);
         return ESP_OK;
 }
 
@@ -481,9 +490,7 @@ static esp_err_t wifi_callback(net_callback call)
         if (call == WIFI_CONNNECT)
         {
                 data_initialize();
-                http_server_start();
-                sntp_start(sntp_connect_callback);
-                //udpclientstart(udpcallback);
+                ota_check(ota_callback_handel);
         }
         return ESP_OK;
 }
