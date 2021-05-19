@@ -2,15 +2,9 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/event_groups.h"
 
-#include "nvs_flash.h" //载入资料
-#include "esp_wifi.h"
 #include "esp_smartconfig.h"
 #include "smartconfig_ack.h" //回调
-#include "esp_log.h"
 #include "esp_event_loop.h" //esp_event_loop_init
-
-#include <stdio.h>
-#include <string.h>
 
 #include "wificompent.h"
 #include "navcompent.h"

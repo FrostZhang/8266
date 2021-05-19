@@ -1,9 +1,8 @@
 #ifndef SNTPCOMPENT_H
 #define SNTPCOMPENT_H
 #include "lwip/apps/sntp.h"
-#include "esp_err.h"
+#include "application.h"
 
-#include "time.h"
 extern struct tm timeinfo;
 
 typedef enum

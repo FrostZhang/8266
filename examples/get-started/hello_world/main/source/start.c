@@ -1,20 +1,15 @@
 
-#include <stdio.h>
-#include <stdlib.h> //queue.h 依赖
-
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 //#include "freertos/queue.h"
 #include "esp_spi_flash.h"
-#include "cJSON.h"
-#include "esp_log.h"
 #include "driver/gpio.h"
 
 #include "driver/i2c.h"
 #include "driver/spi.h"
 
 #include "mqtt_client.h"
-#include "os.h"
+//#include "os.h"
 #include "dht.h"
 #include "ds18b20.h"
 #include "driver/adc.h"
@@ -127,18 +122,18 @@ static void Taskds18b20(void *p)
                 vTaskDelay(3000 / portTICK_PERIOD_MS);
                 temp = (int)(Ds18b20ReadTemp() * 0.0625 + 0.005);
                 printf("ds18b20采集的温度: %d \n\n", temp);
-                cJSON *jsonSend = cJSON_CreateObject();
-                //cJSON_AddItemToObject(jsonSend, "reported", cJSON_CreateNumber(localIP->addr));
-                cJSON *rep = cJSON_CreateObject();
-                cJSON_AddItemToObject(jsonSend, REPORTED, rep);
-                cJSON_AddItemToObject(rep, "temp", cJSON_CreateNumber(temp));
-                char *sendstr = cJSON_PrintUnformatted(jsonSend);
-                udp_client_send(sendstr);
-                if (NULL != sendstr)
-                {
-                        cJSON_free(sendstr);
-                }
-                cJSON_Delete(jsonSend);
+                // cJSON *jsonSend = cJSON_CreateObject();
+                // //cJSON_AddItemToObject(jsonSend, "reported", cJSON_CreateNumber(localIP->addr));
+                // cJSON *rep = cJSON_CreateObject();
+                // cJSON_AddItemToObject(jsonSend, REPORTED, rep);
+                // cJSON_AddItemToObject(rep, "temp", cJSON_CreateNumber(temp));
+                // char *sendstr = cJSON_PrintUnformatted(jsonSend);
+                // udp_client_send(sendstr);
+                // if (NULL != sendstr)
+                // {
+                //         cJSON_free(sendstr);
+                // }
+                // cJSON_Delete(jsonSend);
         }
 }
 
@@ -158,19 +153,19 @@ static void TaskCreatDht11(void *p)
                 vTaskDelay(5000 / portTICK_RATE_MS);
                 dh11Read(&curTem, &curHum);
                 ESP_LOGI(TAG, "Temperature : %d , Humidity : %d", curTem, curHum);
-                cJSON *jsonSend = cJSON_CreateObject();
-                //cJSON_AddItemToObject(jsonSend, "reported", cJSON_CreateNumber(localIP->addr));
-                cJSON *rep = cJSON_CreateObject();
-                cJSON_AddItemToObject(jsonSend, REPORTED, rep);
-                cJSON_AddItemToObject(rep, "temp", cJSON_CreateNumber(curTem));
-                cJSON_AddItemToObject(rep, "hum", cJSON_CreateNumber(curHum));
-                char *sendstr = cJSON_PrintUnformatted(jsonSend);
-                udp_client_send(sendstr);
-                if (NULL != sendstr)
-                {
-                        cJSON_free(sendstr);
-                }
-                cJSON_Delete(jsonSend);
+                // cJSON *jsonSend = cJSON_CreateObject();
+                // //cJSON_AddItemToObject(jsonSend, "reported", cJSON_CreateNumber(localIP->addr));
+                // cJSON *rep = cJSON_CreateObject();
+                // cJSON_AddItemToObject(jsonSend, REPORTED, rep);
+                // cJSON_AddItemToObject(rep, "temp", cJSON_CreateNumber(curTem));
+                // cJSON_AddItemToObject(rep, "hum", cJSON_CreateNumber(curHum));
+                // char *sendstr = cJSON_PrintUnformatted(jsonSend);
+                // udp_client_send(sendstr);
+                // if (NULL != sendstr)
+                // {
+                //         cJSON_free(sendstr);
+                // }
+                // cJSON_Delete(jsonSend);
         }
         vTaskDelete(NULL);
 }

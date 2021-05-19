@@ -1,10 +1,8 @@
-#include "nvs_flash.h" //载入资料
-#include "start.h"
-#include <string.h>
-#include <stdlib.h>
 
-#include "esp_log.h"
+#include "nvs_flash.h" //载入资料
+#include "application.h"
 #include "navcompent.h"
+#include "start.h"
 
 static const char *TAG = "flash";
 

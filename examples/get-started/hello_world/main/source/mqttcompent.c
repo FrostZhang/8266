@@ -1,21 +1,19 @@
-#include "esp_log.h"
-#include "mqtt_client.h"
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "freertos/queue.h"
-#include "freertos/event_groups.h"
+
+#include "mqtt_client.h"
+#include "application.h"
 #include "mqttcompent.h"
 #include "datacompent.h"
 #include "wificompent.h"
 #include "lwip/ip4_addr.h"
 
-#include "nvs_flash.h" //载入资料
-#include <string.h>
+//#include "nvs_flash.h" //载入资料
 
 #define mqttport 1883
 static const char *TAG = "mqttcompent";
-esp_mqtt_client_handle_t client = {0};
+static esp_mqtt_client_handle_t client = {0};
 
 static const char *host = "t0eff28.mqtt.iot.gz.baidubce.com";
 static const char *mainid = "t0eff28/";

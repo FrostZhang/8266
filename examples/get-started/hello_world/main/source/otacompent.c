@@ -1,14 +1,13 @@
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
-#include "otacompent.h"
-#include "application.h"
-#include "esp_log.h"
-#include "esp_err.h"
+
 #include "esp_ota_ops.h"
 #include "esp_http_client.h"
 #include "esp_https_ota.h"
 #include "navcompent.h"
+#include "application.h"
+#include "otacompent.h"
 
 static const char *TAG = "ota";
 static ota_callback callback;

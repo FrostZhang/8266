@@ -1,5 +1,6 @@
 #ifndef UDPCOMPENT
 #define UDPCOMPENT
+#include "application.h"
 
 typedef esp_err_t (*udp_callback_t)(char* callback,uint len);
 

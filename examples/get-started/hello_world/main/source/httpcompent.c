@@ -1,4 +1,4 @@
-#include <esp_log.h>
+
 #include <esp_http_server.h>
 #include "stdlib.h"
 #include "httpcompent.h"

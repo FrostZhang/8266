@@ -1,18 +1,15 @@
-#include <stdio.h>
+
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "lwip/sockets.h"
 #include "lwip/err.h"
-#include "esp_log.h"
-#include <string.h> //queue.h 依赖
 
 #include "udpcompent.h"
 #include "datacompent.h"
 
 static const char *TAG = "udp";
 
-#define CONFIG_EXAMPLE_IPV4 1
-#define UDP_HELLO "{\"esp8266\":\"hello\"}"
+// #define CONFIG_EXAMPLE_IPV4 1
 static const char *HOST_IP_ADDR = "255.255.255.255";
 u16_t PORT = 8266;
 int sock = -1;
