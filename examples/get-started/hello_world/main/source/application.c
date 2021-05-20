@@ -2,8 +2,11 @@
 #include "application.h"
 #include "driver/gpio.h"
 #include "esp_system.h"
+#include "esp_ota_ops.h"
 
 #define BURSIZE 2048
+char *XINHAO = "strip_4";
+char *OTA_LABLE;
 
 static int hex2dec(char c)
 {

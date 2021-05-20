@@ -231,6 +231,10 @@ static esp_err_t htmlData_handle(httpd_req_t *req)
     strcat(str, mqttusername);
     strcat(str, ",mqttmm=");
     strcat(str, mqttpassword);
+    strcat(str, ",xinghao=");
+    strcat(str, XINHAO);
+    strcat(str, ",otachoose=");
+    strcat(str, OTA_LABLE);
 
     return httpd_resp_send(req, str, strlen(str));
 }

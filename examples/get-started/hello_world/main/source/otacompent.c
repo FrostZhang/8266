@@ -64,6 +64,7 @@ static void ota_task(void *pvParameter)
 
     const esp_partition_t *notruning = esp_ota_get_next_update_partition(running);
     strcat(url,notruning->label);
+    OTA_LABLE= strdup(notruning->label);
     ESP_LOGI(TAG, "begin download: %s", url);
 
     esp_http_client_config_t config = {

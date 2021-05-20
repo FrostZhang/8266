@@ -14,4 +14,7 @@ void system_restart();
 void system_pilot_light(int is_on);
 void print_free_heap_size();
 int strSearch(char *str1, char *str2);
+
+extern char* XINHAO;
+extern char* OTA_LABLE;
 #endif

@@ -74,6 +74,23 @@
             </tr>
         </table>
     </form>
+    <h3>产品信息</h3>
+    <form id="restart" method="post">
+        <table>
+            <tr>
+                <td>型号:</td>
+                <td>
+                    <input id="xinghao" name="xinghao" disabled="true"></input>
+                </td>
+            </tr>
+            <tr>
+                <td>OTA片区:</td>
+                <td>
+                    <input id="otachoose" name="otachoose" disabled="true"></input>
+                </td>
+            </tr>
+        </table>
+    </form>
     <h3>重启设备</h3>
     <form id="restart" method="post">
         <table>
@@ -135,15 +152,21 @@
                             var o = document.getElementById("open13");
                             o.value = "0";
                             o.textContent = "关";
-                        }if (kv[0] == "open15") {
+                        } if (kv[0] == "open15") {
                             var o = document.getElementById("open15");
                             o.value = "0";
                             o.textContent = "关";
-                        }if (kv[0] == "mqttzz") {
+                        } if (kv[0] == "mqttzz") {
                             var o = document.getElementById("mqttzz");
                             o.value = kv[1];
-                        }if (kv[0] == "mqttmm") {
+                        } if (kv[0] == "mqttmm") {
                             var o = document.getElementById("mqttmm");
+                            o.value = kv[1];
+                        } if (kv[0] == "xinghao") {
+                            var o = document.getElementById("xinghao");
+                            o.value = kv[1];
+                        } if (kv[0] == "otachoose") {
+                            var o = document.getElementById("otachoose");
                             o.value = kv[1];
                         }
                     });
