@@ -438,9 +438,9 @@ static esp_err_t sntp_connect_callback(sntp_event *call)
         }
         else if (call->mestype == SNTP_EVENT_TIMING)
         {
-                ds_check(call->timeinfo);
                 if (call->timeinfo->tm_sec == 0)
                 {
+                        ds_check(call->timeinfo);
                         print_free_heap_size();
                 }
         }
@@ -471,7 +471,6 @@ extern esp_err_t udpcallback(char *rec, uint len)
 
 static esp_err_t ota_callback_handel()
 {
-        ESP_LOGI(TAG, "ota end");
         http_server_start();
         sntp_start(sntp_connect_callback);
         //udpclientstart(udpcallback);

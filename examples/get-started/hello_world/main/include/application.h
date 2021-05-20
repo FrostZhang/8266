@@ -13,4 +13,5 @@ void http_url_decode(char url[]);
 void system_restart();
 void system_pilot_light(int is_on);
 void print_free_heap_size();
+int strSearch(char *str1, char *str2);
 #endif

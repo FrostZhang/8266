@@ -120,3 +120,42 @@ extern void print_free_heap_size()
 {
     printf("esp_system free heap size: %d\n", esp_get_free_heap_size());
 }
+
+int strSearch(char *str1, char *str2)
+{
+    int at, flag = 1;
+    if (strlen(str2) > strlen(str1))
+    {
+        at = -1;
+    }
+    else if (!strcmp(str1, str2))
+    {
+        at = 0;
+    }
+    else
+    {
+        int i = 0, j = 0;
+        for (i = 0; i < strlen(str1) && flag;)
+        {
+            for (j = 0; j < strlen(str2) && flag;)
+            {
+                if (str1[i] != str2[j])
+                {
+                    i++;
+                    j = 0;
+                }
+                else if (str1[i] == str2[j])
+                {
+                    i++;
+                    j++;
+                }
+                if (j == strlen(str2))
+                {
+                    flag = 0;
+                }
+            }
+        }
+        at = i - j;
+    }
+    return at;
+}

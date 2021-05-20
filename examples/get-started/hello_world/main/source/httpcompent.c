@@ -43,7 +43,6 @@ static esp_err_t index_post_handler(httpd_req_t *req)
     reset_callback_data();
     while (remaining > 0)
     {
-        /* Read the data for the request */
         if ((ret = httpd_req_recv(req, buf,
                                   MIN(remaining, sizeof(buf)))) <= 0)
         {
@@ -54,15 +53,8 @@ static esp_err_t index_post_handler(httpd_req_t *req)
             }
             return ESP_FAIL;
         }
-        /* Send back the same data */
-        //httpd_resp_send_chunk(req, buf, ret);
-
         remaining -= ret;
-
-        /* Log data received */
-        // ESP_LOGI(httptag, "=========== RECEIVED DATA ==========");
         ESP_LOGI(TAG, "RECEIVED DATA %.*s", ret, buf);
-        // ESP_LOGI(httptag, "====================================");
         buf[ret] = '\0';
         http_url_decode(buf);
 
@@ -177,10 +169,6 @@ static esp_err_t ds_handle(httpd_req_t *req)
         }
         free(buf);
     }
-    // extern char dsdata[33];
-    // extern char dsdata1[33];
-    // extern char dsdata2[33];
-    // extern char dsdata3[33];
 
     StringBuilder *sb = sb_create();
     sb_append(sb, dsdata);

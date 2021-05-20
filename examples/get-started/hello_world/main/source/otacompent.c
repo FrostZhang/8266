@@ -45,11 +45,6 @@ static void ota_task(void *pvParameter)
 {
     const esp_partition_t *running = esp_ota_get_running_partition();
     ESP_LOGI(TAG, "running partition: %s\n", running->label);
-    const esp_partition_t *notruning = esp_ota_get_next_update_partition(running);
-    if (notruning != NULL)
-    {
-        ESP_LOGI(TAG, "not running partition: %s\n", notruning->label);
-    }
 
     ESP_LOGI(TAG, "Start to Connect to Server....");
     char *path = ota_url;
@@ -63,9 +58,16 @@ static void ota_task(void *pvParameter)
         vTaskDelete(NULL);
         return;
     }
+    char *url = malloc(strlen(path) + 18);
+    memset(url, '\0',strlen(path) + 18);
+    strncpy(url, path, strlen(path));
+
+    const esp_partition_t *notruning = esp_ota_get_next_update_partition(running);
+    strcat(url,notruning->label);
+    ESP_LOGI(TAG, "begin download: %s", url);
 
     esp_http_client_config_t config = {
-        .url = CONFIG_FIRMWARE_UPGRADE_URL,
+        .url = url,
         //.cert_pem = (char *)server_cert_pem_start,
         .cert_pem = NULL,
         .event_handler = _http_event_handler,
@@ -78,6 +80,8 @@ static void ota_task(void *pvParameter)
     else
     {
         ESP_LOGE(TAG, "Firmware Upgrades Failed");
+        free(url);
+        free(path);
         callback();
         vTaskDelete(NULL);
     }

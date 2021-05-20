@@ -93,6 +93,7 @@ static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
         return ESP_OK;
 }
 
+//mqtt发送
 extern int mqtt_publish(const char *send)
 {
         if (isConnect == 0 || uptopic == NULL)
@@ -102,6 +103,7 @@ extern int mqtt_publish(const char *send)
         return esp_mqtt_client_publish(client, uptopic, send, 0, 0, 0);
 }
 
+//停止mqtt
 extern void mqtt_stop()
 {
         if (client != NULL)
@@ -140,6 +142,7 @@ static void ini_mqtt_baidu(const char *mqttusername)
         uptopic[strlen(sub)] = '\0';
 }
 
+//开始mqtt
 extern esp_err_t mqtt_app_start(mqtt_callback_t call)
 {
         mqtt_stop();
