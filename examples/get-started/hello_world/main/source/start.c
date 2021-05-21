@@ -13,7 +13,7 @@
 #include "dht.h"
 #include "ds18b20.h"
 #include "driver/adc.h"
-
+#include "driver/hw_timer.h"
 #include "driver/ledc.h"
 #include "driver/ir_rx.h"
 #include "driver/ir_tx.h"
@@ -35,22 +35,27 @@ static const char *TAG = "Main";
 #define LEDC_TEST_DUTY (4096)
 #define LEDC_TEST_FADE_TIME (1500)
 
-//灯 2 开关 4 12 13 15 红外收 5 红外发 14
-#define IR_RX_IO_NUM 5
+//常规：指示灯2(在芯片附近 烧录时会闪烁) 开关4/12/13/15 红外收5发14 中断0/3 TX1(不用) goio16(不用)
+#define IR_RX_IO_NUM GPIO_NUM_5
 #define IR_RX_BUF_LEN 128
-#define IR_TX_IO_NUM 14
+#define IR_TX_IO_NUM GPIO_NUM_14
 
 static int gpio_bit;
 
+static void gpio_isr_handler(void *arg)
+{
+        uint32_t gpio_num = (uint32_t)arg;
+        //xQueueSendFromISR(gpio_evt_queue, &gpio_num, NULL);
+        gpio_isr_handler_remove(gpio_num); //防止接触不良多次触发
+
+        vTaskDelay(700 / portTICK_RATE_MS);
+        gpio_isr_handler_add(gpio_num, gpio_isr_handler, gpio_num);
+}
+
 //static xQueueHandle gpio_evt_queue = NULL;
-// static void gpio_isr_handler(void *arg)
+//static void gpio_0_(void *arg)
 // {
-//         uint32_t gpio_num = (uint32_t)arg;
-//         xQueueSendFromISR(gpio_evt_queue, &gpio_num, NULL);
-// }
-// static void gpio_task_example(void *arg)
-// {
-//         uint32_t io_num;
+//         uint32_t io_num = (uint32_t)arg;
 //         for (;;)
 //         {
 //                 if (xQueueReceive(gpio_evt_queue, &io_num, portMAX_DELAY))
@@ -59,52 +64,44 @@ static int gpio_bit;
 //                 }
 //         }
 // }
-
-static void button_press_5s_cb(void *arg)
-{
-        print_free_heap_size();
-}
+// static void button_press_5s_cb(void *arg)
+// {
+//         print_free_heap_size();
+// }
 
 //初始化gpio
 static void GpioIni(void)
 {
-        //灯显
         gpio_config_t io_conf;
-        io_conf.intr_type = GPIO_INTR_DISABLE;
-        io_conf.mode = GPIO_MODE_OUTPUT;
-        io_conf.pin_bit_mask = GPIO_Pin_4;
+        io_conf.intr_type = GPIO_INTR_DISABLE; //取消中断
+        io_conf.mode = GPIO_MODE_OUTPUT;       //对外输出 控制设备
         io_conf.pull_down_en = 0;
         io_conf.pull_up_en = 0;
+        io_conf.pin_bit_mask = GPIO_Pin_4 | GPIO_Pin_12 | GPIO_Pin_13 | GPIO_Pin_15;
         gpio_config(&io_conf);
-        io_conf.pin_bit_mask = GPIO_Pin_12;
-        gpio_config(&io_conf);
-        io_conf.pin_bit_mask = GPIO_Pin_13;
-        gpio_config(&io_conf);
-        io_conf.pin_bit_mask = GPIO_Pin_15;
-        gpio_config(&io_conf);
-
-        vTaskDelay(1000 / portTICK_RATE_MS);
+        vTaskDelay(100 / portTICK_RATE_MS);
         gpio_set_level(GPIO_NUM_4, 1);
         gpio_set_level(GPIO_NUM_12, 1);
         gpio_set_level(GPIO_NUM_13, 1);
         gpio_set_level(GPIO_NUM_15, 1);
 
-        //gpio_install_isr_service(0); //中断都要初始化  //BUTTON_ACTIVE_LOW
-        button_handle_t btn_handle = iot_button_create(GPIO_NUM_0, BUTTON_ACTIVE_LOW);
-        iot_button_add_custom_cb(btn_handle, 5, button_press_5s_cb, NULL);
-        // //boot press
-        // io_conf.intr_type = GPIO_INTR_DISABLE;
-        // io_conf.mode = GPIO_MODE_INPUT;
-        // io_conf.pin_bit_mask = GPIO_Pin_0;
-        // io_conf.pull_down_en = 0;
-        // io_conf.pull_up_en = 0;
-        // gpio_config(&io_conf);
+        // button_handle_t btn_handle = iot_button_create(GPIO_NUM_0, BUTTON_ACTIVE_LOW);
+        // iot_button_add_custom_cb(btn_handle, 5, button_press_5s_cb, NULL);
+        //boot press
+        //gpio_evt_queue = xQueueCreate(10, sizeof(uint32_t));
+        //xTaskCreate(gpio_task_example, "gpio_task_example", 1024, NULL, 10, NULL);
+#if defined(APP_STRIP_4) || defined(APP_STRIP_3)
+        gpio_install_isr_service(0);
+        io_conf.intr_type = GPIO_INTR_DISABLE;
+        io_conf.mode = GPIO_MODE_INPUT; //接收3.3v 输入
+        io_conf.pull_down_en = 0;
+        io_conf.pull_up_en = 0;
+        io_conf.pin_bit_mask = GPIO_Pin_0;
+        gpio_config(&io_conf);
+        gpio_set_intr_type(GPIO_NUM_0, GPIO_INTR_POSEDGE);
+        gpio_isr_handler_add(GPIO_NUM_0, gpio_isr_handler, (void *)GPIO_NUM_0);
 
-        // gpio_set_intr_type(GPIO_NUM_0, GPIO_INTR_POSEDGE);
-        // gpio_evt_queue = xQueueCreate(10, sizeof(uint32_t));
-        // xTaskCreate(gpio_task_example, "gpio_task_example", 1024, NULL, 10, NULL);
-
-        // gpio_isr_handler_add(GPIO_NUM_0, gpio_isr_handler, (void *)GPIO_NUM_0);
+#endif
 }
 
 //ds18b20
@@ -122,18 +119,6 @@ static void Taskds18b20(void *p)
                 vTaskDelay(3000 / portTICK_PERIOD_MS);
                 temp = (int)(Ds18b20ReadTemp() * 0.0625 + 0.005);
                 printf("ds18b20采集的温度: %d \n\n", temp);
-                // cJSON *jsonSend = cJSON_CreateObject();
-                // //cJSON_AddItemToObject(jsonSend, "reported", cJSON_CreateNumber(localIP->addr));
-                // cJSON *rep = cJSON_CreateObject();
-                // cJSON_AddItemToObject(jsonSend, REPORTED, rep);
-                // cJSON_AddItemToObject(rep, "temp", cJSON_CreateNumber(temp));
-                // char *sendstr = cJSON_PrintUnformatted(jsonSend);
-                // udp_client_send(sendstr);
-                // if (NULL != sendstr)
-                // {
-                //         cJSON_free(sendstr);
-                // }
-                // cJSON_Delete(jsonSend);
         }
 }
 
@@ -153,19 +138,6 @@ static void TaskCreatDht11(void *p)
                 vTaskDelay(5000 / portTICK_RATE_MS);
                 dh11Read(&curTem, &curHum);
                 ESP_LOGI(TAG, "Temperature : %d , Humidity : %d", curTem, curHum);
-                // cJSON *jsonSend = cJSON_CreateObject();
-                // //cJSON_AddItemToObject(jsonSend, "reported", cJSON_CreateNumber(localIP->addr));
-                // cJSON *rep = cJSON_CreateObject();
-                // cJSON_AddItemToObject(jsonSend, REPORTED, rep);
-                // cJSON_AddItemToObject(rep, "temp", cJSON_CreateNumber(curTem));
-                // cJSON_AddItemToObject(rep, "hum", cJSON_CreateNumber(curHum));
-                // char *sendstr = cJSON_PrintUnformatted(jsonSend);
-                // udp_client_send(sendstr);
-                // if (NULL != sendstr)
-                // {
-                //         cJSON_free(sendstr);
-                // }
-                // cJSON_Delete(jsonSend);
         }
         vTaskDelete(NULL);
 }
@@ -295,24 +267,14 @@ static void gpio_input(int input)
                 gpio_set_level(GPIO_NUM_4, 1);
         else
                 gpio_set_level(GPIO_NUM_4, 0);
-        if (input & GPIO_Pin_2)
-                gpio_set_level(GPIO_NUM_2, 1);
-        else
-                gpio_set_level(GPIO_NUM_2, 0);
-        // if (input & GPIO_Pin_5)
-        //         gpio_set_level(GPIO_NUM_5, 1);
-        // else
-        //         gpio_set_level(GPIO_NUM_5, 0);
         if (input & GPIO_Pin_12)
                 gpio_set_level(GPIO_NUM_12, 1);
         else
                 gpio_set_level(GPIO_NUM_12, 0);
-
         if (input & GPIO_Pin_13)
                 gpio_set_level(GPIO_NUM_13, 1);
         else
                 gpio_set_level(GPIO_NUM_13, 0);
-
         if (input & GPIO_Pin_15)
                 gpio_set_level(GPIO_NUM_15, 1);
         else
@@ -334,13 +296,6 @@ extern void system_ds_callback(gpio_num_t num, int isopen)
         data_free(send);
 }
 
-//时钟每秒回调
-extern void system_sntp_callback(struct tm *timeinfo)
-{
-
-        return;
-}
-
 //判断gpio的开关状态
 extern int system_get_gpio_state(gpio_num_t num)
 {
@@ -356,11 +311,10 @@ extern esp_err_t system_http_callback(http_event *call)
 {
         if (call->bdjs != NULL)
         {
-                ESP_LOGI(TAG, "HTTP REC %s", call->bdjs);
                 data_res *ans = data_decode_bdjs(call->bdjs);
                 if (ans->cmd != -1)
                 {
-                        printf("HTTP get switchdata %d \n", ans->cmd);
+                        printf("HTTP get cmd %d \n", ans->cmd);
                         gpio_input(ans->cmd);
                         char *send = data_bdjs_reported(CMD, ans->cmd);
                         mqtt_publish(send);
@@ -406,6 +360,7 @@ extern esp_err_t system_http_callback(http_event *call)
                 {
                         gpio_bit = temp;
                         gpio_input(gpio_bit);
+                        printf("HTTP get cmd %d \n", gpio_bit);
                         char *send = data_bdjs_reported(CMD, gpio_bit);
                         mqtt_publish(send);
                         data_free(send);
@@ -429,31 +384,48 @@ static esp_err_t mqttcallback(char *rec)
         return ESP_OK;
 }
 
-//时钟回调
+static time_t now = 0;
+//硬件时钟
+static void hw_timer_callback(void *arg)
+{
+        time(&now);
+        localtime_r(&now, &timeinfo); //更新时间
+        if (timeinfo.tm_sec == 0)
+        {
+                extern uint32_t esp_get_time(void);
+                ESP_LOGI(TAG, "esp_get_time %d", esp_get_time());
+
+                ds_check(&timeinfo);
+                print_free_heap_size();
+        }
+}
+//定时器
+static void hw_timer()
+{
+        hw_timer_init(hw_timer_callback, NULL);
+        hw_timer_alarm_us(1000, 1);
+        //hw_timer_disarm();
+        //hw_timer_deinit();
+}
+
+//sntp 互联网可用?
 static esp_err_t sntp_connect_callback(sntp_event *call)
 {
         if (call->mestype == SNTP_EVENT_SUCCESS)
         {
+                hw_timer();
                 mqtt_app_start(mqttcallback);
-        }
-        else if (call->mestype == SNTP_EVENT_TIMING)
-        {
-                if (call->timeinfo->tm_sec == 0)
-                {
-                        ds_check(call->timeinfo);
-                        print_free_heap_size();
-                }
         }
         else if (call->mestype == SNTP_EVENT_CONNNECTFAILED)
         {
                 printf("sntp_connect_failed after 5mis restart");
-                vTaskDelay(5000 / portTICK_RATE_MS);
-                system_restart();
+                // vTaskDelay(5000 / portTICK_RATE_MS);
+                // system_restart();
         }
         return ESP_OK;
 }
 
-//udp收到信息 回调
+//udp收到信息 现在走的协议是 百度的协议
 extern esp_err_t udpcallback(char *rec, uint len)
 {
         char *data = malloc(len);
@@ -469,6 +441,7 @@ extern esp_err_t udpcallback(char *rec, uint len)
         return ESP_OK;
 }
 
+//ota 检查结束
 static esp_err_t ota_callback_handel()
 {
         http_server_start();

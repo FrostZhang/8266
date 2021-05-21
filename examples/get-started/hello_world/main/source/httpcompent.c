@@ -112,16 +112,12 @@ static esp_err_t index_post_handler(httpd_req_t *req)
             httpevent.restart = 1;
         }
     }
-    //const char *resp_str = (const char *)req->user_ctx;
-    // End response
-    system_http_callback(&httpevent);
 
-    vTaskDelay(500 / portTICK_PERIOD_MS);
+    system_http_callback(&httpevent);
+    vTaskDelay(100 / portTICK_PERIOD_MS);
     const char *resp_str = (const char *)req->user_ctx;
     httpd_resp_send_chunk(req, resp_str, strlen(resp_str));
     httpd_resp_send_chunk(req, NULL, 0);
-
-    //httpd_resp_send(req, resp_str, strlen(resp_str));
     return ESP_OK;
 }
 
@@ -194,7 +190,6 @@ static httpd_uri_t ds = {
 
 static esp_err_t heartbeat_handle(httpd_req_t *req)
 {
-    //struct tm timeinfo;
     char strftime_buf[64];
     strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
     return httpd_resp_send(req, strftime_buf, strlen(strftime_buf));
@@ -210,23 +205,14 @@ static esp_err_t htmlData_handle(httpd_req_t *req)
 {
     char str[128];
     memset(str, '\0', 128);
-
     if (system_get_gpio_state(GPIO_NUM_4))
-    {
         strcat(str, "open4=1,");
-    }
     if (system_get_gpio_state(GPIO_NUM_12))
-    {
         strcat(str, "open12=1,");
-    }
     if (system_get_gpio_state(GPIO_NUM_13))
-    {
         strcat(str, "open13=1,");
-    }
     if (system_get_gpio_state(GPIO_NUM_15))
-    {
         strcat(str, "open15=1,");
-    }
     strcat(str, "mqttzz=");
     strcat(str, mqttusername);
     strcat(str, ",mqttmm=");

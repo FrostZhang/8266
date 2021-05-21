@@ -3,8 +3,6 @@
 #include "lwip/apps/sntp.h"
 #include "application.h"
 
-extern struct tm timeinfo;
-
 typedef enum
 {
     SNTP_EVENT_ERROR = 0,

@@ -149,10 +149,10 @@ static void read_ds()
     nvs_close(mHandleNvsRead);
 }
 
-static void read_ota_config()
+static void read_app_config()
 {
     nvs_handle mHandleNvsRead;
-    esp_err_t err = nvs_open("ota", NVS_READWRITE, &mHandleNvsRead);
+    esp_err_t err = nvs_open("appconfig", NVS_READWRITE, &mHandleNvsRead);
     if (err == ESP_OK)
     {
         char ota_url_temp[128] = {0};
@@ -262,12 +262,12 @@ extern esp_err_t nav_write_ota(char otapath[128])
 {
     nvs_handle mHandleNvsRead;
     //将airkiss获取的wifi写入内存
-    esp_err_t err = nvs_open("ota", NVS_READWRITE, &mHandleNvsRead);
+    esp_err_t err = nvs_open("appconfig", NVS_READWRITE, &mHandleNvsRead);
     if (err == ESP_OK)
     {
         char ota_url_temp[128] = {0};
         strcpy(ota_url_temp, otapath);
-        ota_url_temp[strnlen(otapath, sizeof(otapath)-1)] = '\0';
+        ota_url_temp[strnlen(otapath, 127)] = '\0';
         err = nvs_set_str(mHandleNvsRead, "ota_url", ota_url_temp);
 
         if (ota_url != NULL)
@@ -293,4 +293,5 @@ extern void nav_load_custom_data()
     read_wifi();
     read_mqtt_baidu();
     read_ds();
+    read_app_config();
 }

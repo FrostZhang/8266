@@ -5,7 +5,6 @@
 
 static const char *TAG = "sntp";
 static time_t now = 0;
-struct tm timeinfo = {0};
 
 static void initialize_sntp(void)
 {
@@ -22,7 +21,6 @@ static void obtain_time(void)
     initialize_sntp();
     int retry = 0;
     const int retry_count = 10;
-
     while (timeinfo.tm_year < (2016 - 1900) && ++retry < retry_count)
     {
         ESP_LOGI(TAG, "Waiting for system time to be set... (%d/%d)", retry, retry_count);
@@ -69,21 +67,20 @@ static void sntp_task(void *arg)
     {
         strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
         ESP_LOGI(TAG, "The current date/time in Shanghai is: %s", strftime_buf);
-        //ESP_LOGI(TAG, "Free heap size: %d\n", esp_get_free_heap_size());
         event_t.timeinfo = &timeinfo;
         event_t.mestype = SNTP_EVENT_SUCCESS;
         callback(&event_t);
-        event_t.mestype = SNTP_EVENT_TIMING;
-        while (true)
-        {
-            time(&now);
-            localtime_r(&now, &timeinfo);
-            // strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
-            // ESP_LOGI(TAG, "The current date/time in Shanghai is: %s", strftime_buf);
-            //system_sntp_callback(&timeinfo);
-            callback(&event_t);
-            vTaskDelay(1000 / portTICK_PERIOD_MS);
-        }
+        //event_t.mestype = SNTP_EVENT_TIMING;
+        // while (true)
+        // {
+        //     time(&now);
+        //     localtime_r(&now, &timeinfo);
+        //     // strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
+        //     // ESP_LOGI(TAG, "The current date/time in Shanghai is: %s", strftime_buf);
+        //     //system_sntp_callback(&timeinfo);
+        //     callback(&event_t);
+        //     vTaskDelay(1000 / portTICK_PERIOD_MS);
+        // }
     }
     vTaskDelete(NULL);
 }
