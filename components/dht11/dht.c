@@ -195,14 +195,14 @@ uint8_t dh11Read(uint8_t *temperature, uint8_t *humidity)
 	return 0;
 }
 
-uint8_t dh11Init(void)
+uint8_t dh11Init(gpio_num_t num)
 {
 
 	io_conf.intr_type = GPIO_INTR_DISABLE;
 	//设置为输出模式
 	io_conf.mode = GPIO_MODE_OUTPUT;
 	//管脚的位
-	io_conf.pin_bit_mask = (1ULL << DHT11_GPIO_PIN);
+	io_conf.pin_bit_mask = (1ULL << num);
 	//禁止下拉
 	io_conf.pull_down_en = 0;
 	//禁止上拉

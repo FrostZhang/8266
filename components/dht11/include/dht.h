@@ -8,8 +8,6 @@
 #include <string.h>
 
 /* Define your drive pin */
-#define DHT11_GPIO_PIN 5
-
 #define DHT11_OUT_HIGH gpio_set_level(DHT11_GPIO_PIN, 1);
 #define DHT11_OUT_LOW gpio_set_level(DHT11_GPIO_PIN, 0);
 #define DHT11_IN gpio_get_level(DHT11_GPIO_PIN)
@@ -25,7 +23,7 @@ typedef struct
 
 /* Function declaration */
 uint8_t dh11Read(uint8_t *temperature, uint8_t *humidity);
-uint8_t dh11Init(void); //Init DHT11
+uint8_t dh11Init(gpio_num_t num) //Init DHT11
 void dh11SensorTest(void);
 
 #endif

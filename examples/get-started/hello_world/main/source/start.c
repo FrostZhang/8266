@@ -30,15 +30,19 @@
 #include "application.h"
 #include "otacompent.h"
 
+//0    1  2     3  4  5  12   13 14 15 16
+//boot TX light RX io IR LEDC io IR io x
 static const char *TAG = "Main";
+
+#define IR_RX_IO_NUM GPIO_NUM_5
+#define IR_TX_IO_NUM GPIO_NUM_14
+#define LEDC_IO_NUM GPIO_NUM_12
+#define DHT11_IO_NUM GPIO_NUM_1
+#define DS18B20_IO_NUM GPIO_NUM_1
 
 #define LEDC_TEST_DUTY (4096)
 #define LEDC_TEST_FADE_TIME (1500)
-
-//常规：指示灯2(在芯片附近 烧录时会闪烁) 开关4/12/13/15 红外收5发14 中断0/3 TX1(不用) goio16(不用)
-#define IR_RX_IO_NUM GPIO_NUM_5
 #define IR_RX_BUF_LEN 128
-#define IR_TX_IO_NUM GPIO_NUM_14
 
 static int gpio_bit;
 
@@ -96,18 +100,23 @@ static void GpioIni(void)
         io_conf.mode = GPIO_MODE_INPUT; //接收3.3v 输入
         io_conf.pull_down_en = 0;
         io_conf.pull_up_en = 0;
-        io_conf.pin_bit_mask = GPIO_Pin_0;
+        io_conf.pin_bit_mask = GPIO_Pin_0 | GPIO_Pin_5 | GPIO_Pin_14 | GPIO_Pin_3;
         gpio_config(&io_conf);
         gpio_set_intr_type(GPIO_NUM_0, GPIO_INTR_POSEDGE);
+        gpio_set_intr_type(GPIO_NUM_5, GPIO_INTR_POSEDGE);
+        gpio_set_intr_type(GPIO_NUM_14, GPIO_INTR_POSEDGE);
+        gpio_set_intr_type(GPIO_NUM_3, GPIO_INTR_POSEDGE);
         gpio_isr_handler_add(GPIO_NUM_0, gpio_isr_handler, (void *)GPIO_NUM_0);
-
+        gpio_isr_handler_add(GPIO_NUM_5, gpio_isr_handler, (void *)GPIO_NUM_5);
+        gpio_isr_handler_add(GPIO_NUM_14, gpio_isr_handler, (void *)GPIO_NUM_14);
+        gpio_isr_handler_add(GPIO_NUM_3, gpio_isr_handler, (void *)GPIO_NUM_3);
 #endif
 }
 
 //ds18b20
 static void Taskds18b20(void *p)
 {
-        uint8_t res = Ds18b20Init(GPIO_NUM_5);
+        uint8_t res = Ds18b20Init(DS18B20_IO_NUM);
         uint8_t temp = 0;
         if (res == 0)
         {
@@ -127,7 +136,7 @@ static void TaskCreatDht11(void *p)
 {
         uint8_t curTem = 0;
         uint8_t curHum = 0;
-        uint8_t res = dh11Init();
+        uint8_t res = dh11Init(DHT11_IO_NUM);
         if (res == 0)
         {
                 ESP_LOGE(TAG, "dh11Init failed");
@@ -145,6 +154,10 @@ static void TaskCreatDht11(void *p)
 //呼吸灯
 static void LEDC(void *p)
 {
+#if defined(APP_STRIP_4) || defined(APP_STRIP_3)
+        ESP_LOGE(TAG, "当前是strip 模式 不可以使用 gpio12");
+        return;
+#endif
         ledc_timer_config_t ledc_timer = {
             .duty_resolution = LEDC_TIMER_13_BIT, // resolution of PWM duty
             .freq_hz = 5000,                      // frequency of PWM signal
@@ -156,7 +169,7 @@ static void LEDC(void *p)
         ledc_channel_config_t ledc_channel = {
             .channel = LEDC_CHANNEL_0,
             .duty = 0,
-            .gpio_num = 12,
+            .gpio_num = LEDC_IO_NUM,
             .speed_mode = LEDC_HIGH_SPEED_MODE,
             .hpoint = 0,
             .timer_sel = LEDC_TIMER_0};
@@ -197,6 +210,10 @@ static esp_err_t ir_rx_nec_code_check(ir_rx_nec_data_t nec_code)
 //红外接收
 static void ir_rx_task(void *arg)
 {
+#if defined(APP_STRIP_4) || defined(APP_STRIP_3)
+        ESP_LOGE(TAG, "当前是strip 模式 不可以使用 gpio14");
+        return;
+#endif
         ir_rx_nec_data_t ir_data;
         ir_rx_config_t ir_rx_config = {
             .io_num = IR_RX_IO_NUM,
@@ -225,6 +242,10 @@ static void ir_rx_task(void *arg)
 //红外发射
 static void ir_tx_task(void *arg)
 {
+#if defined(APP_STRIP_4) || defined(APP_STRIP_3)
+        ESP_LOGE(TAG, "当前是strip 模式 不可以使用 gpio14");
+        return;
+#endif
         ir_tx_config_t ir_tx_config = {
             .io_num = IR_TX_IO_NUM,
             .freq = 38000,
