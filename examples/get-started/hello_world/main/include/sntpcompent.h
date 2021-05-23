@@ -21,5 +21,5 @@ typedef sntp_event *sntp_event_handle_t;
 typedef esp_err_t (*sntp_event_callback_t)(sntp_event_handle_t event);
 
 void sntp_start(sntp_event_callback_t callback);
-
+void sntpcompent_stop();
 #endif

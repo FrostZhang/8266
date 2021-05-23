@@ -14,8 +14,8 @@ static const char *HOST_IP_ADDR = "255.255.255.255";
 u16_t PORT = 8266;
 int sock = -1;
 struct sockaddr_in destAddr = {0};
-udp_callback_t callback;
-
+udp_callback_t callback; 
+static TaskHandle_t handel;
 extern void udp_client_send(const char *data)
 {
         if (sock < 0)
@@ -65,7 +65,7 @@ static void udp_client_task(void *pvParameters)
                         break;
                 }
                 ESP_LOGI(TAG, "Socket created");
-                while (1)
+                while (handel != NULL)
                 {
 
                         struct sockaddr_in sourceAddr; // Large enough for both IPv4 or IPv6
@@ -85,7 +85,7 @@ static void udp_client_task(void *pvParameters)
                         //         ESP_LOGI(TAG, "Received %d bytes from %s:", len, addr_str);
                         //         ESP_LOGI(TAG, "%s", rx_buffer);
                         // }
-                        callback(rx_buffer,len);
+                        callback(rx_buffer, len);
                         vTaskDelay(200 / portTICK_PERIOD_MS);
                 }
 
@@ -98,9 +98,19 @@ static void udp_client_task(void *pvParameters)
         }
         vTaskDelete(NULL);
 }
- 
+
 extern void udp_client_start(udp_callback_t call)
 {
         callback = call;
-        xTaskCreate(udp_client_task, "udp_client", 4096, NULL, 5, NULL);
+        xTaskCreate(udp_client_task, "udp_client", 4096, NULL, 5, &handel);
+}
+
+extern void udp_client_stop()
+{
+        if (handel != NULL)
+        {
+                shutdown(sock, 0);
+                close(sock);
+                vTaskDelete(handel);
+        }
 }

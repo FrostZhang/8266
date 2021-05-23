@@ -60,7 +60,7 @@ static void gpio_isr_handler(void *arg)
 {
         uint32_t gpio_num = (uint32_t)arg;
         int level = gpio_get_level(gpio_num);
-        os_delay_us(200*1000); 
+        os_delay_us(200 * 1000);
         if (gpio_get_level(gpio_num) != level)
         {
                 return;
@@ -160,16 +160,16 @@ static void GpioIni(void)
         gpio_config_t io_conf;
         io_conf.intr_type = GPIO_INTR_DISABLE; //取消中断
         io_conf.mode = GPIO_MODE_OUTPUT;       //对外输出 控制设备
-        io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
+        io_conf.pull_down_en = 0;
         io_conf.pull_up_en = 0;
-        io_conf.pin_bit_mask = GPIO_Pin_4 | GPIO_Pin_12 | GPIO_Pin_13 | GPIO_Pin_15;
+        io_conf.pin_bit_mask = GPIO_Pin_4 | GPIO_Pin_13 | GPIO_Pin_15 | GPIO_Pin_16;
         gpio_config(&io_conf);
         os_delay_us(20); //延时20MS 等配置完毕
         // vTaskDelay(100 / portTICK_RATE_MS);
         gpio_set_level(GPIO_NUM_4, 0);
-        gpio_set_level(GPIO_NUM_12, 0);
         gpio_set_level(GPIO_NUM_13, 0);
         gpio_set_level(GPIO_NUM_15, 0);
+        gpio_set_level(GPIO_NUM_16, 0);
 
         // button_handle_t btn_handle = iot_button_create(GPIO_NUM_0, BUTTON_ACTIVE_LOW);
         // iot_button_add_custom_cb(btn_handle, 5, button_press_5s_cb, NULL);
@@ -178,9 +178,9 @@ static void GpioIni(void)
         //PIN_FUNC_SELECT
 #if defined(APP_STRIP_4) || defined(APP_STRIP_3)
         io_conf.mode = GPIO_MODE_OUTPUT_OD;
-        io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
+        io_conf.pull_down_en = 0;
         io_conf.pull_up_en = 0;
-        io_conf.pin_bit_mask = GPIO_Pin_0 | GPIO_Pin_5 | GPIO_Pin_14 /*|GPIO_Pin_3*/;
+        io_conf.pin_bit_mask = GPIO_Pin_0 | GPIO_Pin_5 | GPIO_Pin_12 |GPIO_Pin_14;
         io_conf.intr_type = GPIO_INTR_ANYEDGE;
         gpio_config(&io_conf);
         os_delay_us(20); //延时20MS 等配置完毕
@@ -190,8 +190,8 @@ static void GpioIni(void)
         gpio_install_isr_service(0);
         gpio_isr_handler_add(GPIO_NUM_0, gpio_isr_handler, (void *)GPIO_NUM_0);
         gpio_isr_handler_add(GPIO_NUM_5, gpio_isr_handler, (void *)GPIO_NUM_5);
+        gpio_isr_handler_add(GPIO_NUM_12, gpio_isr_handler, (void *)GPIO_NUM_12);
         gpio_isr_handler_add(GPIO_NUM_14, gpio_isr_handler, (void *)GPIO_NUM_14);
-        //gpio_isr_handler_add(GPIO_NUM_3, gpio_isr_handler, (void *)GPIO_NUM_3);
 #endif
 }
 
@@ -502,6 +502,7 @@ static esp_err_t sntp_connect_callback(sntp_event *call)
                 {
                         ds_check(call->timeinfo);
                         print_free_heap_size();
+                        printf("snt Stack %ld", uxTaskGetStackHighWaterMark(NULL));
                 }
         }
         else if (call->mestype == SNTP_EVENT_CONNNECTFAILED)
@@ -545,6 +546,13 @@ static esp_err_t wifi_callback(net_callback call)
         {
                 data_initialize();
                 ota_check(ota_callback_handel);
+        }
+        else if(call == WIFI_Disconnect)
+        {
+                ESP_LOGE(TAG,"WiFi中断 断开 sntp htpp mqtt");
+                sntpcompent_stop();
+                http_server_end();
+                mqtt_stop();
         }
         return ESP_OK;
 }
@@ -608,7 +616,7 @@ static void print_sys()
 
         printf("%dMB %s flash\n", spi_flash_get_chip_size() / (1024 * 1024),
                (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded" : "external");
-        ESP_LOGI(TAG, "Free heap size: %d min size %d\n", esp_get_free_heap_size(),esp_get_minimum_free_heap_size());
+        ESP_LOGI(TAG, "Free heap size: %d min size %d\n", esp_get_free_heap_size(), esp_get_minimum_free_heap_size());
 }
 
 void app_main()

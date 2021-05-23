@@ -11,7 +11,7 @@
 
 static const char *TAG = "ota";
 static ota_callback callback;
-
+static TaskHandle_t handle;
 static esp_err_t _http_event_handler(esp_http_client_event_t *evt)
 {
     switch (evt->event_id)
@@ -91,5 +91,5 @@ static void ota_task(void *pvParameter)
 extern void ota_check(ota_callback call)
 {
     callback = call;
-    xTaskCreate(ota_task, "ota_task", 8192, NULL, 5, NULL);
+    xTaskCreate(ota_task, "ota_task", 8192, NULL, 5, &handle);
 }

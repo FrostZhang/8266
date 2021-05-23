@@ -118,6 +118,7 @@ static esp_err_t index_post_handler(httpd_req_t *req)
     const char *resp_str = (const char *)req->user_ctx;
     httpd_resp_send_chunk(req, resp_str, strlen(resp_str));
     httpd_resp_send_chunk(req, NULL, 0);
+    printf("http Stack %ld", uxTaskGetStackHighWaterMark(NULL));
     return ESP_OK;
 }
 
@@ -287,7 +288,9 @@ extern esp_err_t http_server_end()
 {
     if (server != NULL)
     {
-        return stop_webserver(server);
+        esp_err_t err = stop_webserver(server);
+        server =NULL;
+        return err;
     }
     return ESP_FAIL;
 }

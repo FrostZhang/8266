@@ -4,7 +4,7 @@
 
 #include "esp_smartconfig.h"
 #include "smartconfig_ack.h" //回调
-#include "esp_event_loop.h" //esp_event_loop_init
+#include "esp_event_loop.h"  //esp_event_loop_init
 
 #include "wificompent.h"
 #include "navcompent.h"
@@ -130,11 +130,9 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
                 xEventGroupSetBits(wifi_event_group, CONNECTED_BIT);
                 xEventGroupClearBits(wifi_event_group, CONNECTED_FIELD);
                 wifiretry = 0;
-                //callback connect
+                wifi_connect = 1;
                 if (callback != NULL)
-                {
                         callback(WIFI_CONNNECT);
-                }
                 break;
         case SYSTEM_EVENT_STA_DISCONNECTED:
                 ESP_LOGE(TAG, "Disconnect reason : %d", info->disconnected.reason);
@@ -164,10 +162,16 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
                                 else //启用airkiss配网
                                         xTaskCreate(smartconfig_task, "smartconfig_task", 4096, NULL, 1, NULL);
                         }
-                        if (callback != NULL)
+                        else
                         {
-                                callback(WIFI_Disconnect);
+                                ESP_LOGE(TAG,"err wifiretry %d",wifiretry);
                         }
+                        
+                }
+                if (callback != NULL)
+                {
+                        ESP_LOGE(TAG, "wifi send Disconnect");
+                        callback(WIFI_Disconnect);
                 }
                 break;
         default:

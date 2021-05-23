@@ -22,5 +22,6 @@ int strSearch(char *str1, char *str2);
 extern char* XINHAO;
 extern char* OTA_LABLE;
 extern struct tm timeinfo;  //当前时间
+extern int wifi_connect;    //当前是否连了wifi
 
 #endif

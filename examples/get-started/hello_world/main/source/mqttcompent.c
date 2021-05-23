@@ -85,6 +85,7 @@ static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
                 //printf("TOPIC=%.*s\r\n", event->topic_len, event->topic);
                 event->data[event->data_len] = '\0';
                 callback(event->data);
+                printf("mqtt Stack %ld", uxTaskGetStackHighWaterMark(NULL));
                 break;
         case MQTT_EVENT_ERROR:
                 ESP_LOGI(TAG, "MQTT_EVENT_ERROR");

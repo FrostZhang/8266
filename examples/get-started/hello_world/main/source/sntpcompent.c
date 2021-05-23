@@ -6,6 +6,8 @@
 static const char *TAG = "sntp";
 static time_t now = 0;
 
+static TaskHandle_t handel;
+
 static void initialize_sntp(void)
 {
     ESP_LOGI(TAG, "Initializing SNTP");
@@ -71,7 +73,7 @@ static void sntp_task(void *arg)
         event_t.mestype = SNTP_EVENT_SUCCESS;
         callback(&event_t);
         event_t.mestype = SNTP_EVENT_TIMING;
-        while (true)
+        while (handel != NULL)
         {
             time(&now);
             localtime_r(&now, &timeinfo);
@@ -85,8 +87,18 @@ static void sntp_task(void *arg)
     vTaskDelete(NULL);
 }
 
+extern void sntpcompent_stop()
+{
+    if (handel != NULL)
+    {
+        sntp_stop();
+        vTaskDelete(handel);
+        handel = NULL;
+    }
+}
+
 //获取时间 也是在检测是否能连接互联网
 extern void sntp_start(sntp_event_callback_t event_handle)
 {
-    xTaskCreate(sntp_task, "sntptask", 2048, event_handle, 8, NULL);
+    xTaskCreate(sntp_task, "sntptask", 1024*3, event_handle, 8, &handel);
 }

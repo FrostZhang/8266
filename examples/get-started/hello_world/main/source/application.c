@@ -15,6 +15,7 @@ char *XINHAO = "ir_relay";
 
 char *OTA_LABLE;
 struct tm timeinfo = {0};
+int wifi_connect;
 
 static int hex2dec(char c)
 {
@@ -171,19 +172,19 @@ int strSearch(char *str1, char *str2)
     return at;
 }
 
-char* substring(char* src,int pos,int length)
+char *substring(char *src, int pos, int length)
 {
     //通过calloc来分配一个length长度的字符数组，返回的是字符指针。
-    char* subch=(char*)calloc(sizeof(char),length+1);
+    char *subch = (char *)calloc(sizeof(char), length + 1);
     //只有在C99下for循环中才可以声明变量，这里写在外面，提高兼容性。
-    src=src+pos;
+    src = src + pos;
     //是pch指针指向pos位置。
-    for(int i=0;i<length;i++)
+    for (int i = 0; i < length; i++)
     {
         //        *(src++)将指针向前移动一位
-        subch[i]=*(src++);
+        subch[i] = *(src++);
         //循环遍历赋值数组。
     }
-    subch[length]='\0';//加上字符串结束符。
-    return subch;       //返回分配的字符数组地址。
+    subch[length] = '\0'; //加上字符串结束符。
+    return subch;         //返回分配的字符数组地址。
 }
