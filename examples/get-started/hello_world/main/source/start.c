@@ -32,6 +32,7 @@
 
 //0    1  2     3  4  5  12   13 14 15 16
 //boot TX light RX io IR LEDC io IR io x
+//1 3 在调试状态下 gpio不可用
 static const char *TAG = "Main";
 
 #define IR_RX_IO_NUM GPIO_NUM_5
@@ -45,29 +46,109 @@ static const char *TAG = "Main";
 #define IR_RX_BUF_LEN 128
 
 static int gpio_bit;
+static time_t now = 0;
+static xQueueHandle gpio_evt_queue = NULL;
+
+static int gpio0_itr_curstate;
+static int gpio5_itr_curstate;
+static int gpio14_itr_curstate;
+
+extern int system_get_gpio_state(gpio_num_t num);
+static void gpio_input(int input);
 
 static void gpio_isr_handler(void *arg)
 {
         uint32_t gpio_num = (uint32_t)arg;
-        //xQueueSendFromISR(gpio_evt_queue, &gpio_num, NULL);
-        gpio_isr_handler_remove(gpio_num); //防止接触不良多次触发
-
-        vTaskDelay(700 / portTICK_RATE_MS);
-        gpio_isr_handler_add(gpio_num, gpio_isr_handler, gpio_num);
+        int level = gpio_get_level(gpio_num);
+        os_delay_us(200*1000); 
+        if (gpio_get_level(gpio_num) != level)
+        {
+                return;
+        }
+        if (gpio_num == GPIO_NUM_0)
+        {
+                if (level == gpio0_itr_curstate)
+                {
+                        return;
+                }
+                gpio0_itr_curstate = level;
+        }
+        else if (gpio_num == GPIO_NUM_5)
+        {
+                if (level == gpio5_itr_curstate)
+                {
+                        return;
+                }
+                gpio5_itr_curstate = level;
+        }
+        else if (gpio_num == GPIO_NUM_14)
+        {
+                if (level == gpio14_itr_curstate)
+                {
+                        return;
+                }
+                gpio14_itr_curstate = level;
+        }
+        xQueueSendFromISR(gpio_evt_queue, &gpio_num, NULL);
 }
 
-//static xQueueHandle gpio_evt_queue = NULL;
-//static void gpio_0_(void *arg)
-// {
-//         uint32_t io_num = (uint32_t)arg;
-//         for (;;)
-//         {
-//                 if (xQueueReceive(gpio_evt_queue, &io_num, portMAX_DELAY))
-//                 {
-//                         ESP_LOGI(TAG, "GPIO[%d] intr, val: %d\n", io_num, gpio_get_level(io_num));
-//                 }
-//         }
-// }
+static void gpio_task(void *arg)
+{
+        uint32_t io_num = (uint32_t)arg;
+        for (;;)
+        {
+                if (xQueueReceive(gpio_evt_queue, &io_num, portMAX_DELAY))
+                {
+                        //ESP_LOGI(TAG, "GPIO[%d] intr, val: %d\n", io_num, gpio_get_level(io_num));
+                        //vTaskDelay(500 / portTICK_RATE_MS);
+                        //GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, true); //clear interrupt mask
+                        if (io_num == GPIO_NUM_0)
+                        {
+                                if (isr_gpio0_for >= GPIO_NUM_MAX)
+                                        return;
+                                if (system_get_gpio_state(isr_gpio0_for))
+                                        gpio_bit &= ~BIT(isr_gpio0_for);
+                                else
+                                        gpio_bit |= BIT(isr_gpio0_for);
+                        }
+                        else if (io_num == GPIO_NUM_5)
+                        {
+                                if (isr_gpio5_for >= GPIO_NUM_MAX)
+                                        return;
+                                if (system_get_gpio_state(isr_gpio5_for))
+                                        gpio_bit &= ~BIT(isr_gpio5_for);
+                                else
+                                        gpio_bit |= BIT(isr_gpio5_for);
+                        }
+                        else if (io_num == GPIO_NUM_14)
+                        {
+                                if (isr_gpio14_for >= GPIO_NUM_MAX)
+                                        return;
+                                if (system_get_gpio_state(isr_gpio14_for))
+                                        gpio_bit &= ~BIT(isr_gpio14_for);
+                                else
+                                        gpio_bit |= BIT(isr_gpio14_for);
+                        }
+                        else if (io_num == GPIO_NUM_3)
+                        {
+                                if (isr_gpio3_for >= GPIO_NUM_MAX)
+                                        return;
+                                if (system_get_gpio_state(isr_gpio3_for))
+                                        gpio_bit &= ~BIT(isr_gpio3_for);
+                                else
+                                        gpio_bit |= BIT(isr_gpio3_for);
+                        }
+                        gpio_input(gpio_bit);
+                        printf("GPIO[%d] intr\n", io_num);
+                        char *send = data_bdjs_reported(CMD, gpio_bit);
+                        mqtt_publish(send);
+                        data_free(send);
+                }
+        }
+        ESP_LOGI(TAG, "gpio_task 将停止工作");
+        vTaskDelete(NULL);
+}
+
 // static void button_press_5s_cb(void *arg)
 // {
 //         print_free_heap_size();
@@ -79,37 +160,38 @@ static void GpioIni(void)
         gpio_config_t io_conf;
         io_conf.intr_type = GPIO_INTR_DISABLE; //取消中断
         io_conf.mode = GPIO_MODE_OUTPUT;       //对外输出 控制设备
-        io_conf.pull_down_en = 0;
+        io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
         io_conf.pull_up_en = 0;
         io_conf.pin_bit_mask = GPIO_Pin_4 | GPIO_Pin_12 | GPIO_Pin_13 | GPIO_Pin_15;
         gpio_config(&io_conf);
-        vTaskDelay(100 / portTICK_RATE_MS);
-        gpio_set_level(GPIO_NUM_4, 1);
-        gpio_set_level(GPIO_NUM_12, 1);
-        gpio_set_level(GPIO_NUM_13, 1);
-        gpio_set_level(GPIO_NUM_15, 1);
+        os_delay_us(20); //延时20MS 等配置完毕
+        // vTaskDelay(100 / portTICK_RATE_MS);
+        gpio_set_level(GPIO_NUM_4, 0);
+        gpio_set_level(GPIO_NUM_12, 0);
+        gpio_set_level(GPIO_NUM_13, 0);
+        gpio_set_level(GPIO_NUM_15, 0);
 
         // button_handle_t btn_handle = iot_button_create(GPIO_NUM_0, BUTTON_ACTIVE_LOW);
         // iot_button_add_custom_cb(btn_handle, 5, button_press_5s_cb, NULL);
         //boot press
-        //gpio_evt_queue = xQueueCreate(10, sizeof(uint32_t));
-        //xTaskCreate(gpio_task_example, "gpio_task_example", 1024, NULL, 10, NULL);
+        //gpio0  gpio_set_level1 即使控制引脚输出了高电平,当按下按钮的时候,引脚接地,引脚强制被拉低.
+        //PIN_FUNC_SELECT
 #if defined(APP_STRIP_4) || defined(APP_STRIP_3)
-        gpio_install_isr_service(0);
-        io_conf.intr_type = GPIO_INTR_DISABLE;
-        io_conf.mode = GPIO_MODE_INPUT; //接收3.3v 输入
-        io_conf.pull_down_en = 0;
+        io_conf.mode = GPIO_MODE_OUTPUT_OD;
+        io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
         io_conf.pull_up_en = 0;
-        io_conf.pin_bit_mask = GPIO_Pin_0 | GPIO_Pin_5 | GPIO_Pin_14 | GPIO_Pin_3;
+        io_conf.pin_bit_mask = GPIO_Pin_0 | GPIO_Pin_5 | GPIO_Pin_14 /*|GPIO_Pin_3*/;
+        io_conf.intr_type = GPIO_INTR_ANYEDGE;
         gpio_config(&io_conf);
-        gpio_set_intr_type(GPIO_NUM_0, GPIO_INTR_POSEDGE);
-        gpio_set_intr_type(GPIO_NUM_5, GPIO_INTR_POSEDGE);
-        gpio_set_intr_type(GPIO_NUM_14, GPIO_INTR_POSEDGE);
-        gpio_set_intr_type(GPIO_NUM_3, GPIO_INTR_POSEDGE);
+        os_delay_us(20); //延时20MS 等配置完毕
+
+        gpio_evt_queue = xQueueCreate(16, sizeof(uint32_t));
+        xTaskCreate(gpio_task, "gpio_task", 2048, NULL, 1, NULL);
+        gpio_install_isr_service(0);
         gpio_isr_handler_add(GPIO_NUM_0, gpio_isr_handler, (void *)GPIO_NUM_0);
         gpio_isr_handler_add(GPIO_NUM_5, gpio_isr_handler, (void *)GPIO_NUM_5);
         gpio_isr_handler_add(GPIO_NUM_14, gpio_isr_handler, (void *)GPIO_NUM_14);
-        gpio_isr_handler_add(GPIO_NUM_3, gpio_isr_handler, (void *)GPIO_NUM_3);
+        //gpio_isr_handler_add(GPIO_NUM_3, gpio_isr_handler, (void *)GPIO_NUM_3);
 #endif
 }
 
@@ -125,7 +207,7 @@ static void Taskds18b20(void *p)
         }
         while (1)
         {
-                vTaskDelay(3000 / portTICK_PERIOD_MS);
+                vTaskDelay(10000 / portTICK_PERIOD_MS);
                 temp = (int)(Ds18b20ReadTemp() * 0.0625 + 0.005);
                 printf("ds18b20采集的温度: %d \n\n", temp);
         }
@@ -211,7 +293,8 @@ static esp_err_t ir_rx_nec_code_check(ir_rx_nec_data_t nec_code)
 static void ir_rx_task(void *arg)
 {
 #if defined(APP_STRIP_4) || defined(APP_STRIP_3)
-        ESP_LOGE(TAG, "当前是strip 模式 不可以使用 gpio14");
+        ESP_LOGE(TAG, "ir_rx_task 当前是strip 模式 不可以使用 gpio5");
+        vTaskDelete(NULL);
         return;
 #endif
         ir_rx_nec_data_t ir_data;
@@ -243,7 +326,8 @@ static void ir_rx_task(void *arg)
 static void ir_tx_task(void *arg)
 {
 #if defined(APP_STRIP_4) || defined(APP_STRIP_3)
-        ESP_LOGE(TAG, "当前是strip 模式 不可以使用 gpio14");
+        ESP_LOGE(TAG, "ir_tx_task 当前是strip 模式 不可以使用 gpio14");
+        vTaskDelete(NULL);
         return;
 #endif
         ir_tx_config_t ir_tx_config = {
@@ -405,37 +489,20 @@ static esp_err_t mqttcallback(char *rec)
         return ESP_OK;
 }
 
-static time_t now = 0;
-//硬件时钟
-static void hw_timer_callback(void *arg)
-{
-        time(&now);
-        localtime_r(&now, &timeinfo); //更新时间
-        if (timeinfo.tm_sec == 0)
-        {
-                extern uint32_t esp_get_time(void);
-                ESP_LOGI(TAG, "esp_get_time %d", esp_get_time());
-
-                ds_check(&timeinfo);
-                print_free_heap_size();
-        }
-}
-//定时器
-static void hw_timer()
-{
-        hw_timer_init(hw_timer_callback, NULL);
-        hw_timer_alarm_us(1000, 1);
-        //hw_timer_disarm();
-        //hw_timer_deinit();
-}
-
-//sntp 互联网可用?
+//sntp 互联网可用? 每秒回调
 static esp_err_t sntp_connect_callback(sntp_event *call)
 {
         if (call->mestype == SNTP_EVENT_SUCCESS)
         {
-                hw_timer();
                 mqtt_app_start(mqttcallback);
+        }
+        else if (call->mestype == SNTP_EVENT_TIMING)
+        {
+                if (call->timeinfo->tm_sec == 0)
+                {
+                        ds_check(call->timeinfo);
+                        print_free_heap_size();
+                }
         }
         else if (call->mestype == SNTP_EVENT_CONNNECTFAILED)
         {
@@ -537,12 +604,11 @@ static void print_sys()
         esp_chip_info_t chip_info;
         esp_chip_info(&chip_info);
         printf("This is ESP8266 chip with %d CPU cores, WiFi, ", chip_info.cores);
-
         printf("silicon revision %d, ", chip_info.revision);
 
         printf("%dMB %s flash\n", spi_flash_get_chip_size() / (1024 * 1024),
                (chip_info.features & CHIP_FEATURE_EMB_FLASH) ? "embedded" : "external");
-        ESP_LOGI(TAG, "Free heap size: %d\n", esp_get_free_heap_size());
+        ESP_LOGI(TAG, "Free heap size: %d min size %d\n", esp_get_free_heap_size(),esp_get_minimum_free_heap_size());
 }
 
 void app_main()
@@ -553,12 +619,10 @@ void app_main()
         nav_load_custom_data();
         wifi_connect_start(wifi_callback);
 
-        //xTaskCreate(TaskCreatDht11, "TaskCreatDht11", 2048, NULL, 4, NULL);
-        //xTaskCreate(Taskds18b20, "Taskds18b20", 2048, NULL, 3, NULL);
+        //xTaskCreate(TaskCreatDht11, "TaskCreatDht11", 1024, NULL, 4, NULL);
+        //xTaskCreate(Taskds18b20, "Taskds18b20", 1024, NULL, 3, NULL);
         //xTaskCreate(LEDC, "LEDC", 4096, NULL, 8, NULL);
 
-        //io5
         xTaskCreate(ir_rx_task, "ir_rx_task", 2048, NULL, 5, NULL);
-        //io14
-        //xTaskCreate(ir_tx_task, "ir_tx_task", 2048, NULL, 5, NULL);
+        xTaskCreate(ir_tx_task, "ir_tx_task", 2048, NULL, 5, NULL);
 }

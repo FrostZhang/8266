@@ -203,26 +203,38 @@ static httpd_uri_t heartbeat = {
 
 static esp_err_t htmlData_handle(httpd_req_t *req)
 {
-    char str[128];
-    memset(str, '\0', 128);
+    StringBuilder *sb = sb_create();
     if (system_get_gpio_state(GPIO_NUM_4))
-        strcat(str, "open4=1,");
+        sb_append(sb, "open4=1,");
     if (system_get_gpio_state(GPIO_NUM_12))
-        strcat(str, "open12=1,");
+        sb_append(sb, "open12=1,");
     if (system_get_gpio_state(GPIO_NUM_13))
-        strcat(str, "open13=1,");
+        sb_append(sb, "open13=1,");
     if (system_get_gpio_state(GPIO_NUM_15))
-        strcat(str, "open15=1,");
-    strcat(str, "mqttzz=");
-    strcat(str, mqttusername);
-    strcat(str, ",mqttmm=");
-    strcat(str, mqttpassword);
-    strcat(str, ",xinghao=");
-    strcat(str, XINHAO);
-    strcat(str, ",otachoose=");
-    strcat(str, OTA_LABLE);
-
-    return httpd_resp_send(req, str, strlen(str));
+        sb_append(sb, "open15=1,");
+    if (mqttusername != NULL)
+    {
+        sb_appendf(sb, "mqttzz=%s", mqttusername);
+    }
+    if (mqttpassword != NULL)
+    {
+        sb_appendf(sb, ",mqttmm=%s", mqttpassword);
+    }
+    sb_appendf(sb, ",xinghao=%s", XINHAO);
+    sb_appendf(sb, ",otachoose=%s", OTA_LABLE);
+    if (ota_url != NULL)
+    {
+        sb_appendf(sb, ",ota_url=%s", ota_url);
+    }
+    sb_appendf(sb, ",isrio0=%d", isr_gpio0_for);
+    sb_appendf(sb, ",isrio5=%d", isr_gpio5_for);
+    sb_appendf(sb, ",isrio14=%d", isr_gpio14_for);
+    sb_appendf(sb, ",isrio3=%d", isr_gpio3_for);
+    char *str = sb_concat(sb);
+    esp_err_t err = httpd_resp_send(req, str, strlen(str));
+    free(str);
+    sb_free(sb);
+    return err;
 }
 
 static httpd_uri_t htmlData = {
@@ -234,7 +246,7 @@ static httpd_uri_t htmlData = {
 static httpd_handle_t start_webserver(void)
 {
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
-
+    config.stack_size = 4096;
     // Start the httpd server
     ESP_LOGI(TAG, "Starting server on port: '%d'", config.server_port);
     if (httpd_start(&server, &config) == ESP_OK)

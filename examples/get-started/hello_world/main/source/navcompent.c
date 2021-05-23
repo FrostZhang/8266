@@ -23,6 +23,14 @@ char dsdata3[33];
 //ota 升级地址 通常是 http://xxx.xxx/xxx
 char *ota_url = {0};
 
+#if defined(APP_STRIP_4) || defined(APP_STRIP_3)
+//中断 引发gpio转换状态
+int isr_gpio0_for;
+int isr_gpio5_for;
+int isr_gpio14_for;
+int isr_gpio3_for;
+#endif
+
 static void read_wifi()
 {
     nvs_handle mHandleNvsRead;
@@ -164,6 +172,35 @@ static void read_app_config()
             strncpy(ota_url, ota_url_temp, sizeof(ota_url_temp));
             ESP_LOGI(TAG, "get str ota_url = %s", ota_url);
         }
+#if defined(APP_STRIP_4) || defined(APP_STRIP_3)
+        err = nvs_get_i32(mHandleNvsRead, "isr_gpio0_for", &isr_gpio0_for);
+        if (err != ESP_OK)
+        {
+            isr_gpio0_for = 4;
+        }
+        err = nvs_get_i32(mHandleNvsRead, "isr_gpio5_for", &isr_gpio0_for);
+        if (err != ESP_OK)
+        {
+            isr_gpio5_for = 12;
+        }
+        err = nvs_get_i32(mHandleNvsRead, "isr_gpio14_for", &isr_gpio0_for);
+        if (err != ESP_OK)
+        {
+            isr_gpio14_for = 13;
+        }
+        err = nvs_get_i32(mHandleNvsRead, "isr_gpio3_for", &isr_gpio0_for);
+        if (err != ESP_OK)
+        {
+            isr_gpio3_for = 15;
+        }
+#endif
+    }
+    else
+    {
+        isr_gpio0_for = 4;
+        isr_gpio5_for = 12;
+        isr_gpio14_for = 13;
+        isr_gpio3_for = 15;
     }
     nvs_close(mHandleNvsRead);
 }
@@ -274,6 +311,27 @@ extern esp_err_t nav_write_ota(char otapath[128])
             free(ota_url);
         ota_url = malloc(128);
         strcpy(ota_url, ota_url_temp);
+    }
+    nvs_close(mHandleNvsRead);
+    return err;
+}
+
+//写入中断 0 5 14 3 引发什么gpio转换状态 （模拟开关 控制灯泡）
+extern esp_err_t nav_write_isr_for(int a, int b, int c, int d)
+{
+    nvs_handle mHandleNvsRead;
+    //将airkiss获取的wifi写入内存
+    esp_err_t err = nvs_open("appconfig", NVS_READWRITE, &mHandleNvsRead);
+    if (err == ESP_OK)
+    {
+        isr_gpio0_for = a;
+        err = nvs_set_i32(mHandleNvsRead, "isr_gpio0_for", isr_gpio0_for);
+        isr_gpio5_for = a;
+        err = nvs_set_i32(mHandleNvsRead, "isr_gpio5_for", isr_gpio5_for);
+        isr_gpio14_for = a;
+        err = nvs_set_i32(mHandleNvsRead, "isr_gpio14_for", isr_gpio14_for);
+        isr_gpio3_for = a;
+        err = nvs_set_i32(mHandleNvsRead, "isr_gpio3_for", isr_gpio3_for);
     }
     nvs_close(mHandleNvsRead);
     return err;

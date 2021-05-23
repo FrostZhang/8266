@@ -23,7 +23,6 @@ typedef struct
 
 /* Function declaration */
 uint8_t dh11Read(uint8_t *temperature, uint8_t *humidity);
-uint8_t dh11Init(gpio_num_t num) //Init DHT11
-void dh11SensorTest(void);
+uint8_t dh11Init(gpio_num_t num); //Init DHT11
 
 #endif

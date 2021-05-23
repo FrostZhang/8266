@@ -11,6 +11,10 @@ extern char *wifipassword;
 extern char *mqttusername;
 extern char *mqttpassword;
 extern char *ota_url;
+extern int isr_gpio0_for;
+extern int isr_gpio5_for;
+extern int isr_gpio14_for;
+extern int isr_gpio3_for;
 
 void nav_load_custom_data();
 esp_err_t nav_write_wifi(char ssid[32], char pass[64]);

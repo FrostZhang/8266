@@ -28,25 +28,25 @@
             <tr>
                 <td>Gpio4:</td>
                 <td>
-                    <button id="open4" name="open4" type="submit" value="1">开</button>
+                    <button id="open4" name="open4" type="submit" value="1">已关闭</button>
                 </td>
             </tr>
             <tr>
                 <td>Gpio12:</td>
                 <td>
-                    <button id="open12" name="open12" type="submit" value="1">开</button>
+                    <button id="open12" name="open12" type="submit" value="1">已关闭</button>
                 </td>
             </tr>
             <tr>
                 <td>Gpio13:</td>
                 <td>
-                    <button id="open13" name="open13" type="submit" value="1">开</button>
+                    <button id="open13" name="open13" type="submit" value="1">已关闭</button>
                 </td>
             </tr>
             <tr>
                 <td>Gpio15:</td>
                 <td>
-                    <button id="open15" name="open15" type="submit" value="1">开</button>
+                    <button id="open15" name="open15" type="submit" value="1">已关闭</button>
                 </td>
             </tr>
         </table>
@@ -74,7 +74,59 @@
             </tr>
         </table>
     </form>
-    <h3>产品信息</h3>
+    <h3>硬件升级</h3>
+    <form method="post">
+        <table>
+            <tr>
+                <td>地址:</td>
+                <td>
+                    <input id="otapath" name="otapath" type="Text"></input>
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>
+                    <button type="submit">更新地址</button>
+                </td>
+            </tr>
+        </table>
+    </form>
+    <h3>开关配置</h3>
+    <form method="post">
+        <table>
+            <tr>
+                <td>开关1:</td>
+                <td>
+                    <input id="isrio0" name="isrio0" type="number"></input>
+                </td>
+            </tr>
+            <tr>
+                <td>开关2:</td>
+                <td>
+                    <input id="isrio5" name="isrio5" type="number"></input>
+                </td>
+            </tr>
+            <tr>
+                <td>开关3:</td>
+                <td>
+                    <input id="isrio14" name="isrio14" type="number"></input>
+                </td>
+            </tr>
+            <tr>
+                <td>开关4:</td>
+                <td>
+                    <input id="isrio3" name="isrio3" type="number"></input>
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>
+                    <button type="submit">更新开关配置</button>
+                </td>
+            </tr>
+        </table>
+    </form>
+    <h3>设备信息</h3>
     <form id="restart" method="post">
         <table>
             <tr>
@@ -142,20 +194,20 @@
                         if (kv[0] == "open4") {
                             var o = document.getElementById("open4");
                             o.value = "0";
-                            o.textContent = "关";
+                            o.textContent = "已打开";
                         }
                         if (kv[0] == "open12") {
                             var o = document.getElementById("open12");
                             o.value = "0";
-                            o.textContent = "关";
+                            o.textContent = "已打开";
                         } if (kv[0] == "open13") {
                             var o = document.getElementById("open13");
                             o.value = "0";
-                            o.textContent = "关";
+                            o.textContent = "已打开";
                         } if (kv[0] == "open15") {
                             var o = document.getElementById("open15");
                             o.value = "0";
-                            o.textContent = "关";
+                            o.textContent = "已打开";
                         } if (kv[0] == "mqttzz") {
                             var o = document.getElementById("mqttzz");
                             o.value = kv[1];
@@ -167,6 +219,21 @@
                             o.value = kv[1];
                         } if (kv[0] == "otachoose") {
                             var o = document.getElementById("otachoose");
+                            o.value = kv[1];
+                        }if (kv[0] == "otapath") {
+                            var o = document.getElementById("otapath");
+                            o.value = kv[1];
+                        }if (kv[0] == "isrio0") {
+                            var o = document.getElementById("isrio0");
+                            o.value = kv[1];
+                        }if (kv[0] == "isrio5") {
+                            var o = document.getElementById("isrio5");
+                            o.value = kv[1];
+                        }if (kv[0] == "isrio14") {
+                            var o = document.getElementById("isrio14");
+                            o.value = kv[1];
+                        }if (kv[0] == "isrio3") {
+                            var o = document.getElementById("isrio3");
                             o.value = kv[1];
                         }
                     });
