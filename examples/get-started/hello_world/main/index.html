@@ -26,27 +26,27 @@
     <form id="gpio" method="post">
         <table>
             <tr>
-                <td>Gpio4:</td>
+                <td>开关1:</td>
                 <td>
                     <button id="open4" name="open4" type="submit" value="1">已关闭</button>
                 </td>
             </tr>
             <tr>
-                <td>Gpio12:</td>
-                <td>
-                    <button id="open12" name="open12" type="submit" value="1">已关闭</button>
-                </td>
-            </tr>
-            <tr>
-                <td>Gpio13:</td>
+                <td>开关2:</td>
                 <td>
                     <button id="open13" name="open13" type="submit" value="1">已关闭</button>
                 </td>
             </tr>
             <tr>
-                <td>Gpio15:</td>
+                <td>开关3:</td>
                 <td>
                     <button id="open15" name="open15" type="submit" value="1">已关闭</button>
+                </td>
+            </tr>
+            <tr>
+                <td>开关4:</td>
+                <td>
+                    <button id="open16" name="open16" type="submit" value="1">已关闭</button>
                 </td>
             </tr>
         </table>
@@ -138,25 +138,25 @@
     <form method="post">
         <table>
             <tr>
-                <td>开关1:</td>
+                <td>控制1:</td>
                 <td>
                     <input id="isrio0" name="isrio0" type="number"></input>
                 </td>
             </tr>
             <tr>
-                <td>开关2:</td>
+                <td>控制2:</td>
                 <td>
                     <input id="isrio5" name="isrio5" type="number"></input>
                 </td>
             </tr>
             <tr>
-                <td>开关3:</td>
+                <td>控制3:</td>
                 <td>
                     <input id="isrio14" name="isrio14" type="number"></input>
                 </td>
             </tr>
             <tr>
-                <td>开关4:</td>
+                <td>控制3:</td>
                 <td>
                     <input id="isrio3" name="isrio3" type="number"></input>
                 </td>
@@ -239,8 +239,8 @@
                             o.value = "0";
                             o.textContent = "已打开";
                         }
-                        if (kv[0] == "open12") {
-                            var o = document.getElementById("open12");
+                        if (kv[0] == "open16") {
+                            var o = document.getElementById("open16");
                             o.value = "0";
                             o.textContent = "已打开";
                         } if (kv[0] == "open13") {

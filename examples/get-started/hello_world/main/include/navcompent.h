@@ -14,7 +14,7 @@ extern char *ota_url;
 extern int isr_gpio0_for;
 extern int isr_gpio5_for;
 extern int isr_gpio14_for;
-extern int isr_gpio3_for;
+extern int isr_gpio12_for;
 extern char *wifi_sta_name;
 
 void nav_load_custom_data();

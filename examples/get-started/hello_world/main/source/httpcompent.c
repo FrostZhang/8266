@@ -13,9 +13,9 @@
 static const char *MQTTZZ = "mqttzz";
 static const char *MQTTMM = "mqttmm";
 static const char *OPEN4 = "open4";
-static const char *OPEN12 = "open12";
 static const char *OPEN13 = "open13";
 static const char *OPEN15 = "open15";
+static const char *OPEN16 = "open16";
 static const char *RESTART = "restart";
 static const char *BDJS = "bdjs";
 static const char *DATA = "data";
@@ -29,9 +29,9 @@ static http_event httpevent;
 static void reset_callback_data()
 {
     httpevent.open4 = -1;
-    httpevent.open12 = -1;
     httpevent.open13 = -1;
     httpevent.open15 = -1;
+    httpevent.open16 = -1;
     httpevent.restart = -1;
     httpevent.bdjs = NULL;
 }
@@ -82,10 +82,6 @@ static esp_err_t index_post_handler(httpd_req_t *req)
             {
                 httpevent.open4 = atoi(value);
             }
-            if (strcmp(key, OPEN12) == 0)
-            {
-                httpevent.open12 = atoi(value);
-            }
             if (strcmp(key, OPEN13) == 0)
             {
                 httpevent.open13 = atoi(value);
@@ -93,6 +89,10 @@ static esp_err_t index_post_handler(httpd_req_t *req)
             if (strcmp(key, OPEN15) == 0)
             {
                 httpevent.open15 = atoi(value);
+            }
+            if (strcmp(key, OPEN16) == 0)
+            {
+                httpevent.open16 = atoi(value);
             }
             if (strcmp(key, RESTART) == 0)
             {
@@ -208,7 +208,7 @@ static esp_err_t htmlData_handle(httpd_req_t *req)
     if (system_get_gpio_state(GPIO_NUM_4))
         sb_append(sb, "open4=1,");
     if (system_get_gpio_state(GPIO_NUM_12))
-        sb_append(sb, "open12=1,");
+        sb_append(sb, "open16=1,");
     if (system_get_gpio_state(GPIO_NUM_13))
         sb_append(sb, "open13=1,");
     if (system_get_gpio_state(GPIO_NUM_15))
@@ -230,7 +230,8 @@ static esp_err_t htmlData_handle(httpd_req_t *req)
     sb_appendf(sb, ",isrio0=%d", isr_gpio0_for);
     sb_appendf(sb, ",isrio5=%d", isr_gpio5_for);
     sb_appendf(sb, ",isrio14=%d", isr_gpio14_for);
-    sb_appendf(sb, ",isrio3=%d", isr_gpio3_for);
+    sb_appendf(sb, ",isrio12=%d", isr_gpio12_for);
+    sb_appendf(sb, ",sta_na=%d", wifi_sta_name);
     char *str = sb_concat(sb);
     esp_err_t err = httpd_resp_send(req, str, strlen(str));
     free(str);
@@ -289,7 +290,7 @@ extern esp_err_t http_server_end()
     if (server != NULL)
     {
         esp_err_t err = stop_webserver(server);
-        server =NULL;
+        server = NULL;
         return err;
     }
     return ESP_FAIL;

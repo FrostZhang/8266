@@ -6,9 +6,9 @@ typedef struct http_event
 {
     int restart;
     int open4;
-    int open12;
     int open13;
     int open15;
+    int open16;
     char* bdjs;
 } http_event;
 

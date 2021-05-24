@@ -29,7 +29,7 @@ char *wifi_sta_name = {0}; //当连接wifi 对方显示我的设备名称
 int isr_gpio0_for;
 int isr_gpio5_for;
 int isr_gpio14_for;
-int isr_gpio3_for;
+int isr_gpio12_for;
 #endif
 
 static void read_wifi()
@@ -194,17 +194,17 @@ static void read_app_config()
         err = nvs_get_i32(mHandleNvsRead, "isr_gpio5_for", &isr_gpio0_for);
         if (err != ESP_OK)
         {
-            isr_gpio5_for = 12;
+            isr_gpio5_for = 13;
+        }
+        err = nvs_get_i32(mHandleNvsRead, "isr_gpio12_for", &isr_gpio0_for);
+        if (err != ESP_OK)
+        {
+            isr_gpio12_for = 15;
         }
         err = nvs_get_i32(mHandleNvsRead, "isr_gpio14_for", &isr_gpio0_for);
         if (err != ESP_OK)
         {
-            isr_gpio14_for = 13;
-        }
-        err = nvs_get_i32(mHandleNvsRead, "isr_gpio3_for", &isr_gpio0_for);
-        if (err != ESP_OK)
-        {
-            isr_gpio3_for = 15;
+            isr_gpio14_for = 16;
         }
 #endif
         memset(strtemp, '\0', 128);
@@ -226,7 +226,7 @@ static void read_app_config()
         isr_gpio0_for = 4;
         isr_gpio5_for = 12;
         isr_gpio14_for = 13;
-        isr_gpio3_for = 15;
+        isr_gpio12_for = 15;
         wifi_sta_name = malloc(12);
         wifi_sta_name = "Asher link";
     }
@@ -261,11 +261,10 @@ extern esp_err_t nav_write_mqtt_baidu_account(char ssid[32], char pass[64])
     esp_err_t err = nvs_open("mqtt", NVS_READWRITE, &mHandleNvsRead);
     if (err == ESP_OK)
     {
-        char strtemp[32] = {0};
+        char strtemp[64] = {0};
         strcpy(strtemp, ssid);
         err = nvs_set_str(mHandleNvsRead, "strtemp", strtemp);
-
-        char strtemp[64] = {0};
+        
         strcpy(strtemp, pass);
         err = nvs_set_str(mHandleNvsRead, "strtemp", strtemp);
     }
@@ -352,7 +351,7 @@ extern esp_err_t nav_write_wifi_sta_name(char sta_name[32])
     if (err == ESP_OK)
     {
         char strtemp[32] = {0};
-        strcpy(strtemp, 32);
+        strcpy(strtemp, sta_name);
         strtemp[strnlen(sta_name, 31)] = '\0';
         err = nvs_set_str(mHandleNvsRead, "wifi_sta_name", strtemp);
         if (wifi_sta_name != NULL)
@@ -378,8 +377,8 @@ extern esp_err_t nav_write_isr_for(int a, int b, int c, int d)
         err = nvs_set_i32(mHandleNvsRead, "isr_gpio5_for", isr_gpio5_for);
         isr_gpio14_for = a;
         err = nvs_set_i32(mHandleNvsRead, "isr_gpio14_for", isr_gpio14_for);
-        isr_gpio3_for = a;
-        err = nvs_set_i32(mHandleNvsRead, "isr_gpio3_for", isr_gpio3_for);
+        isr_gpio12_for = a;
+        err = nvs_set_i32(mHandleNvsRead, "isr_gpio12_for", isr_gpio12_for);
     }
     nvs_close(mHandleNvsRead);
     return err;

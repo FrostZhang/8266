@@ -51,6 +51,7 @@ static xQueueHandle gpio_evt_queue = NULL;
 
 static int gpio0_itr_curstate;
 static int gpio5_itr_curstate;
+static int gpio12_itr_curstate;
 static int gpio14_itr_curstate;
 
 extern int system_get_gpio_state(gpio_num_t num);
@@ -80,6 +81,14 @@ static void gpio_isr_handler(void *arg)
                         return;
                 }
                 gpio5_itr_curstate = level;
+        }
+        else if (gpio_num == GPIO_NUM_12)
+        {
+                if (level == gpio12_itr_curstate)
+                {
+                        return;
+                }
+                gpio12_itr_curstate = level;
         }
         else if (gpio_num == GPIO_NUM_14)
         {
@@ -120,6 +129,15 @@ static void gpio_task(void *arg)
                                 else
                                         gpio_bit |= BIT(isr_gpio5_for);
                         }
+                        else if (io_num == GPIO_NUM_12)
+                        {
+                                if (isr_gpio12_for >= GPIO_NUM_MAX)
+                                        return;
+                                if (system_get_gpio_state(isr_gpio12_for))
+                                        gpio_bit &= ~BIT(isr_gpio12_for);
+                                else
+                                        gpio_bit |= BIT(isr_gpio12_for);
+                        }
                         else if (io_num == GPIO_NUM_14)
                         {
                                 if (isr_gpio14_for >= GPIO_NUM_MAX)
@@ -129,15 +147,7 @@ static void gpio_task(void *arg)
                                 else
                                         gpio_bit |= BIT(isr_gpio14_for);
                         }
-                        else if (io_num == GPIO_NUM_3)
-                        {
-                                if (isr_gpio3_for >= GPIO_NUM_MAX)
-                                        return;
-                                if (system_get_gpio_state(isr_gpio3_for))
-                                        gpio_bit &= ~BIT(isr_gpio3_for);
-                                else
-                                        gpio_bit |= BIT(isr_gpio3_for);
-                        }
+
                         gpio_input(gpio_bit);
                         printf("GPIO[%d] intr\n", io_num);
                         char *send = data_bdjs_reported(CMD, gpio_bit);
@@ -276,7 +286,6 @@ static void LEDC(void *p)
 
 static esp_err_t ir_rx_nec_code_check(ir_rx_nec_data_t nec_code)
 {
-
         if ((nec_code.addr1 != ((~nec_code.addr2) & 0xff)))
         {
                 return ESP_FAIL;
@@ -373,10 +382,6 @@ static void gpio_input(int input)
                 gpio_set_level(GPIO_NUM_4, 1);
         else
                 gpio_set_level(GPIO_NUM_4, 0);
-        if (input & GPIO_Pin_12)
-                gpio_set_level(GPIO_NUM_12, 1);
-        else
-                gpio_set_level(GPIO_NUM_12, 0);
         if (input & GPIO_Pin_13)
                 gpio_set_level(GPIO_NUM_13, 1);
         else
@@ -385,6 +390,10 @@ static void gpio_input(int input)
                 gpio_set_level(GPIO_NUM_15, 1);
         else
                 gpio_set_level(GPIO_NUM_15, 0);
+        if (input & GPIO_Pin_16)
+                gpio_set_level(GPIO_NUM_16, 1);
+        else
+                gpio_set_level(GPIO_NUM_16, 0);
 }
 
 //定时器 回调
@@ -438,14 +447,6 @@ extern esp_err_t system_http_callback(http_event *call)
                         else
                                 temp &= ~GPIO_Pin_4;
                 }
-                isopen = call->open12;
-                if (isopen != -1)
-                {
-                        if (isopen == 1)
-                                temp |= GPIO_Pin_12;
-                        else
-                                temp &= ~GPIO_Pin_12;
-                }
                 isopen = call->open13;
                 if (isopen != -1)
                 {
@@ -461,6 +462,14 @@ extern esp_err_t system_http_callback(http_event *call)
                                 temp |= GPIO_Pin_15;
                         else
                                 temp &= ~GPIO_Pin_15;
+                }
+                isopen = call->open16;
+                if (isopen != -1)
+                {
+                        if (isopen == 1)
+                                temp |= GPIO_Pin_16;
+                        else
+                                temp &= ~GPIO_Pin_16;
                 }
                 if (temp != gpio_bit)
                 {
@@ -580,7 +589,6 @@ static void adc_task()
                 {
                         ESP_LOGI(TAG, "adc read: %d\r\n", adc_data[0]);
                 }
-
                 // ESP_LOGI(TAG, "adc read fast:\r\n");
 
                 // if (ESP_OK == adc_read_fast(adc_data, 100)) {
@@ -588,7 +596,6 @@ static void adc_task()
                 //         printf("%d\n", adc_data[x]);
                 //     }
                 // }
-
                 vTaskDelay(1000 / portTICK_RATE_MS);
         }
 }
