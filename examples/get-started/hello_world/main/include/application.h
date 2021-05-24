@@ -4,6 +4,7 @@
 #include "sb.h"      //stringbuilder
 #include <string.h>  //string 库
 #include <stdlib.h>  //std 库
+// #include <stdint.h>  //std 库
 #include <time.h>  //std 库
 #include "esp_log.h" //标准的esp 打印
 #include "esp_err.h" //标准的esp err 回调
@@ -23,5 +24,9 @@ extern char* XINHAO;
 extern char* OTA_LABLE;
 extern struct tm timeinfo;  //当前时间
 extern int wifi_connect;    //当前是否连了wifi
+#if defined(APP_STRIP_4)||defined(APP_STRIP_3)
+extern uint8_t cus_strip[4];
+extern uint8_t cus_isr[4];
+#endif
 
 #endif

@@ -49,54 +49,32 @@ static int gpio_bit;
 static time_t now = 0;
 static xQueueHandle gpio_evt_queue = NULL;
 
+extern int system_get_gpio_state(gpio_num_t num);
+static void gpio_input_all(int input);
+static int isr_level_temp[] = {0, 0, 0, 0};
+
 static int gpio0_itr_curstate;
 static int gpio5_itr_curstate;
 static int gpio12_itr_curstate;
 static int gpio14_itr_curstate;
 
-extern int system_get_gpio_state(gpio_num_t num);
-static void gpio_input(int input);
-
 static void gpio_isr_handler(void *arg)
 {
         uint32_t gpio_num = (uint32_t)arg;
         int level = gpio_get_level(gpio_num);
-        os_delay_us(200 * 1000);
+        os_delay_us(60000);
         if (gpio_get_level(gpio_num) != level)
-        {
                 return;
-        }
-        if (gpio_num == GPIO_NUM_0)
+        for (uint8_t i = 0; i < sizeof(cus_isr); i++)
         {
-                if (level == gpio0_itr_curstate)
+                if (cus_isr[i] == gpio_num)
                 {
-                        return;
+                        if (level == isr_level_temp[i])
+                        {
+                                return;
+                        }
+                        isr_level_temp[i] = level;
                 }
-                gpio0_itr_curstate = level;
-        }
-        else if (gpio_num == GPIO_NUM_5)
-        {
-                if (level == gpio5_itr_curstate)
-                {
-                        return;
-                }
-                gpio5_itr_curstate = level;
-        }
-        else if (gpio_num == GPIO_NUM_12)
-        {
-                if (level == gpio12_itr_curstate)
-                {
-                        return;
-                }
-                gpio12_itr_curstate = level;
-        }
-        else if (gpio_num == GPIO_NUM_14)
-        {
-                if (level == gpio14_itr_curstate)
-                {
-                        return;
-                }
-                gpio14_itr_curstate = level;
         }
         xQueueSendFromISR(gpio_evt_queue, &gpio_num, NULL);
 }
@@ -148,7 +126,7 @@ static void gpio_task(void *arg)
                                         gpio_bit |= BIT(isr_gpio14_for);
                         }
 
-                        gpio_input(gpio_bit);
+                        gpio_input_all(gpio_bit);
                         printf("GPIO[%d] intr\n", io_num);
                         char *send = data_bdjs_reported(CMD, gpio_bit);
                         mqtt_publish(send);
@@ -167,19 +145,20 @@ static void gpio_task(void *arg)
 //初始化gpio
 static void GpioIni(void)
 {
+#if defined(APP_STRIP_4) || defined(APP_STRIP_3)
         gpio_config_t io_conf;
         io_conf.intr_type = GPIO_INTR_DISABLE; //取消中断
         io_conf.mode = GPIO_MODE_OUTPUT;       //对外输出 控制设备
         io_conf.pull_down_en = 0;
         io_conf.pull_up_en = 0;
-        io_conf.pin_bit_mask = GPIO_Pin_4 | GPIO_Pin_13 | GPIO_Pin_15 | GPIO_Pin_16;
+        io_conf.pin_bit_mask = 0;
+        for (uint8_t i = 0; i < sizeof(cus_strip); i++)
+                io_conf.pin_bit_mask |= BIT(cus_strip[i]);
         gpio_config(&io_conf);
         os_delay_us(20); //延时20MS 等配置完毕
         // vTaskDelay(100 / portTICK_RATE_MS);
-        gpio_set_level(GPIO_NUM_4, 0);
-        gpio_set_level(GPIO_NUM_13, 0);
-        gpio_set_level(GPIO_NUM_15, 0);
-        gpio_set_level(GPIO_NUM_16, 0);
+        for (uint8_t i = 0; i < sizeof(cus_strip); i++)
+                gpio_set_level(cus_strip[i], 0);
 
         // button_handle_t btn_handle = iot_button_create(GPIO_NUM_0, BUTTON_ACTIVE_LOW);
         // iot_button_add_custom_cb(btn_handle, 5, button_press_5s_cb, NULL);
@@ -187,11 +166,12 @@ static void GpioIni(void)
         //gpio0  gpio_set_level1 即使控制引脚输出了高电平,当按下按钮的时候,引脚接地,引脚强制被拉低.
         //PIN_FUNC_SELECT
         //别人写的是 input pull up
-#if defined(APP_STRIP_4) || defined(APP_STRIP_3)
         io_conf.mode = GPIO_MODE_OUTPUT_OD;
         io_conf.pull_down_en = 0;
         io_conf.pull_up_en = 0;
-        io_conf.pin_bit_mask = GPIO_Pin_0 | GPIO_Pin_5 | GPIO_Pin_12 | GPIO_Pin_14;
+        io_conf.pin_bit_mask = 0;
+        for (uint8_t i = 0; i < sizeof(cus_isr); i++)
+                io_conf.pin_bit_mask |= BIT(cus_isr[i]);
         io_conf.intr_type = GPIO_INTR_ANYEDGE;
         gpio_config(&io_conf);
         os_delay_us(20); //延时20MS 等配置完毕
@@ -199,10 +179,16 @@ static void GpioIni(void)
         gpio_evt_queue = xQueueCreate(16, sizeof(uint32_t));
         xTaskCreate(gpio_task, "gpio_task", 2048, NULL, 1, NULL);
         gpio_install_isr_service(0);
-        gpio_isr_handler_add(GPIO_NUM_0, gpio_isr_handler, (void *)GPIO_NUM_0);
-        gpio_isr_handler_add(GPIO_NUM_5, gpio_isr_handler, (void *)GPIO_NUM_5);
-        gpio_isr_handler_add(GPIO_NUM_12, gpio_isr_handler, (void *)GPIO_NUM_12);
-        gpio_isr_handler_add(GPIO_NUM_14, gpio_isr_handler, (void *)GPIO_NUM_14);
+        //不知道会不会闭包
+        for (uint8_t i = 0; i < sizeof(cus_isr); i++)
+        {
+                uint8_t n = i;
+                gpio_isr_handler_add(cus_isr[n], gpio_isr_handler, (void *)cus_isr[n]);
+        }
+        // gpio_isr_handler_add(GPIO_NUM_0, gpio_isr_handler, (void *)GPIO_NUM_0);
+        // gpio_isr_handler_add(GPIO_NUM_5, gpio_isr_handler, (void *)GPIO_NUM_5);
+        // gpio_isr_handler_add(GPIO_NUM_12, gpio_isr_handler, (void *)GPIO_NUM_12);
+        // gpio_isr_handler_add(GPIO_NUM_14, gpio_isr_handler, (void *)GPIO_NUM_14);
 #endif
 }
 
@@ -374,26 +360,61 @@ static void ir_tx_task(void *arg)
         vTaskDelete(NULL);
 }
 
-//解析cmd 这是一个bit 值 包含1~32个开关 对应硬件的 gpio
-static void gpio_input(int input)
+//同时控制所有 cus_strip 的状态
+static void gpio_input_all(int input)
 {
         gpio_bit = input;
-        if (input & GPIO_Pin_4)
-                gpio_set_level(GPIO_NUM_4, 1);
-        else
-                gpio_set_level(GPIO_NUM_4, 0);
-        if (input & GPIO_Pin_13)
-                gpio_set_level(GPIO_NUM_13, 1);
-        else
-                gpio_set_level(GPIO_NUM_13, 0);
-        if (input & GPIO_Pin_15)
-                gpio_set_level(GPIO_NUM_15, 1);
-        else
-                gpio_set_level(GPIO_NUM_15, 0);
-        if (input & GPIO_Pin_16)
-                gpio_set_level(GPIO_NUM_16, 1);
-        else
-                gpio_set_level(GPIO_NUM_16, 0);
+        for (uint8_t i = 0; i < sizeof(cus_strip); i++)
+        {
+                if (input & BIT(cus_strip[i]))
+                {
+                        gpio_set_level(cus_strip[i], 1);
+                }
+                else
+                {
+                        gpio_set_level(cus_strip[i], 0);
+                }
+                
+        }
+}
+
+//控制某一个 cus_strip 的状态
+static void gpio_input_num(gpio_num_t num, int level)
+{
+        if (level != 0 || level != 1)
+                return;
+        for (uint8_t i = 0; i < sizeof(cus_strip); i++)
+        {
+                if (cus_strip[i] == num)
+                {
+                        gpio_set_level(cus_strip[i], level);
+                        return;
+                }
+        }
+        ESP_LOGE(TAG, "%d 不在自定义控制列表", num);
+}
+
+//反转某一个 cus_strip 的状态
+static void gpio_input_reversal(gpio_num_t num)
+{
+        for (uint8_t i = 0; i < sizeof(cus_strip); i++)
+        {
+                if (cus_strip[i] == num)
+                {
+                        if (system_get_gpio_state(num))
+                        {
+                                gpio_bit &= ~BIT(num);
+                                gpio_set_level(cus_strip[i], 0);
+                        }
+                        else
+                        {
+                                gpio_bit |= BIT(num);
+                                gpio_set_level(cus_strip[i], 1);
+                        }
+                        return;
+                }
+        }
+        ESP_LOGE(TAG, "%d 不在自定义控制列表", num);
 }
 
 //定时器 回调
@@ -405,7 +426,7 @@ extern void system_ds_callback(gpio_num_t num, int isopen)
                 gpio_bit &= ~BIT(num);
 
         printf("ds callback %d 回调 %d isopen %d\n", gpio_bit, num, isopen);
-        gpio_input(gpio_bit);
+        gpio_input_all(gpio_bit);
         char *send = data_bdjs_reported(CMD, gpio_bit);
         mqtt_publish(send);
         data_free(send);
@@ -430,7 +451,7 @@ extern esp_err_t system_http_callback(http_event *call)
                 if (ans->cmd != -1)
                 {
                         printf("HTTP get cmd %d \n", ans->cmd);
-                        gpio_input(ans->cmd);
+                        gpio_input_all(ans->cmd);
                         char *send = data_bdjs_reported(CMD, ans->cmd);
                         mqtt_publish(send);
                         data_free(send);
@@ -474,7 +495,7 @@ extern esp_err_t system_http_callback(http_event *call)
                 if (temp != gpio_bit)
                 {
                         gpio_bit = temp;
-                        gpio_input(gpio_bit);
+                        gpio_input_all(gpio_bit);
                         printf("HTTP get cmd %d \n", gpio_bit);
                         char *send = data_bdjs_reported(CMD, gpio_bit);
                         mqtt_publish(send);
@@ -494,7 +515,7 @@ static esp_err_t mqttcallback(char *rec)
         data_res *ans = data_decode_bdjs(rec);
         if (ans->cmd != -1)
         {
-                gpio_input(ans->cmd);
+                gpio_input_all(ans->cmd);
         }
         return ESP_OK;
 }
@@ -534,7 +555,7 @@ extern esp_err_t udpcallback(char *rec, uint len)
         if (ans->cmd != -1)
         {
                 printf("udp get switchdata %d \n", ans->cmd);
-                gpio_input(ans->cmd);
+                gpio_input_all(ans->cmd);
         }
         data_free(data);
         return ESP_OK;

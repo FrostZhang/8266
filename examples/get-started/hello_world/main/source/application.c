@@ -17,6 +17,11 @@ char *OTA_LABLE;
 struct tm timeinfo = {0};
 int wifi_connect;
 
+#if defined(APP_STRIP_4)||defined(APP_STRIP_3)
+uint8_t cus_isr[] = {GPIO_NUM_0, GPIO_NUM_5, GPIO_NUM_12, GPIO_NUM_14};
+uint8_t cus_strip[] = {GPIO_NUM_4, GPIO_NUM_13, GPIO_NUM_15, GPIO_NUM_16};
+#endif
+
 static int hex2dec(char c)
 {
     if ('0' <= c && c <= '9')
