@@ -224,9 +224,9 @@ static void read_app_config()
     else
     {
         isr_gpio0_for = 4;
-        isr_gpio5_for = 12;
-        isr_gpio14_for = 13;
+        isr_gpio5_for = 13;
         isr_gpio12_for = 15;
+        isr_gpio14_for = 16;
         wifi_sta_name = malloc(12);
         wifi_sta_name = "Asher link";
     }
@@ -264,7 +264,7 @@ extern esp_err_t nav_write_mqtt_baidu_account(char ssid[32], char pass[64])
         char strtemp[64] = {0};
         strcpy(strtemp, ssid);
         err = nvs_set_str(mHandleNvsRead, "strtemp", strtemp);
-        
+
         strcpy(strtemp, pass);
         err = nvs_set_str(mHandleNvsRead, "strtemp", strtemp);
     }
