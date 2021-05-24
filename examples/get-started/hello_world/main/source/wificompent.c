@@ -13,7 +13,8 @@
 static const char *TAG = "wifi";
 
 static u8_t wifiretry = 0;
-static char isSCini = 0;
+static char issmartconfigini = 0;
+static char isstart;
 
 static EventGroupHandle_t wifi_event_group;
 static const int CONNECTED_BIT = BIT0;
@@ -23,7 +24,6 @@ static const int Net_SUCCESS = BIT3;
 
 static net_event_callback_t callback;
 ip4_addr_t *LocalIP;
-
 static void smartconfig_callback(smartconfig_status_t status, void *pdata)
 {
         switch (status)
@@ -83,7 +83,7 @@ static void smartconfig_task(void *parm)
         ESP_ERROR_CHECK(esp_smartconfig_set_type(SC_TYPE_ESPTOUCH_AIRKISS));
         ESP_ERROR_CHECK(esp_smartconfig_start(smartconfig_callback));
         int cot = 0;
-        isSCini++;
+        issmartconfigini++;
         while (1)
         {
                 system_pilot_light((cot++) % 2);
@@ -96,7 +96,7 @@ static void smartconfig_task(void *parm)
                 {
                         ESP_LOGI(TAG, "smartconfig over");
                         esp_smartconfig_stop();
-                        isSCini = 0;
+                        issmartconfigini = 0;
                         system_pilot_light(1);
                         vTaskDelete(NULL);
                 }
@@ -119,11 +119,18 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
 {
         /* For accessing reason codes in case of disconnection */
         system_event_info_t *info = &event->event_info;
-        ESP_LOGI(TAG, "wifi handel %d ", event->event_id);
+        ESP_LOGI(TAG, "wifi event_id %d ", event->event_id);
         switch (event->event_id)
         {
         case SYSTEM_EVENT_STA_START:
-                esp_wifi_connect();
+                if (!isstart)
+                {
+                        //wifi 断开的时候 会跳到 start这里 然后 esp_wifi_connect 被调两次
+                        //所以加一个字段 防止被再次调用
+                        isstart = 1;
+                        esp_wifi_disconnect();
+                        esp_wifi_connect();
+                }
                 break;
         case SYSTEM_EVENT_STA_GOT_IP:
                 LocalIP = &info->got_ip.ip_info.ip;
@@ -150,11 +157,12 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
                         {
                                 //断线重连
                                 os_delay_us(5000);
+                                ESP_LOGI(TAG, "尝试连接网络，第%d次", wifiretry);
                                 esp_wifi_connect();
                         }
                         else if (wifiretry == 5)
                         {
-                                if (isSCini > 0)
+                                if (issmartconfigini > 0)
                                 {
                                         //airkiss配网失败
                                         xEventGroupSetBits(wifi_event_group, CONNECTED_FIELD);
@@ -164,9 +172,8 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
                         }
                         else
                         {
-                                ESP_LOGE(TAG,"err wifiretry %d",wifiretry);
+                                ESP_LOGE(TAG, "err wifiretry %d", wifiretry);
                         }
-                        
                 }
                 if (callback != NULL)
                 {
@@ -182,36 +189,13 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
 
 static void initialise_wifi(void)
 {
-        wifi_config_t wifi_config = {0};
-        //navcompent ini wifi custom data
-        // extern char *wifissid;
-        // extern char *wifipassword;
-        if (wifissid != NULL)
-        {
-                strncpy((char *)wifi_config.sta.ssid, wifissid, sizeof(wifi_config.sta.ssid));
-        }
-        else
-        {
-                ESP_LOGI(TAG, "get str ssid error %s", wifissid);
-                strncpy((char *)wifi_config.sta.ssid, CONFIG_ESP_WIFI_SSID, sizeof(wifi_config.sta.ssid));
-                // nvs_set_str(mHandleNvsRead, "ssid", data);
-        }
-
-        if (wifipassword != NULL)
-        {
-                strncpy((char *)wifi_config.sta.password, wifipassword, sizeof(wifi_config.sta.password));
-        }
-        else
-        {
-                ESP_LOGI(TAG, "get str password error");
-                strncpy((char *)wifi_config.sta.password, CONFIG_ESP_WIFI_SSID, sizeof(wifi_config.sta.password));
-                // nvs_set_str(mHandleNvsRead, "ssid", data);
-        }
-
         tcpip_adapter_init();
-
+        tcpip_adapter_set_hostname(TCPIP_ADAPTER_IF_STA, wifi_sta_name);
+        //esp_read_mac
+        wifi_config_t wifi_config = {0};
+        strncpy((char *)wifi_config.sta.ssid, wifissid, sizeof(wifi_config.sta.ssid));
+        strncpy((char *)wifi_config.sta.password, wifipassword, sizeof(wifi_config.sta.ssid));
         wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-
         ESP_ERROR_CHECK(esp_wifi_init(&cfg));
 
         ESP_LOGI(TAG, "ssid %s   pass %s", wifi_config.sta.ssid, wifi_config.sta.password);

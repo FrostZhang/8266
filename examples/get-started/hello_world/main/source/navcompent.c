@@ -20,8 +20,9 @@ char dsdata1[33];
 char dsdata2[33];
 char dsdata3[33];
 
-//ota 升级地址 通常是 http://xxx.xxx/xxx
-char *ota_url = {0};
+char *ota_url = {0}; //ota 升级地址 通常是 http://xxx.xxx/xxx
+
+char *wifi_sta_name = {0}; //当连接wifi 对方显示我的设备名称
 
 #if defined(APP_STRIP_4) || defined(APP_STRIP_3)
 //中断 引发gpio转换状态
@@ -45,10 +46,14 @@ static void read_wifi()
 
         if (err == ESP_OK)
         {
-            //wifissid = ssid;
             wifissid = malloc(sizeof(ssid));
             strncpy(wifissid, ssid, sizeof(ssid));
-            ESP_LOGI(TAG, "get str ssid = %s ", wifissid);
+            ESP_LOGI(TAG, "read wifi ssid = %s ", wifissid);
+        }
+        else
+        {
+            wifissid = CONFIG_ESP_WIFI_SSID;
+            ESP_LOGI(TAG, "read sysconfig wifi ssid = %s ", wifissid);
         }
 
         char pass[64] = {0};
@@ -58,8 +63,19 @@ static void read_wifi()
         {
             wifipassword = malloc(sizeof(pass));
             strncpy(wifipassword, pass, sizeof(pass));
-            ESP_LOGI(TAG, "get str pass = %s", wifipassword);
+            ESP_LOGI(TAG, "read wifi pass = %s", wifipassword);
         }
+        else
+        {
+            wifipassword = CONFIG_ESP_WIFI_PASSWORD;
+            ESP_LOGI(TAG, "read sysconfig wifi pass = %s ", wifipassword);
+        }
+    }
+    else
+    {
+        wifissid = CONFIG_ESP_WIFI_SSID;
+        wifipassword = CONFIG_ESP_WIFI_PASSWORD;
+        ESP_LOGI(TAG, "read sysconfig wifi: %s %s", wifissid, wifipassword);
     }
     nvs_close(mHandleNvsRead);
 }
@@ -70,24 +86,21 @@ static void read_mqtt_baidu()
     esp_err_t err = nvs_open("mqtt", NVS_READWRITE, &mHandleNvsRead);
     if (err == ESP_OK)
     {
-        char username[32] = {0};
-        uint32_t len = sizeof(username);
-        err = nvs_get_str(mHandleNvsRead, "username", username, &len);
+        char strtemp[64] = {0};
+        uint32_t len = 0;
+        err = nvs_get_str(mHandleNvsRead, "username", strtemp, &len);
         if (err == ESP_OK)
         {
-            mqttusername = malloc(sizeof(username));
-            strncpy(mqttusername, username, sizeof(username));
-            ESP_LOGI(TAG, "get str mqttzz = %s", mqttusername);
+            mqttusername = malloc(len + 1);
+            strncpy(mqttusername, strtemp, len);
+            ESP_LOGI(TAG, "get str mqttzz = %s len:%d", mqttusername, strlen(mqttusername));
         }
-
-        char password[64] = {0};
-        len = sizeof(password);
-        err = nvs_get_str(mHandleNvsRead, "password", password, &len);
+        err = nvs_get_str(mHandleNvsRead, "password", strtemp, &len);
         if (err == ESP_OK)
         {
-            mqttpassword = malloc(sizeof(password));
-            strncpy(mqttpassword, password, sizeof(password));
-            ESP_LOGI(TAG, "get str mqttmm = %s", mqttpassword);
+            mqttpassword = malloc(len + 1);
+            strncpy(mqttpassword, strtemp, len);
+            ESP_LOGI(TAG, "get str mqttmm = %s len:%d", mqttpassword, strlen(mqttpassword));
         }
     }
     nvs_close(mHandleNvsRead);
@@ -101,52 +114,51 @@ static void read_ds()
     if (err == ESP_OK)
     {
         //读取 字符串
-        char open[64] = {0};
-        uint32_t len = sizeof(open);
-        err = nvs_get_str(mHandleNvsRead, "dsdata", open, &len);
+        char strtemp[64] = {0};
+        uint32_t len = sizeof(strtemp);
+        err = nvs_get_str(mHandleNvsRead, "dsdata", strtemp, &len);
         if (err == ESP_OK)
         {
-            strncpy(dsdata, open, sizeof(open));
-            dsdata[sizeof(open)] = '\0';
+            strncpy(dsdata, strtemp, len);
+            //dsdata[len + 1] = '\0';
             ESP_LOGI(TAG, "get str dsdata = %s ", dsdata);
         }
         else
         {
-            ESP_LOGE(TAG, "dsdata err %d", err);
+            ESP_LOGE(TAG, "get dsdata err %d", err);
         }
-        err = nvs_get_str(mHandleNvsRead, "dsdata1", open, &len);
+        err = nvs_get_str(mHandleNvsRead, "dsdata1", strtemp, &len);
         if (err == ESP_OK)
         {
-            strncpy(dsdata1, open, sizeof(open));
-            dsdata1[sizeof(open)] = '\0';
+            strncpy(dsdata1, strtemp, len);
+            //dsdata1[sizeof(strtemp)] = '\0';
             ESP_LOGI(TAG, "get str dsdata1 = %s ", dsdata1);
         }
         else
         {
-            ESP_LOGE(TAG, "dsdata1 err %d", err);
+            ESP_LOGE(TAG, "get dsdata1 err %d", err);
         }
-        err = nvs_get_str(mHandleNvsRead, "dsdata2", open, &len);
+        err = nvs_get_str(mHandleNvsRead, "dsdata2", strtemp, &len);
         if (err == ESP_OK)
         {
-            strncpy(dsdata2, open, sizeof(open));
-            dsdata2[sizeof(open)] = '\0';
+            strncpy(dsdata2, strtemp, len);
+            //dsdata2[sizeof(strtemp)] = '\0';
             ESP_LOGI(TAG, "get str dsdata2 = %s ", dsdata2);
         }
         else
         {
-            ESP_LOGE(TAG, "dsdata2 err %d", err);
+            ESP_LOGE(TAG, "get dsdata2 err %d", err);
         }
-
-        err = nvs_get_str(mHandleNvsRead, "dsdata3", open, &len);
+        err = nvs_get_str(mHandleNvsRead, "dsdata3", strtemp, &len);
         if (err == ESP_OK)
         {
-            strncpy(dsdata3, open, sizeof(open));
-            dsdata3[sizeof(open)] = '\0';
+            strncpy(dsdata3, strtemp, len);
+            //dsdata3[sizeof(strtemp)] = '\0';
             ESP_LOGI(TAG, "get str dsdata3 = %s ", dsdata3);
         }
         else
         {
-            ESP_LOGE(TAG, "dsdata3 err %d", err);
+            ESP_LOGE(TAG, "get dsdata3 err %d", err);
         }
     }
     else
@@ -163,13 +175,14 @@ static void read_app_config()
     esp_err_t err = nvs_open("appconfig", NVS_READWRITE, &mHandleNvsRead);
     if (err == ESP_OK)
     {
-        char ota_url_temp[128] = {0};
-        uint32_t len = sizeof(ota_url_temp);
-        err = nvs_get_str(mHandleNvsRead, "ota_url", ota_url_temp, &len);
+        char strtemp[128] = {0};
+        memset(strtemp, '\0', 128);
+        uint32_t len = 0;
+        err = nvs_get_str(mHandleNvsRead, "ota_url", strtemp, &len);
         if (err == ESP_OK)
         {
-            ota_url = malloc(sizeof(ota_url_temp));
-            strncpy(ota_url, ota_url_temp, sizeof(ota_url_temp));
+            ota_url = malloc(len + 1);
+            strncpy(ota_url, strtemp, len);
             ESP_LOGI(TAG, "get str ota_url = %s", ota_url);
         }
 #if defined(APP_STRIP_4) || defined(APP_STRIP_3)
@@ -194,6 +207,19 @@ static void read_app_config()
             isr_gpio3_for = 15;
         }
 #endif
+        memset(strtemp, '\0', 128);
+        err = nvs_get_str(mHandleNvsRead, "wifi_sta_name", strtemp, &len);
+        if (err == ESP_OK)
+        {
+            wifi_sta_name = malloc(len + 1);
+            strncpy(wifi_sta_name, strtemp, len);
+            ESP_LOGI(TAG, "get str wifi_sta_name = %s", wifi_sta_name);
+        }
+        else
+        {
+            wifi_sta_name = malloc(12);
+            wifi_sta_name = "Asher link";
+        }
     }
     else
     {
@@ -201,6 +227,8 @@ static void read_app_config()
         isr_gpio5_for = 12;
         isr_gpio14_for = 13;
         isr_gpio3_for = 15;
+        wifi_sta_name = malloc(12);
+        wifi_sta_name = "Asher link";
     }
     nvs_close(mHandleNvsRead);
 }
@@ -233,13 +261,13 @@ extern esp_err_t nav_write_mqtt_baidu_account(char ssid[32], char pass[64])
     esp_err_t err = nvs_open("mqtt", NVS_READWRITE, &mHandleNvsRead);
     if (err == ESP_OK)
     {
-        char username[32] = {0};
-        strcpy(username, ssid);
-        err = nvs_set_str(mHandleNvsRead, "username", username);
+        char strtemp[32] = {0};
+        strcpy(strtemp, ssid);
+        err = nvs_set_str(mHandleNvsRead, "strtemp", strtemp);
 
-        char password[64] = {0};
-        strcpy(password, pass);
-        err = nvs_set_str(mHandleNvsRead, "password", password);
+        char strtemp[64] = {0};
+        strcpy(strtemp, pass);
+        err = nvs_set_str(mHandleNvsRead, "strtemp", strtemp);
     }
     nvs_close(mHandleNvsRead);
     return err;
@@ -252,37 +280,36 @@ extern esp_err_t nav_write_ds(char dso[32], int num)
     esp_err_t err = nvs_open("dstime", NVS_READWRITE, &mHandleNvsRead);
     if (err == ESP_OK)
     {
-        char open[33] = {0};
-        strncpy(open, dso, 32);
-        //补个0
-        open[32] = '\0';
+        char strtemp[33] = {0};
+        strncpy(strtemp, dso, 32);
+        strtemp[32] = '\0';
         if (num == 4)
         {
-            err = nvs_set_str(mHandleNvsRead, "dsdata", open);
-            strncpy(dsdata, open, 32);
+            err = nvs_set_str(mHandleNvsRead, "dsdata", strtemp);
+            strncpy(dsdata, strtemp, 32);
             dsdata[32] = '\0';
-            ESP_LOGI(TAG, "write_ds dsdata = %s", open);
+            ESP_LOGI(TAG, "write_ds dsdata = %s", strtemp);
         }
         else if (num == 12)
         {
-            err = nvs_set_str(mHandleNvsRead, "dsdata1", open);
-            strncpy(dsdata1, open, 32);
+            err = nvs_set_str(mHandleNvsRead, "dsdata1", strtemp);
+            strncpy(dsdata1, strtemp, 32);
             dsdata1[32] = '\0';
-            ESP_LOGI(TAG, "write_ds dsdata1 = %s", open);
+            ESP_LOGI(TAG, "write_ds dsdata1 = %s", strtemp);
         }
         else if (num == 13)
         {
-            err = nvs_set_str(mHandleNvsRead, "dsdata2", open);
-            strncpy(dsdata2, open, 32);
+            err = nvs_set_str(mHandleNvsRead, "dsdata2", strtemp);
+            strncpy(dsdata2, strtemp, 32);
             dsdata2[32] = '\0';
-            ESP_LOGI(TAG, "write_ds dsdata2 = %s", open);
+            ESP_LOGI(TAG, "write_ds dsdata2 = %s", strtemp);
         }
         else if (num == 15)
         {
-            err = nvs_set_str(mHandleNvsRead, "dsdata3", open);
-            strncpy(dsdata3, open, 32);
+            err = nvs_set_str(mHandleNvsRead, "dsdata3", strtemp);
+            strncpy(dsdata3, strtemp, 32);
             dsdata3[32] = '\0';
-            ESP_LOGI(TAG, "write_ds dsdata3 = %s", open);
+            ESP_LOGI(TAG, "write_ds dsdata3 = %s", strtemp);
         }
         else
         {
@@ -302,15 +329,36 @@ extern esp_err_t nav_write_ota(char otapath[128])
     esp_err_t err = nvs_open("appconfig", NVS_READWRITE, &mHandleNvsRead);
     if (err == ESP_OK)
     {
-        char ota_url_temp[128] = {0};
-        strcpy(ota_url_temp, otapath);
-        ota_url_temp[strnlen(otapath, 127)] = '\0';
-        err = nvs_set_str(mHandleNvsRead, "ota_url", ota_url_temp);
+        char strtemp[128] = {0};
+        strcpy(strtemp, otapath);
+        strtemp[strnlen(otapath, 127)] = '\0';
+        err = nvs_set_str(mHandleNvsRead, "ota_url", strtemp);
 
         if (ota_url != NULL)
             free(ota_url);
         ota_url = malloc(128);
-        strcpy(ota_url, ota_url_temp);
+        strcpy(ota_url, strtemp);
+    }
+    nvs_close(mHandleNvsRead);
+    return err;
+}
+
+//写入 wifi station name
+extern esp_err_t nav_write_wifi_sta_name(char sta_name[32])
+{
+    nvs_handle mHandleNvsRead;
+    //将airkiss获取的wifi写入内存
+    esp_err_t err = nvs_open("appconfig", NVS_READWRITE, &mHandleNvsRead);
+    if (err == ESP_OK)
+    {
+        char strtemp[32] = {0};
+        strcpy(strtemp, 32);
+        strtemp[strnlen(sta_name, 31)] = '\0';
+        err = nvs_set_str(mHandleNvsRead, "wifi_sta_name", strtemp);
+        if (wifi_sta_name != NULL)
+            free(wifi_sta_name);
+        wifi_sta_name = malloc(strnlen(sta_name, 32) + 1);
+        strncpy(wifi_sta_name, strtemp, 31);
     }
     nvs_close(mHandleNvsRead);
     return err;

@@ -51,25 +51,68 @@
             </tr>
         </table>
     </form>
+
+    <h3>WIFI</h3>
+    <form id="wifi" method="post">
+        <table>
+            <tr>
+                <td>网络名称:</td>
+                <td>
+                    <input id="ssid" name="ssid" type="Text" maxlength="20"></input>
+                </td>
+            </tr>
+            <tr>
+                <td>网络密钥:</td>
+                <td>
+                    <input id="pass" name="pass" type="password" maxlength="30"></input>
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>
+                    <button type="submit">连接（重启设备）</button>
+                </td>
+            </tr>
+        </table>
+    </form>
+
+    <h3>设备名称</h3>
+    <form id="wifi" method="post">
+        <table>
+            <tr>
+                <td></td>
+                <td>
+                    <input id="sta_na" name="sta_na" type="Text" maxlength="20"></input>
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>
+                    <button type="submit">更新</button>
+                </td>
+            </tr>
+        </table>
+    </form>
+
     <h3>MQTT（开发者平台）</h3>
     <form id="mqtt" method="post">
         <table>
             <tr>
                 <td>MQTT ZZ:</td>
                 <td>
-                    <input id="mqttzz" name="mqttzz" type="Text"></input>
+                    <input id="mqttzz" name="mqttzz" type="Text" maxlength="25"></input>
                 </td>
             </tr>
             <tr>
                 <td>MQTT MM:</td>
                 <td>
-                    <input id="mqttmm" name="mqttmm" type="password"></input>
+                    <input id="mqttmm" name="mqttmm" type="password" maxlength="50"></input>
                 </td>
             </tr>
             <tr>
                 <td></td>
                 <td>
-                    <button type="submit">更新配置</button>
+                    <button type="submit">连接（重启设备）</button>
                 </td>
             </tr>
         </table>
@@ -80,13 +123,13 @@
             <tr>
                 <td>地址:</td>
                 <td>
-                    <input id="otapath" name="otapath" type="Text"></input>
+                    <input id="otapath" name="otapath" type="Text" maxlength="110"></input>
                 </td>
             </tr>
             <tr>
                 <td></td>
                 <td>
-                    <button type="submit">更新地址</button>
+                    <button type="submit">检测（重启设备）</button>
                 </td>
             </tr>
         </table>
@@ -121,7 +164,7 @@
             <tr>
                 <td></td>
                 <td>
-                    <button type="submit">更新开关配置</button>
+                    <button type="submit">更新</button>
                 </td>
             </tr>
         </table>
@@ -220,20 +263,29 @@
                         } if (kv[0] == "otachoose") {
                             var o = document.getElementById("otachoose");
                             o.value = kv[1];
-                        }if (kv[0] == "otapath") {
+                        } if (kv[0] == "otapath") {
                             var o = document.getElementById("otapath");
                             o.value = kv[1];
-                        }if (kv[0] == "isrio0") {
+                        } if (kv[0] == "isrio0") {
                             var o = document.getElementById("isrio0");
                             o.value = kv[1];
-                        }if (kv[0] == "isrio5") {
+                        } if (kv[0] == "isrio5") {
                             var o = document.getElementById("isrio5");
                             o.value = kv[1];
-                        }if (kv[0] == "isrio14") {
+                        } if (kv[0] == "isrio14") {
                             var o = document.getElementById("isrio14");
                             o.value = kv[1];
-                        }if (kv[0] == "isrio3") {
+                        } if (kv[0] == "isrio3") {
                             var o = document.getElementById("isrio3");
+                            o.value = kv[1];
+                        }if (kv[0] == "ssid") {
+                            var o = document.getElementById("ssid");
+                            o.value = kv[1];
+                        }if (kv[0] == "pass") {
+                            var o = document.getElementById("pass");
+                            o.value = kv[1];
+                        }if (kv[0] == "sta_na") {
+                            var o = document.getElementById("sta_na");
                             o.value = kv[1];
                         }
                     });

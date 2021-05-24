@@ -176,11 +176,12 @@ static void GpioIni(void)
         //boot press
         //gpio0  gpio_set_level1 即使控制引脚输出了高电平,当按下按钮的时候,引脚接地,引脚强制被拉低.
         //PIN_FUNC_SELECT
+        //别人写的是 input pull up
 #if defined(APP_STRIP_4) || defined(APP_STRIP_3)
         io_conf.mode = GPIO_MODE_OUTPUT_OD;
         io_conf.pull_down_en = 0;
         io_conf.pull_up_en = 0;
-        io_conf.pin_bit_mask = GPIO_Pin_0 | GPIO_Pin_5 | GPIO_Pin_12 |GPIO_Pin_14;
+        io_conf.pin_bit_mask = GPIO_Pin_0 | GPIO_Pin_5 | GPIO_Pin_12 | GPIO_Pin_14;
         io_conf.intr_type = GPIO_INTR_ANYEDGE;
         gpio_config(&io_conf);
         os_delay_us(20); //延时20MS 等配置完毕
@@ -547,9 +548,9 @@ static esp_err_t wifi_callback(net_callback call)
                 data_initialize();
                 ota_check(ota_callback_handel);
         }
-        else if(call == WIFI_Disconnect)
+        else if (call == WIFI_Disconnect)
         {
-                ESP_LOGE(TAG,"WiFi中断 断开 sntp htpp mqtt");
+                ESP_LOGE(TAG, "WiFi中断 断开 sntp htpp mqtt");
                 sntpcompent_stop();
                 http_server_end();
                 mqtt_stop();
@@ -623,7 +624,6 @@ void app_main()
 {
         print_sys();
         GpioIni();
-
         nav_load_custom_data();
         wifi_connect_start(wifi_callback);
 

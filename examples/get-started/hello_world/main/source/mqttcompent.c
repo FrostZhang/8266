@@ -156,9 +156,7 @@ extern esp_err_t mqtt_app_start(mqtt_callback_t call)
                 return ESP_FAIL;
         }
         callback = call;
-
-        ESP_LOGI(TAG, "mqttusername %s %d", mqttusername, strlen(mqttusername));
-        ESP_LOGI(TAG, "mqttpassword %s %d", mqttpassword, strlen(mqttpassword));
+        
         ini_mqtt_baidu(mqttusername);
 
         //xEventGroupWaitBits(wifi_event_group, Net_SUCCESS,true, true, portMAX_DELAY);
