@@ -12,6 +12,6 @@ typedef enum
 } net_callback;
 
 typedef esp_err_t (*net_event_callback_t)(net_callback callback);
-void wifi_connect_start(net_event_callback_t callback);
+void wifi_connect_start();
 
 #endif

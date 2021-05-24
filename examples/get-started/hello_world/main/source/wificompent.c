@@ -87,7 +87,7 @@ static void smartconfig_task(void *parm)
         while (1)
         {
                 system_pilot_light((cot++) % 2);
-                uxBits = xEventGroupWaitBits(wifi_event_group, CONNECTED_FIELD | CONNECTED_BIT | ESPTOUCH_DONE_BIT, true, false, 100); //portMAX_DELAY
+                uxBits = xEventGroupWaitBits(wifi_event_group, CONNECTED_FIELD | CONNECTED_BIT | ESPTOUCH_DONE_BIT, true, false, 1000 / portTICK_RATE_MS);
                 if (uxBits & CONNECTED_BIT)
                 {
                         ESP_LOGI(TAG, "WiFi Connected to ap by smartconfig");
@@ -122,15 +122,15 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
         ESP_LOGI(TAG, "wifi event_id %d ", event->event_id);
         switch (event->event_id)
         {
+        case SYSTEM_EVENT_WIFI_READY:
+                esp_wifi_disconnect();
+                break;
         case SYSTEM_EVENT_STA_START:
-                if (!isstart)
-                {
-                        //wifi 断开的时候 会跳到 start这里 然后 esp_wifi_connect 被调两次
-                        //所以加一个字段 防止被再次调用
-                        isstart = 1;
-                        esp_wifi_disconnect();
-                        esp_wifi_connect();
-                }
+                //wifi 断开的时候 会跳到 start这里 然后 esp_wifi_connect 被调两次
+                //所以加一个字段 防止被再次调用
+                ESP_LOGI(TAG, "station 模式准备好了，开始连接wifi");
+                isstart = 1;
+                esp_wifi_connect();
                 break;
         case SYSTEM_EVENT_STA_GOT_IP:
                 LocalIP = &info->got_ip.ip_info.ip;
@@ -142,6 +142,7 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
                         callback(WIFI_CONNNECT);
                 break;
         case SYSTEM_EVENT_STA_DISCONNECTED:
+                wifi_connect = 0;
                 ESP_LOGE(TAG, "Disconnect reason : %d", info->disconnected.reason);
                 if (info->disconnected.reason == WIFI_REASON_BASIC_RATE_NOT_SUPPORT)
                 {
@@ -152,12 +153,17 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
                 }
                 else
                 {
+                        if (callback != NULL)
+                        {
+                                ESP_LOGE(TAG, "wifi send Disconnect");
+                                callback(WIFI_Disconnect);
+                        }
                         wifiretry++;
                         if (wifiretry < 5)
                         {
                                 //断线重连
-                                os_delay_us(5000);
-                                ESP_LOGI(TAG, "尝试连接网络，第%d次", wifiretry);
+                                ESP_LOGI(TAG, "5秒尝试连接网络，第%d次", wifiretry);
+                                vTaskDelay(5000 / portTICK_RATE_MS);
                                 esp_wifi_connect();
                         }
                         else if (wifiretry == 5)
@@ -174,11 +180,6 @@ static esp_err_t event_handler(void *ctx, system_event_t *event)
                         {
                                 ESP_LOGE(TAG, "err wifiretry %d", wifiretry);
                         }
-                }
-                if (callback != NULL)
-                {
-                        ESP_LOGE(TAG, "wifi send Disconnect");
-                        callback(WIFI_Disconnect);
                 }
                 break;
         default:

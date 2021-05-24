@@ -4,6 +4,7 @@
 #include "esp_system.h"
 #include "esp_ota_ops.h"
 
+
 #define BURSIZE 2048
 #if defined(APP_STRIP_4)
 char *XINHAO = "strip_4";
@@ -16,6 +17,7 @@ char *XINHAO = "ir_relay";
 char *OTA_LABLE;
 struct tm timeinfo = {0};
 int wifi_connect;
+xQueueHandle wifi_queue;
 
 #if defined(APP_STRIP_4)||defined(APP_STRIP_3)
 uint8_t cus_isr[] = {GPIO_NUM_0, GPIO_NUM_5, GPIO_NUM_12, GPIO_NUM_14};

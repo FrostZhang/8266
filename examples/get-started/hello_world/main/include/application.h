@@ -1,6 +1,9 @@
 #ifndef APPLICATION_H
 #define APPLICATION_H
 
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "freertos/queue.h"
 #include "sb.h"      //stringbuilder
 #include <string.h>  //string 库
 #include <stdlib.h>  //std 库
@@ -28,5 +31,7 @@ extern int wifi_connect;    //当前是否连了wifi
 extern uint8_t cus_strip[4];
 extern uint8_t cus_isr[4];
 #endif
+
+extern xQueueHandle wifi_queue;
 
 #endif

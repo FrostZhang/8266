@@ -22,15 +22,16 @@ static const char *getAcc = "$baidu/iot/shadow/%s/get/accepted";
 static const char *get = "$baidu/iot/shadow/%s/get";
 static const char *up = "$baidu/iot/shadow/%s/update";
 
-static char *uptopic = {0};
-static char *userid = {0};
+static char *uptopic = {0};     //"$baidu/iot/shadow/Asher8266/update";
+static char *userid = {0};      //Asher8266
 //             .username = "t0eff28/Asher8266",
 //             .password = "uEzltFewLsAaMQnZ",
 static mqtt_callback_t callback;
 static int isConnect;
+static int isregist;
 
 //连接成功后 注册百度相关的topic
-static void regist()
+static void regist_baidu()
 {
         char sub[56] = {0};
         memset(sub, '\0', 56);
@@ -43,17 +44,17 @@ static void regist()
         char *send = data_bdjs_request(userid);
         memset(sub, '\0', 56);
         sprintf(sub, get, userid);
-        //esp_mqtt_client_subscribe(client, sub, 0);
+        //向系统请求 服务器缓存的 数据
         esp_mqtt_client_publish(client, sub, send, 0, 0, 0);
         data_free(send);
 
-        vTaskDelay(50 / portTICK_RATE_MS);
-        //extern ip4_addr_t *localIP;
+        vTaskDelay(1000 / portTICK_RATE_MS);
+        //发送ip 公布上线
         send = data_bdjs_reported_string(LOCAL_IP, ip4addr_ntoa(LocalIP));
         ESP_LOGI(TAG, "send ip %s", send);
         esp_mqtt_client_publish(client, uptopic, send, 0, 0, 0);
         data_free(send);
-        data_free(userid);
+        //data_free(userid);
 }
 
 static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
@@ -65,12 +66,14 @@ static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
         {
         case MQTT_EVENT_CONNECTED:
                 ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
-                regist();
+                regist_baidu();
                 isConnect = 1;
                 break;
         case MQTT_EVENT_DISCONNECTED:
                 isConnect = 0;
                 ESP_LOGI(TAG, "MQTT_EVENT_DISCONNECTED");
+                // if (!wifi_connect)
+                //         mqtt_stop();
                 break;
         case MQTT_EVENT_SUBSCRIBED:
 
@@ -85,7 +88,7 @@ static esp_err_t mqtt_event_handler(esp_mqtt_event_handle_t event)
                 //printf("TOPIC=%.*s\r\n", event->topic_len, event->topic);
                 event->data[event->data_len] = '\0';
                 callback(event->data);
-                printf("mqtt Stack %ld", uxTaskGetStackHighWaterMark(NULL));
+                printf("mqtt Stack %ld\n", uxTaskGetStackHighWaterMark(NULL));
                 break;
         case MQTT_EVENT_ERROR:
                 ESP_LOGI(TAG, "MQTT_EVENT_ERROR");
@@ -104,12 +107,12 @@ extern int mqtt_publish(const char *send)
         return esp_mqtt_client_publish(client, uptopic, send, 0, 0, 0);
 }
 
-//停止mqtt
+//停止mqtt 有bug  不要调用
 extern void mqtt_stop()
 {
         if (client != NULL)
         {
-                esp_mqtt_client_stop(client);
+                ESP_LOGI(TAG, "断开mqtt");
                 esp_mqtt_client_destroy(client);
                 client = NULL;
         }
@@ -146,8 +149,11 @@ static void ini_mqtt_baidu(const char *mqttusername)
 //开始mqtt
 extern esp_err_t mqtt_app_start(mqtt_callback_t call)
 {
-        mqtt_stop();
-
+        if (client != NULL)
+        {
+                ESP_LOGE(TAG, "alreay have mqttclient !");
+                return ESP_FAIL;
+        }
         extern char *mqttusername;
         extern char *mqttpassword;
         if (mqttusername == NULL || mqttpassword == NULL)
@@ -156,7 +162,7 @@ extern esp_err_t mqtt_app_start(mqtt_callback_t call)
                 return ESP_FAIL;
         }
         callback = call;
-        
+
         ini_mqtt_baidu(mqttusername);
 
         //xEventGroupWaitBits(wifi_event_group, Net_SUCCESS,true, true, portMAX_DELAY);
@@ -171,6 +177,7 @@ extern esp_err_t mqtt_app_start(mqtt_callback_t call)
             .lwt_topic = uptopic,
             .lwt_msg = lwt_ms,
             .lwt_msg_len = strlen(lwt_ms),
+            .task_stack = 1024*3
             // .user_context = (void *)your_context
         };
 

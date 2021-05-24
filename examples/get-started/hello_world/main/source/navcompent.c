@@ -87,7 +87,7 @@ static void read_mqtt_baidu()
     if (err == ESP_OK)
     {
         char strtemp[64] = {0};
-        uint32_t len = 0;
+        uint32_t len = 32;
         err = nvs_get_str(mHandleNvsRead, "username", strtemp, &len);
         if (err == ESP_OK)
         {
@@ -95,6 +95,11 @@ static void read_mqtt_baidu()
             strncpy(mqttusername, strtemp, len);
             ESP_LOGI(TAG, "get str mqttzz = %s len:%d", mqttusername, strlen(mqttusername));
         }
+        else
+        {
+            ESP_LOGE(TAG, "get mattzz err %d", err);
+        }
+        
         err = nvs_get_str(mHandleNvsRead, "password", strtemp, &len);
         if (err == ESP_OK)
         {

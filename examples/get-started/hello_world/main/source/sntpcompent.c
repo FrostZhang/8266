@@ -91,8 +91,8 @@ extern void sntpcompent_stop()
 {
     if (handel != NULL)
     {
+        ESP_LOGI(TAG, "断开sntp");
         sntp_stop();
-        vTaskDelete(handel);
         handel = NULL;
     }
 }
@@ -100,5 +100,5 @@ extern void sntpcompent_stop()
 //获取时间 也是在检测是否能连接互联网
 extern void sntp_start(sntp_event_callback_t event_handle)
 {
-    xTaskCreate(sntp_task, "sntptask", 1024*3, event_handle, 8, &handel);
+    xTaskCreate(sntp_task, "sntptask", 1024 * 3, event_handle, 8, &handel);
 }

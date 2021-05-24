@@ -160,6 +160,9 @@ static void GpioIni(void)
         for (uint8_t i = 0; i < sizeof(cus_strip); i++)
                 gpio_set_level(cus_strip[i], 0);
 
+        io_conf.pin_bit_mask = GPIO_Pin_2;
+        gpio_config(&io_conf);
+        gpio_set_level(GPIO_NUM_2, 1);  //
         // button_handle_t btn_handle = iot_button_create(GPIO_NUM_0, BUTTON_ACTIVE_LOW);
         // iot_button_add_custom_cb(btn_handle, 5, button_press_5s_cb, NULL);
         //boot press
@@ -374,7 +377,6 @@ static void gpio_input_all(int input)
                 {
                         gpio_set_level(cus_strip[i], 0);
                 }
-                
         }
 }
 
@@ -533,7 +535,7 @@ static esp_err_t sntp_connect_callback(sntp_event *call)
                 {
                         ds_check(call->timeinfo);
                         print_free_heap_size();
-                        printf("snt Stack %ld", uxTaskGetStackHighWaterMark(NULL));
+                        printf("snt Stack %ld\n", uxTaskGetStackHighWaterMark(NULL));
                 }
         }
         else if (call->mestype == SNTP_EVENT_CONNNECTFAILED)
@@ -580,10 +582,10 @@ static esp_err_t wifi_callback(net_callback call)
         }
         else if (call == WIFI_Disconnect)
         {
-                ESP_LOGE(TAG, "WiFi中断 断开 sntp htpp mqtt");
+                ESP_LOGE(TAG, "收到WiFi断开消息");
                 sntpcompent_stop();
-                http_server_end();
-                mqtt_stop();
+                //os_delay_us(2000);
+                //http_server_end();  不能停  有bug  mqtt 也不能停
         }
         return ESP_OK;
 }

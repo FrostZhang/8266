@@ -118,7 +118,7 @@ static esp_err_t index_post_handler(httpd_req_t *req)
     const char *resp_str = (const char *)req->user_ctx;
     httpd_resp_send_chunk(req, resp_str, strlen(resp_str));
     httpd_resp_send_chunk(req, NULL, 0);
-    printf("http Stack %ld", uxTaskGetStackHighWaterMark(NULL));
+    printf("http Stack %ld\n", uxTaskGetStackHighWaterMark(NULL));
     return ESP_OK;
 }
 
@@ -248,7 +248,7 @@ static httpd_uri_t htmlData = {
 static httpd_handle_t start_webserver(void)
 {
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
-    config.stack_size = 4096;
+    config.stack_size = 1024*10;
     // Start the httpd server
     ESP_LOGI(TAG, "Starting server on port: '%d'", config.server_port);
     if (httpd_start(&server, &config) == ESP_OK)
@@ -276,6 +276,8 @@ static esp_err_t stop_webserver(httpd_handle_t server)
 //开启 http server
 extern esp_err_t http_server_start()
 {
+    if (server != NULL)
+        return;
     httpd_handle_t handle = start_webserver();
     if (handle != NULL)
     {
@@ -289,6 +291,7 @@ extern esp_err_t http_server_end()
 {
     if (server != NULL)
     {
+        ESP_LOGI(TAG, "断开http");
         esp_err_t err = stop_webserver(server);
         server = NULL;
         return err;
