@@ -12,6 +12,7 @@
 static const char *TAG = "ota";
 static ota_callback callback;
 static TaskHandle_t handle;
+static int check_count;
 static esp_err_t _http_event_handler(esp_http_client_event_t *evt)
 {
     switch (evt->event_id)
@@ -45,7 +46,7 @@ static void ota_task(void *pvParameter)
 {
     const esp_partition_t *running = esp_ota_get_running_partition();
     ESP_LOGI(TAG, "running partition: %s\n", running->label);
-    OTA_LABLE= strdup(running->label);
+    OTA_LABLE = strdup(running->label);
 
     ESP_LOGI(TAG, "Start to Connect to Server....");
     char *path = ota_url;
@@ -60,11 +61,11 @@ static void ota_task(void *pvParameter)
         return;
     }
     char *url = malloc(strlen(path) + 18);
-    memset(url, '\0',strlen(path) + 18);
+    memset(url, '\0', strlen(path) + 18);
     strncpy(url, path, strlen(path));
 
     const esp_partition_t *notruning = esp_ota_get_next_update_partition(running);
-    strcat(url,notruning->label);
+    strcat(url, notruning->label);
     ESP_LOGI(TAG, "begin download: %s", url);
 
     esp_http_client_config_t config = {
@@ -90,6 +91,15 @@ static void ota_task(void *pvParameter)
 
 extern void ota_check(ota_callback call)
 {
-    callback = call;
-    xTaskCreate(ota_task, "ota_task", 8192, NULL, 5, &handle);
+    if (check_count == 0)
+    {
+        check_count++;
+        callback = call;
+        xTaskCreate(ota_task, "ota_task", 8192, NULL, 5, &handle);
+    }
+    else
+    {
+        ESP_LOGI(TAG ,"already check ota version!");
+        call();
+    }
 }

@@ -28,25 +28,25 @@
             <tr>
                 <td>开关1:</td>
                 <td>
-                    <button id="open4" name="open4" type="submit" value="1">已关闭</button>
+                    <button id="open4" type="submit" value="1">已关闭</button>
                 </td>
             </tr>
             <tr>
                 <td>开关2:</td>
                 <td>
-                    <button id="open13" name="open13" type="submit" value="1">已关闭</button>
+                    <button id="open13" type="submit" value="1">已关闭</button>
                 </td>
             </tr>
             <tr>
                 <td>开关3:</td>
                 <td>
-                    <button id="open15" name="open15" type="submit" value="1">已关闭</button>
+                    <button id="open15" type="submit" value="1">已关闭</button>
                 </td>
             </tr>
             <tr>
                 <td>开关4:</td>
                 <td>
-                    <button id="open16" name="open16" type="submit" value="1">已关闭</button>
+                    <button id="open16" type="submit" value="1">已关闭</button>
                 </td>
             </tr>
         </table>
@@ -58,13 +58,13 @@
             <tr>
                 <td>网络名称:</td>
                 <td>
-                    <input id="ssid" name="ssid" type="Text" maxlength="20"></input>
+                    <input id="ssid" type="Text" maxlength="20"></input>
                 </td>
             </tr>
             <tr>
                 <td>网络密钥:</td>
                 <td>
-                    <input id="pass" name="pass" type="password" maxlength="30"></input>
+                    <input id="pass" type="password" maxlength="30"></input>
                 </td>
             </tr>
             <tr>
@@ -82,7 +82,7 @@
             <tr>
                 <td></td>
                 <td>
-                    <input id="sta_na" name="sta_na" type="Text" maxlength="20"></input>
+                    <input id="sta_na" type="Text" maxlength="20"></input>
                 </td>
             </tr>
             <tr>
@@ -100,13 +100,13 @@
             <tr>
                 <td>MQTT ZZ:</td>
                 <td>
-                    <input id="mqttzz" name="mqttzz" type="Text" maxlength="25"></input>
+                    <input id="mqttzz" type="Text" maxlength="25"></input>
                 </td>
             </tr>
             <tr>
                 <td>MQTT MM:</td>
                 <td>
-                    <input id="mqttmm" name="mqttmm" type="password" maxlength="50"></input>
+                    <input id="mqttmm" type="password" maxlength="50"></input>
                 </td>
             </tr>
             <tr>
@@ -123,7 +123,7 @@
             <tr>
                 <td>地址:</td>
                 <td>
-                    <input id="otapath" name="otapath" type="Text" maxlength="110"></input>
+                    <input id="otapath" type="Text" maxlength="110"></input>
                 </td>
             </tr>
             <tr>
@@ -140,25 +140,25 @@
             <tr>
                 <td>控制1:</td>
                 <td>
-                    <input id="isrio0" name="isrio0" type="number"></input>
+                    <input id="isrio0" type="number"></input>
                 </td>
             </tr>
             <tr>
                 <td>控制2:</td>
                 <td>
-                    <input id="isrio5" name="isrio5" type="number"></input>
+                    <input id="isrio5" type="number"></input>
                 </td>
             </tr>
             <tr>
                 <td>控制3:</td>
                 <td>
-                    <input id="isrio12" name="isrio12" type="number"></input>
+                    <input id="isrio12" type="number"></input>
                 </td>
             </tr>
             <tr>
                 <td>控制4:</td>
                 <td>
-                    <input id="isrio14" name="isrio14" type="number"></input>
+                    <input id="isrio14" type="number"></input>
                 </td>
             </tr>
             <tr>
@@ -175,13 +175,13 @@
             <tr>
                 <td>型号:</td>
                 <td>
-                    <input id="xinghao" name="xinghao" disabled="true"></input>
+                    <input id="xinghao" disabled="true"></input>
                 </td>
             </tr>
             <tr>
                 <td>OTA片区:</td>
                 <td>
-                    <input id="otachoose" name="otachoose" disabled="true"></input>
+                    <input id="otachoose" disabled="true"></input>
                 </td>
             </tr>
         </table>
@@ -192,7 +192,7 @@
             <tr>
                 <td></td>
                 <td>
-                    <button id="restart" name="restart" type="submit" value="1">点我重启</button>
+                    <button id="restart" type="submit" value="1">点我重启</button>
                 </td>
             </tr>
         </table>
@@ -228,30 +228,31 @@
         function test() {
             getXMLDoc("/htmlData", lodback);
             function lodback() {
-                //console.log(xmlhttp.responseText)
                 var str = xmlhttp.responseText;
                 if (str != null && str.length > 0) {
                     var strs = str.split(',');
                     strs.forEach(s => {
                         var kv = s.split("=");
-                        if (kv[0] == "open4") {
-                            var o = document.getElementById("open4");
-                            o.value = "0";
-                            o.textContent = "已打开";
+                        if (kv[0] == "cmd") {
+                            if (kv[1] & (1 << 4)) {
+                                var o = document.getElementById("open4");
+                                o.value = "0";
+                                o.textContent = "已打开";
+                            } if (kv[1] & (1 << 16)) {
+                                var o = document.getElementById("open16");
+                                o.value = "0";
+                                o.textContent = "已打开";
+                            }if (kv[1] & (1 << 13)) {
+                                var o = document.getElementById("open13");
+                                o.value = "0";
+                                o.textContent = "已打开";
+                            }if (kv[1] & (1 << 15)) {
+                                var o = document.getElementById("open15");
+                                o.value = "0";
+                                o.textContent = "已打开";
+                            }
                         }
-                        if (kv[0] == "open16") {
-                            var o = document.getElementById("open16");
-                            o.value = "0";
-                            o.textContent = "已打开";
-                        } if (kv[0] == "open13") {
-                            var o = document.getElementById("open13");
-                            o.value = "0";
-                            o.textContent = "已打开";
-                        } if (kv[0] == "open15") {
-                            var o = document.getElementById("open15");
-                            o.value = "0";
-                            o.textContent = "已打开";
-                        } if (kv[0] == "mqttzz") {
+                        if (kv[0] == "mqttzz") {
                             var o = document.getElementById("mqttzz");
                             o.value = kv[1];
                         } if (kv[0] == "mqttmm") {
@@ -278,13 +279,13 @@
                         } if (kv[0] == "isrio14") {
                             var o = document.getElementById("isrio14");
                             o.value = kv[1];
-                        }if (kv[0] == "ssid") {
+                        } if (kv[0] == "ssid") {
                             var o = document.getElementById("ssid");
                             o.value = kv[1];
-                        }if (kv[0] == "pass") {
+                        } if (kv[0] == "pass") {
                             var o = document.getElementById("pass");
                             o.value = kv[1];
-                        }if (kv[0] == "sta_na") {
+                        } if (kv[0] == "sta_na") {
                             var o = document.getElementById("sta_na");
                             o.value = kv[1];
                         }

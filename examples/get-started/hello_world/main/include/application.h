@@ -22,12 +22,18 @@ void system_restart();
 void system_pilot_light(int is_on);
 void print_free_heap_size();
 int strSearch(char *str1, char *str2);
+char *substring(char *src, int pos, int length);
 
 extern char* XINHAO;
 extern char* OTA_LABLE;
 extern struct tm timeinfo;  //当前时间
 extern int wifi_connect;    //当前是否连了wifi
 #if defined(APP_STRIP_4)||defined(APP_STRIP_3)
+#define ON 0
+#define OPEN 0
+#define OFF 1
+#define CLOSE 1 
+extern int gpio_bit; 
 extern uint8_t cus_strip[4];
 extern uint8_t cus_isr[4];
 #endif

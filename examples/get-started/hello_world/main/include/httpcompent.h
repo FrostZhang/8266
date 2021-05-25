@@ -5,10 +5,8 @@
 typedef struct http_event
 {
     int restart;
-    int open4;
-    int open13;
-    int open15;
-    int open16;
+    int gpio;   
+    int gpio_level;
     char* bdjs;
 } http_event;
 

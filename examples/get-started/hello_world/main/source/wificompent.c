@@ -108,8 +108,9 @@ static void smartconfig_task(void *parm)
                         ESP_ERROR_CHECK(esp_smartconfig_start(smartconfig_callback));
                 }
                 //长时间匹配不上  重启设备
-                if (cot > 100)
+                if (cot > 120)
                 {
+                        ESP_LOGI(TAG, "smartconfig is timeout!");
                         system_restart();
                 }
         }

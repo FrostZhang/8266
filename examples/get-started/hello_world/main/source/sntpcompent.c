@@ -75,13 +75,10 @@ static void sntp_task(void *arg)
         event_t.mestype = SNTP_EVENT_TIMING;
         while (handel != NULL)
         {
+            vTaskDelay(1000 / portTICK_PERIOD_MS);
             time(&now);
             localtime_r(&now, &timeinfo);
-            // strftime(strftime_buf, sizeof(strftime_buf), "%c", &timeinfo);
-            // ESP_LOGI(TAG, "The current date/time in Shanghai is: %s", strftime_buf);
-            //system_sntp_callback(&timeinfo);
             callback(&event_t);
-            vTaskDelay(1000 / portTICK_PERIOD_MS);
         }
     }
     vTaskDelete(NULL);

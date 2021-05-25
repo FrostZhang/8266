@@ -12,14 +12,12 @@
 
 static const char *MQTTZZ = "mqttzz";
 static const char *MQTTMM = "mqttmm";
-static const char *OPEN4 = "open4";
-static const char *OPEN13 = "open13";
-static const char *OPEN15 = "open15";
-static const char *OPEN16 = "open16";
+static const char *OPENSTR = "open";
 static const char *RESTART = "restart";
 static const char *BDJS = "bdjs";
 static const char *DATA = "data";
 static const char *SPACE = " ";
+static const char *LOGIN = "login";
 
 static const char *TAG = "http";
 
@@ -28,10 +26,8 @@ static http_event httpevent;
 
 static void reset_callback_data()
 {
-    httpevent.open4 = -1;
-    httpevent.open13 = -1;
-    httpevent.open15 = -1;
-    httpevent.open16 = -1;
+    httpevent.gpio = -1;
+    httpevent.gpio_level = -1;
     httpevent.restart = -1;
     httpevent.bdjs = NULL;
 }
@@ -71,35 +67,19 @@ static esp_err_t index_post_handler(httpd_req_t *req)
             char *value = strtok_r(NULL, "=", &p2);
 
             if (strcmp(key, MQTTZZ) == 0)
-            {
                 mqttzz = value;
-            }
-            if (strcmp(key, MQTTMM) == 0)
-            {
+            else if (strcmp(key, MQTTMM) == 0)
                 mqttmm = value;
-            }
-            if (strcmp(key, OPEN4) == 0)
+            else if (strncmp(key, OPENSTR, 3) == 0)
             {
-                httpevent.open4 = atoi(value);
+                char *io = substring(key, strlen(OPENSTR), strlen(key) - strlen(OPENSTR));
+                httpevent.gpio = atoi(io);
+                free(io);
+                httpevent.gpio_level = atoi(value);
             }
-            if (strcmp(key, OPEN13) == 0)
-            {
-                httpevent.open13 = atoi(value);
-            }
-            if (strcmp(key, OPEN15) == 0)
-            {
-                httpevent.open15 = atoi(value);
-            }
-            if (strcmp(key, OPEN16) == 0)
-            {
-                httpevent.open16 = atoi(value);
-            }
-            if (strcmp(key, RESTART) == 0)
-            {
+            else if (strcmp(key, RESTART) == 0)
                 httpevent.restart = 1;
-            }
-            //设备直连
-            if (strcmp(key, BDJS) == 0)
+            else if (strcmp(key, BDJS) == 0)
             {
                 httpevent.bdjs = value;
                 httpevent.bdjs[strlen(value)] = '\0';
@@ -205,22 +185,15 @@ static httpd_uri_t heartbeat = {
 static esp_err_t htmlData_handle(httpd_req_t *req)
 {
     StringBuilder *sb = sb_create();
-    if (system_get_gpio_state(GPIO_NUM_4))
-        sb_append(sb, "open4=1,");
-    if (system_get_gpio_state(GPIO_NUM_12))
-        sb_append(sb, "open16=1,");
-    if (system_get_gpio_state(GPIO_NUM_13))
-        sb_append(sb, "open13=1,");
-    if (system_get_gpio_state(GPIO_NUM_15))
-        sb_append(sb, "open15=1,");
+    sb_appendf(sb, "cmd=%d,", gpio_bit);
+    if (wifissid != NULL)
+        sb_appendf(sb, "ssid=%s", wifissid);
+    if (wifipassword != NULL)
+        sb_appendf(sb, ",pass=%s", wifipassword);
     if (mqttusername != NULL)
-    {
         sb_appendf(sb, "mqttzz=%s", mqttusername);
-    }
     if (mqttpassword != NULL)
-    {
         sb_appendf(sb, ",mqttmm=%s", mqttpassword);
-    }
     sb_appendf(sb, ",xinghao=%s", XINHAO);
     sb_appendf(sb, ",otachoose=%s", OTA_LABLE);
     if (ota_url != NULL)
@@ -248,7 +221,7 @@ static httpd_uri_t htmlData = {
 static httpd_handle_t start_webserver(void)
 {
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
-    config.stack_size = 1024*10;
+    config.stack_size = 1024 * 10;
     // Start the httpd server
     ESP_LOGI(TAG, "Starting server on port: '%d'", config.server_port);
     if (httpd_start(&server, &config) == ESP_OK)

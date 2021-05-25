@@ -45,7 +45,6 @@ static const char *TAG = "Main";
 #define LEDC_TEST_FADE_TIME (1500)
 #define IR_RX_BUF_LEN 128
 
-static int gpio_bit;
 static time_t now = 0;
 static xQueueHandle gpio_evt_queue = NULL;
 
@@ -159,10 +158,9 @@ static void GpioIni(void)
         // vTaskDelay(100 / portTICK_RATE_MS);
         for (uint8_t i = 0; i < sizeof(cus_strip); i++)
                 gpio_set_level(cus_strip[i], 0);
-
         io_conf.pin_bit_mask = GPIO_Pin_2;
         gpio_config(&io_conf);
-        gpio_set_level(GPIO_NUM_2, 1);  //
+        gpio_set_level(GPIO_NUM_2, OFF); //
         // button_handle_t btn_handle = iot_button_create(GPIO_NUM_0, BUTTON_ACTIVE_LOW);
         // iot_button_add_custom_cb(btn_handle, 5, button_press_5s_cb, NULL);
         //boot press
@@ -389,6 +387,10 @@ static void gpio_input_num(gpio_num_t num, int level)
         {
                 if (cus_strip[i] == num)
                 {
+                        if (level == 0)
+                                gpio_bit |= BIT(num);
+                        else if (level == 1)
+                                gpio_bit &= ~BIT(num);
                         gpio_set_level(cus_strip[i], level);
                         return;
                 }
@@ -406,12 +408,12 @@ static void gpio_input_reversal(gpio_num_t num)
                         if (system_get_gpio_state(num))
                         {
                                 gpio_bit &= ~BIT(num);
-                                gpio_set_level(cus_strip[i], 0);
+                                gpio_set_level(cus_strip[i], OFF);
                         }
                         else
                         {
                                 gpio_bit |= BIT(num);
-                                gpio_set_level(cus_strip[i], 1);
+                                gpio_set_level(cus_strip[i], ON);
                         }
                         return;
                 }
@@ -422,13 +424,8 @@ static void gpio_input_reversal(gpio_num_t num)
 //定时器 回调
 extern void system_ds_callback(gpio_num_t num, int isopen)
 {
-        if (isopen == 1)
-                gpio_bit |= BIT(num);
-        else
-                gpio_bit &= ~BIT(num);
-
         printf("ds callback %d 回调 %d isopen %d\n", gpio_bit, num, isopen);
-        gpio_input_all(gpio_bit);
+        gpio_input_num(num, isopen);
         char *send = data_bdjs_reported(CMD, gpio_bit);
         mqtt_publish(send);
         data_free(send);
@@ -459,50 +456,13 @@ extern esp_err_t system_http_callback(http_event *call)
                         data_free(send);
                 }
         }
-        else
+        else if (call->gpio != -1)
         {
-                int isopen = call->open4;
-                int temp = gpio_bit;
-                if (isopen != -1)
-                {
-                        if (isopen == 1)
-                                temp |= GPIO_Pin_4;
-                        else
-                                temp &= ~GPIO_Pin_4;
-                }
-                isopen = call->open13;
-                if (isopen != -1)
-                {
-                        if (isopen == 1)
-                                temp |= GPIO_Pin_13;
-                        else
-                                temp &= ~GPIO_Pin_13;
-                }
-                isopen = call->open15;
-                if (isopen != -1)
-                {
-                        if (isopen == 1)
-                                temp |= GPIO_Pin_15;
-                        else
-                                temp &= ~GPIO_Pin_15;
-                }
-                isopen = call->open16;
-                if (isopen != -1)
-                {
-                        if (isopen == 1)
-                                temp |= GPIO_Pin_16;
-                        else
-                                temp &= ~GPIO_Pin_16;
-                }
-                if (temp != gpio_bit)
-                {
-                        gpio_bit = temp;
-                        gpio_input_all(gpio_bit);
-                        printf("HTTP get cmd %d \n", gpio_bit);
-                        char *send = data_bdjs_reported(CMD, gpio_bit);
-                        mqtt_publish(send);
-                        data_free(send);
-                }
+                gpio_input_num(call->gpio, call->gpio_level);
+                printf("HTTP set gpio %d lev:%d\n", call->gpio, call->gpio_level);
+                char *send = data_bdjs_reported(CMD, gpio_bit);
+                mqtt_publish(send);
+                data_free(send);
         }
         if (call->restart == 1)
         {
