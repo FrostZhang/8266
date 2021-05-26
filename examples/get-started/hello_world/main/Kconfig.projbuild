@@ -28,6 +28,18 @@ config ESP_WIFI_PASSWORD
     default "mypassword"
     help
 	WiFi password (WPA or WPA2) for the example to use.
+
+config ESP_MQTT_ZZ
+    string "MQTT ZZ"
+    default "zz"
+    help
+	MQTT for the mqtt to connect to.
+
+config ESP_MQTT_MM
+    string "MQTT MM"
+    default "mm"
+    help
+    MQTT for the mqtt to connect to.
 		
 config MAX_STA_CONN
     int "Max STA conn"

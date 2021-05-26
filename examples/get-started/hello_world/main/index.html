@@ -28,25 +28,25 @@ padding-left: 15%;
 <tr>
 <td>开关1:</td>
 <td>
-<button id="open4" type="submit" value="1">已关闭</button>
+<button id="open4" name="open4" type="submit" value="1">已关闭</button>
 </td>
 </tr>
 <tr>
 <td>开关2:</td>
 <td>
-<button id="open13" type="submit" value="1">已关闭</button>
+<button id="open13" name="open13" type="submit" value="1">已关闭</button>
 </td>
 </tr>
 <tr>
 <td>开关3:</td>
 <td>
-<button id="open15" type="submit" value="1">已关闭</button>
+<button id="open15" name="open15" type="submit" value="1">已关闭</button>
 </td>
 </tr>
 <tr>
 <td>开关4:</td>
 <td>
-<button id="open16" type="submit" value="1">已关闭</button>
+<button id="open16" name="open16" type="submit" value="1">已关闭</button>
 </td>
 </tr>
 </table>
@@ -57,13 +57,13 @@ padding-left: 15%;
 <tr>
 <td>网络名称:</td>
 <td>
-<input id="ssid" type="Text" maxlength="20"></input>
+<input id="ssid" name="ssid" type="Text" maxlength="20" disabled ="true"></input>
 </td>
 </tr>
 <tr>
 <td>网络密钥:</td>
 <td>
-<input id="pass" type="password" maxlength="30"></input>
+<input id="pass" name="pass" type="password" maxlength="30" disabled ="true"></input>
 </td>
 </tr>
 <tr>
@@ -80,7 +80,7 @@ padding-left: 15%;
 <tr>
 <td></td>
 <td>
-<input id="sta_na" type="Text" maxlength="20"></input>
+<input id="sta_na" name="sta_na" type="Text" maxlength="20"></input>
 </td>
 </tr>
 <tr>
@@ -97,13 +97,13 @@ padding-left: 15%;
 <tr>
 <td>MQTT ZZ:</td>
 <td>
-<input id="mqttzz" type="Text" maxlength="25"></input>
+<input id="mqttzz" name="mqttzz" type="Text" maxlength="25"></input>
 </td>
 </tr>
 <tr>
 <td>MQTT MM:</td>
 <td>
-<input id="mqttmm" type="password" maxlength="50"></input>
+<input id="mqttmm" name="mqttmm" type="password" maxlength="50"></input>
 </td>
 </tr>
 <tr>
@@ -120,7 +120,7 @@ padding-left: 15%;
 <tr>
 <td>地址:</td>
 <td>
-<input id="otapath" type="Text" maxlength="110"></input>
+<input id="otapath" name="otapath" type="Text" maxlength="110"></input>
 </td>
 </tr>
 <tr>
@@ -137,13 +137,13 @@ padding-left: 15%;
 <tr>
 <td>控制1:</td>
 <td>
-<input id="isrio0" type="number" placeholder="4 13 15 16"></input>
+<input id="isrio0" name="isrio0" type="number" placeholder="4 13 15 16"></input>
 </td>
 </tr>
 <tr>
 <td>地址</td>
 <td>
-<input id="isrio0p" type="url" placeholder="远程地址(可空)"></input>
+<input id="isrio0p" name="isriop0" type="text" placeholder="远程地址(可空)"></input>
 </td>
 </tr>
 <tr>
@@ -159,13 +159,13 @@ padding-left: 15%;
 <tr>
 <td>控制2:</td>
 <td>
-<input id="isrio5" type="number" placeholder="4 13 15 16"></input>
+<input id="isrio5" name="isrio5" type="number" placeholder="4 13 15 16"></input>
 </td>
 </tr>
 <tr>
 <td>地址</td>
 <td>
-<input id="isrio5p" type="url" placeholder="远程地址(可空)"></input>
+<input id="isrio5p" name="isriop5" type="text" placeholder="远程地址(可空)"></input>
 </td>
 </tr>
 <tr>
@@ -181,13 +181,13 @@ padding-left: 15%;
 <tr>
 <td>控制3:</td>
 <td>
-<input id="isrio12" type="number" placeholder="4 13 15 16"></input>
+<input id="isrio12" name="isrio12" type="number" placeholder="4 13 15 16"></input>
 </td>
 </tr>
 <tr>
 <td>地址</td>
 <td>
-<input id="isrio12p" type="url" placeholder="远程地址(可空)"></input>
+<input id="isrio12p" name="isriop12" type="text" placeholder="远程地址(可空)"></input>
 </td>
 </tr>
 <tr>
@@ -203,13 +203,13 @@ padding-left: 15%;
 <tr>
 <td>控制4:</td>
 <td>
-<input id="isrio14" type="number" placeholder="4 13 15 16"></input>
+<input id="isrio14" name="isrio14" type="number" placeholder="4 13 15 16"></input>
 </td>
 </tr>
 <tr>
 <td>地址</td>
 <td>
-<input id="isrio14p" type="url" placeholder="远程地址(可空)"></input>
+<input id="isrio14p" name="isriop14"  type="text" placeholder="远程地址(可空)"></input>
 </td>
 </tr>
 <tr>
@@ -221,29 +221,29 @@ padding-left: 15%;
 </table>
 </form>
 <h3>设备信息</h3>
-<form id="restart" method="post">
+<form method="post">
 <table>
 <tr>
 <td>型号:</td>
 <td>
-<input id="xinghao" disabled="true"></input>
+<input id="xinghao" name="xinghao" disabled="true"></input>
 </td>
 </tr>
 <tr>
 <td>OTA片区:</td>
 <td>
-<input id="otachoose" disabled="true"></input>
+<input id="otachoose" name="otachoose" disabled="true"></input>
 </td>
 </tr>
 </table>
 </form>
 <h3>重启设备</h3>
-<form id="restart" method="post">
+<form method="post">
 <table>
 <tr>
 <td></td>
 <td>
-<button id="restart" type="submit" value="1">点我重启</button>
+<button id="restart" name="restart" type="submit" value="1">点我重启</button>
 </td>
 </tr>
 </table>

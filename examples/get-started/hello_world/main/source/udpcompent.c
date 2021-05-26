@@ -14,7 +14,7 @@ static const char *HOST_IP_ADDR = "255.255.255.255";
 u16_t PORT = 8266;
 int sock = -1;
 struct sockaddr_in destAddr = {0};
-udp_callback_t callback; 
+udp_callback_t callback;
 static TaskHandle_t handel;
 extern void udp_client_send(const char *data)
 {
@@ -29,6 +29,18 @@ extern void udp_client_send(const char *data)
         {
                 ESP_LOGE(TAG, "Error occured during sending: errno %d", errno);
         }
+}
+
+extern void udp_client_sendto(const char *ip, const char *data)
+{
+        if (sock < 0)
+                ESP_LOGE(TAG, "udp 没有启用");
+        destAddr.sin_addr.s_addr = inet_addr(ip);
+        destAddr.sin_family = AF_INET;
+        destAddr.sin_port = htons(PORT);
+        int err = sendto(sock, data, strlen(data), 0, (struct sockaddr *)&destAddr, sizeof(destAddr));
+        if (err < 0)
+                ESP_LOGE(TAG, "Error occured during sending: errno %d", errno);
 }
 
 static void udp_client_task(void *pvParameters)
@@ -99,10 +111,11 @@ static void udp_client_task(void *pvParameters)
         vTaskDelete(NULL);
 }
 
+//开启udp
 extern void udp_client_start(udp_callback_t call)
 {
         callback = call;
-        xTaskCreate(udp_client_task, "udp_client", 4096, NULL, 5, &handel);
+        xTaskCreate(udp_client_task, "udp_client", 1024 * 8, NULL, 5, &handel);
 }
 
 extern void udp_client_stop()

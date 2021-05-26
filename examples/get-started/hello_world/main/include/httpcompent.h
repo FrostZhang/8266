@@ -6,7 +6,7 @@ typedef struct http_event
 {
     int restart;
     int gpio;   
-    int gpio_level;
+    int gpio_level; //0 on 1 off 2 reval
     char* bdjs;
 } http_event;
 

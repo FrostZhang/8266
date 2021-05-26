@@ -85,11 +85,21 @@ static void gpio_task(void *arg)
                         {
                                 if (cus_isr[i] == io_num)
                                 {
-                                        gpio_input_reversal(isr_events[i].gpio);
-                                        printf("GPIO[%d] intr\n", io_num);
-                                        char *send = data_bdjs_reported(CMD, gpio_bit);
-                                        mqtt_publish(send);
-                                        data_free(send);
+                                        if (isr_events[i].http == NULL || strlen(isr_events[i].http) < 4)
+                                        {
+                                                gpio_input_reversal(isr_events[i].gpio);
+                                                printf("GPIO[%d] intr\n", io_num);
+                                                char *send = data_bdjs_reported(CMD, gpio_bit);
+                                                mqtt_publish(send);
+                                                data_free(send);
+                                        }
+                                        else
+                                        {
+                                                char string[5] = {0};
+                                                char *send = data_bdjs_reported_string(OUTPUT0, itoa(isr_events[i].gpio, string, 10));
+                                                udp_client_sendto(isr_events[i].http, send);
+                                                data_free(send);
+                                        }
                                 }
                         }
                 }
@@ -323,7 +333,7 @@ static void ir_tx_task(void *arg)
 static void gpio_input_all(int input)
 {
         gpio_bit = input;
-        for (uint8_t i = 0; i < sizeof(cus_strip); i++)
+        for (uint8_t i = 0; i < 4; i++)
         {
                 if (input & BIT(cus_strip[i]))
                 {
@@ -415,9 +425,12 @@ extern esp_err_t system_http_callback(http_event *call)
                         data_free(send);
                 }
         }
-        else if (call->gpio != -1)
+        else if (call->gpio > -1)
         {
-                gpio_input_num(call->gpio, call->gpio_level);
+                if (call->gpio_level == 2)
+                        gpio_input_reversal(call->gpio);
+                else
+                        gpio_input_num(call->gpio, call->gpio_level);
                 printf("HTTP set gpio %d lev:%d\n", call->gpio, call->gpio_level);
                 char *send = data_bdjs_reported(CMD, gpio_bit);
                 mqtt_publish(send);
@@ -469,14 +482,17 @@ static esp_err_t sntp_connect_callback(sntp_event *call)
 //udp收到信息 现在走的协议是 百度的协议
 extern esp_err_t udpcallback(char *rec, uint len)
 {
-        char *data = malloc(len);
+        char *data = malloc(len + 1);
         strncpy(data, rec, len);
         ESP_LOGI(TAG, "UDP REC %s", data);
-        data_res *ans = data_decode_bdjs(data);
-        if (ans->cmd != -1)
+        if (strncmp(data,"{",1)) 
         {
-                printf("udp get switchdata %d \n", ans->cmd);
-                gpio_input_all(ans->cmd);
+                data_res *ans = data_decode_bdjs(data);
+                if (ans->output0 != NULL)
+                {
+                        printf("udp get reversal %s \n", ans->output0);
+                        gpio_input_reversal(atoi(ans->output0));
+                }
         }
         data_free(data);
         return ESP_OK;
@@ -485,9 +501,10 @@ extern esp_err_t udpcallback(char *rec, uint len)
 //ota 检查结束
 static esp_err_t ota_callback_handel()
 {
+        //http_clent_start();
         http_server_start();
         sntp_start(sntp_connect_callback);
-        //udpclientstart(udpcallback);
+        udp_client_start(udpcallback);
         return ESP_OK;
 }
 

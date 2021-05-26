@@ -12,6 +12,7 @@ extern const char *REQUESTID;
 typedef struct data_res
 {
     int cmd; //cmd
+    char* output0; //output0
     char* cmd1;
 }data_res;
 

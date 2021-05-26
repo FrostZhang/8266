@@ -29,7 +29,7 @@ char *wifi_sta_name = {0}; //当连接wifi 对方显示我的设备名称
 struct isr_evevt isr_events[4];
 #endif
 
-static char *isr_es[] = {"isr_gpio0_for", "isr_gpio5_for", "isr_gpio12_for", "isr_gpio14_for"};
+static char *isr_keys[] = {"isr_gpio0_for", "isr_gpio5_for", "isr_gpio12_for", "isr_gpio14_for"};
 
 static void read_wifi()
 {
@@ -49,12 +49,6 @@ static void read_wifi()
             strncpy(wifissid, ssid, sizeof(ssid));
             ESP_LOGI(TAG, "read wifi ssid = %s ", wifissid);
         }
-        else
-        {
-            wifissid = CONFIG_ESP_WIFI_SSID;
-            ESP_LOGI(TAG, "read sysconfig wifi ssid = %s ", wifissid);
-        }
-
         char pass[64] = {0};
         len = sizeof(pass);
         err = nvs_get_str(mHandleNvsRead, "pass", pass, &len);
@@ -64,18 +58,16 @@ static void read_wifi()
             strncpy(wifipassword, pass, sizeof(pass));
             ESP_LOGI(TAG, "read wifi pass = %s", wifipassword);
         }
-        else
-        {
-            wifipassword = CONFIG_ESP_WIFI_PASSWORD;
-            ESP_LOGI(TAG, "read sysconfig wifi pass = %s ", wifipassword);
-        }
     }
-    else
+    if (wifissid == NULL || strlen(wifissid) < 4)
     {
         wifissid = CONFIG_ESP_WIFI_SSID;
-        wifipassword = CONFIG_ESP_WIFI_PASSWORD;
-        ESP_LOGI(TAG, "read sysconfig wifi: %s %s", wifissid, wifipassword);
     }
+    if (wifipassword == NULL || strlen(wifipassword) < 4)
+    {
+        wifipassword = CONFIG_ESP_WIFI_PASSWORD;
+    }
+    ESP_LOGI(TAG, "read wifi %s %s", wifissid, wifipassword);
     nvs_close(mHandleNvsRead);
 }
 
@@ -92,21 +84,23 @@ static void read_mqtt_baidu()
         {
             mqttusername = malloc(len + 1);
             strncpy(mqttusername, strtemp, len);
-            ESP_LOGI(TAG, "get str mqttzz = %s len:%d", mqttusername, strlen(mqttusername));
         }
-        else
-        {
-            ESP_LOGE(TAG, "get mattzz err %d", err);
-        }
-
         err = nvs_get_str(mHandleNvsRead, "password", strtemp, &len);
         if (err == ESP_OK)
         {
             mqttpassword = malloc(len + 1);
             strncpy(mqttpassword, strtemp, len);
-            ESP_LOGI(TAG, "get str mqttmm = %s len:%d", mqttpassword, strlen(mqttpassword));
         }
     }
+    if (mqttusername == NULL || strlen(mqttusername) < 4)
+    {
+        mqttusername = CONFIG_ESP_MQTT_ZZ;
+    }
+    if (mqttpassword == NULL || strlen(mqttpassword) < 4)
+    {
+        mqttpassword = CONFIG_ESP_MQTT_MM;
+    }
+    ESP_LOGI(TAG, "read mqtt_baidu %s %s", mqttusername, mqttpassword);
     nvs_close(mHandleNvsRead);
 }
 
@@ -192,33 +186,16 @@ static void read_app_config()
 #if defined(APP_STRIP_4) || defined(APP_STRIP_3)
         for (uint8_t i = 0; i < 4; i++)
         {
-            len = 127;
-            memset(strtemp, '\0', 128);
-            err = nvs_get_str(mHandleNvsRead, isr_es[i], strtemp, &len);
+            len = 128 + 4;
+            err = nvs_get_blob(mHandleNvsRead, isr_keys[i], &isr_events[i], &len);
             if (err != ESP_OK)
             {
-                if (len <= 2)
-                {
-                    isr_events[i].gpio = (strtemp[0] - '0') * 10 + (strtemp[1] - '0');
-                    if (isr_events[i].gpio == -1)
-                        isr_events[i].gpio = cus_strip[i];
-                }
-                else
-                {
-                    isr_events[i].http = strdup(strtemp);
-                    if (sizeof(isr_events[i].http) < 5)
-                    {
-                        isr_events[i].gpio = cus_strip[i];
-                    }
-                    else
-                    {
-                        isr_events[i].gpio = -1;
-                    }
-                }
-            }
-            else
-            {
                 isr_events[i].gpio = cus_strip[i];
+            }
+            else if (strlen(isr_events[i].http) < 4)
+            {
+                free(isr_events[i].http);
+                isr_events[i].http = NULL;
             }
             ESP_LOGI(TAG, "get isr event %s gpio %d", isr_events[i].http, isr_events[i].gpio);
         }
@@ -280,10 +257,12 @@ extern esp_err_t nav_write_mqtt_baidu_account(char ssid[32], char pass[64])
     {
         char strtemp[64] = {0};
         strcpy(strtemp, ssid);
-        err = nvs_set_str(mHandleNvsRead, "strtemp", strtemp);
+        err = nvs_set_str(mHandleNvsRead, "username", strtemp);
 
+        ESP_LOGI("写入mqttzz %s", strtemp);
         strcpy(strtemp, pass);
-        err = nvs_set_str(mHandleNvsRead, "strtemp", strtemp);
+        err = nvs_set_str(mHandleNvsRead, "password", strtemp);
+        ESP_LOGI("写入mqttzz %s", strtemp);
     }
     nvs_close(mHandleNvsRead);
     return err;
@@ -381,22 +360,18 @@ extern esp_err_t nav_write_wifi_sta_name(char sta_name[32])
 }
 
 //写入中断 0 5 14 3 引发什么gpio转换状态 （模拟开关 控制灯泡）
-extern esp_err_t nav_write_isr_for(int a, int b, int c, int d)
+extern esp_err_t nav_write_isr_for(int index, char url[128], int gpio)
 {
     nvs_handle mHandleNvsRead;
     //将airkiss获取的wifi写入内存
     esp_err_t err = nvs_open("appconfig", NVS_READWRITE, &mHandleNvsRead);
     if (err == ESP_OK)
     {
-        char strtemp[128] = {0};
-        isr_events[0].gpio = a;
-        err = nvs_set_str(mHandleNvsRead, "isr_gpio0_for", itoa(a, strtemp, 10));
-        isr_events[1].gpio = b;
-        err = nvs_set_str(mHandleNvsRead, "isr_gpio5_for", itoa(b, strtemp, 10));
-        isr_events[2].gpio = c;
-        err = nvs_set_str(mHandleNvsRead, "isr_gpio14_for", itoa(c, strtemp, 10));
-        isr_events[3].gpio = d;
-        err = nvs_set_str(mHandleNvsRead, "isr_gpio12_for", itoa(d, strtemp, 10));
+        char stetemp[128] = {0};
+        strcpy(stetemp, url);
+        isr_events[index].http = stetemp;
+        isr_events[index].gpio = gpio;
+        nvs_set_blob(mHandleNvsRead, isr_keys[index], &isr_events[index], 128 + 4);
     }
     nvs_close(mHandleNvsRead);
     return err;
@@ -411,8 +386,12 @@ extern void nav_load_custom_data()
         // 并再次初始化
         ESP_ERROR_CHECK(nvs_flash_erase());
         err = nvs_flash_init();
+        if (err != 0)
+        {
+            ESP_LOGE(TAG, "载入资料失败 %d", err);
+            return;
+        }
     }
-
     read_wifi();
     read_mqtt_baidu();
     read_ds();

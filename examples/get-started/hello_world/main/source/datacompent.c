@@ -76,6 +76,12 @@ extern data_res *data_decode_bdjs(char *data)
             {
                 callback_data.cmd = jsoncmd->valueint;
             }
+
+            cJSON *jsono0 = cJSON_GetObjectItem(reporter, OUTPUT0);
+            if (jsono0 != NULL && cJSON_IsString(jsono0))
+            {
+                callback_data.output0 = jsoncmd->valuestring;
+            }
         }
         cJSON_Delete(json);
     }

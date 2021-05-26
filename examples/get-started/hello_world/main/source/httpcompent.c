@@ -18,6 +18,8 @@ static const char *BDJS = "bdjs";
 static const char *DATA = "data";
 static const char *SPACE = " ";
 static const char *LOGIN = "login";
+static const char *ISRIO = "isrio";
+static const char *ISRIOP = "isriop";
 
 static const char *TAG = "http";
 
@@ -56,6 +58,9 @@ static esp_err_t index_post_handler(httpd_req_t *req)
 
         char *mqttzz = NULL;
         char *mqttmm = NULL;
+        int isrio = -1;
+        int isriov = -1;
+        char *isriop = NULL;
         char *ptr;
         char *p;
         ptr = strtok_r(buf, "&", &p);
@@ -70,7 +75,7 @@ static esp_err_t index_post_handler(httpd_req_t *req)
                 mqttzz = value;
             else if (strcmp(key, MQTTMM) == 0)
                 mqttmm = value;
-            else if (strncmp(key, OPENSTR, 3) == 0)
+            else if (strncmp(key, OPENSTR, 4) == 0)
             {
                 char *io = substring(key, strlen(OPENSTR), strlen(key) - strlen(OPENSTR));
                 httpevent.gpio = atoi(io);
@@ -84,12 +89,34 @@ static esp_err_t index_post_handler(httpd_req_t *req)
                 httpevent.bdjs = value;
                 httpevent.bdjs[strlen(value)] = '\0';
             }
+            else if (strncmp(key, ISRIOP, 6) == 0)
+            {
+                isriop = value;
+            }
+            else if (strncmp(key, ISRIO, 5) == 0)
+            {
+                char *io = substring(key, strlen(ISRIO), strlen(key) - strlen(ISRIO));
+                isrio = atoi(io);
+                free(io);
+                isriov = atoi(value);
+            }
             ptr = strtok_r(NULL, "&", &p);
         }
         if (mqttzz != NULL && mqttmm != NULL)
         {
             nav_write_mqtt_baidu_account(mqttzz, mqttmm);
             httpevent.restart = 1;
+        }
+        if (isrio > -1)
+        {
+            for (uint8_t i = 0; i < 4; i++)
+            {
+                if (cus_isr[i] == isrio)
+                {
+                    nav_write_isr_for(i, isriop, isriov);
+                    break;
+                }
+            }
         }
     }
 
@@ -191,7 +218,7 @@ static esp_err_t htmlData_handle(httpd_req_t *req)
     if (wifipassword != NULL)
         sb_appendf(sb, ",pass=%s", wifipassword);
     if (mqttusername != NULL)
-        sb_appendf(sb, "mqttzz=%s", mqttusername);
+        sb_appendf(sb, ",mqttzz=%s", mqttusername);
     if (mqttpassword != NULL)
         sb_appendf(sb, ",mqttmm=%s", mqttpassword);
     sb_appendf(sb, ",xinghao=%s", XINHAO);

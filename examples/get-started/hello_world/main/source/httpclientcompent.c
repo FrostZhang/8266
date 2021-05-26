@@ -42,6 +42,7 @@ static void http_task(void *pvParameters)
     esp_http_client_config_t config = {
         .url = "http://0.0.0.0/",
         .event_handler = _http_event_handler,
+        .port =8266
     };
     client = esp_http_client_init(&config);
 }
@@ -84,5 +85,8 @@ extern void http_client_post(const char *url, const char *data)
 
 extern void http_clent_start()
 {
-    xTaskCreate(&http_task, "http_task", 1024 * 3, NULL, 5, NULL);
+    if (client == NULL)
+    {
+        xTaskCreate(&http_task, "http_task", 1024 * 8, NULL, 1, NULL);
+    }
 }
