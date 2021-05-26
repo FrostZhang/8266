@@ -3,298 +3,349 @@
 <link rel='icon' href='data:;base64,='>
 
 <head>
-    <meta charset='utf-8'>
-    <meta name='viewport' content='width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0'>
-    <title>AsherLink</title>
-    <style>
-        button {
-            min-width: 180px;
-        }
+<meta charset='utf-8'>
+<meta name='viewport' content='width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0'>
+<title>AsherLink</title>
+<style>
+button {
+min-width: 180px;
+}
 
-        td {
-            min-width: 75px;
-        }
+td {
+min-width: 75px;
+}
 
-        table {
-            padding-left: 15%;
-        }
-    </style>
+table {
+padding-left: 15%;
+}
+</style>
 
 <body id="body" onload="load()">
-    <h1>Asher-Link</h1>
-    <h3>控制开关</h3>
-    <form id="gpio" method="post">
-        <table>
-            <tr>
-                <td>开关1:</td>
-                <td>
-                    <button id="open4" type="submit" value="1">已关闭</button>
-                </td>
-            </tr>
-            <tr>
-                <td>开关2:</td>
-                <td>
-                    <button id="open13" type="submit" value="1">已关闭</button>
-                </td>
-            </tr>
-            <tr>
-                <td>开关3:</td>
-                <td>
-                    <button id="open15" type="submit" value="1">已关闭</button>
-                </td>
-            </tr>
-            <tr>
-                <td>开关4:</td>
-                <td>
-                    <button id="open16" type="submit" value="1">已关闭</button>
-                </td>
-            </tr>
-        </table>
-    </form>
+<h1>Asher-Link</h1>
+<h3>输出</h3>
+<form id="gpio" method="post">
+<table>
+<tr>
+<td>开关1:</td>
+<td>
+<button id="open4" type="submit" value="1">已关闭</button>
+</td>
+</tr>
+<tr>
+<td>开关2:</td>
+<td>
+<button id="open13" type="submit" value="1">已关闭</button>
+</td>
+</tr>
+<tr>
+<td>开关3:</td>
+<td>
+<button id="open15" type="submit" value="1">已关闭</button>
+</td>
+</tr>
+<tr>
+<td>开关4:</td>
+<td>
+<button id="open16" type="submit" value="1">已关闭</button>
+</td>
+</tr>
+</table>
+</form>
+<h3>WIFI</h3>
+<form id="wifi" method="post">
+<table>
+<tr>
+<td>网络名称:</td>
+<td>
+<input id="ssid" type="Text" maxlength="20"></input>
+</td>
+</tr>
+<tr>
+<td>网络密钥:</td>
+<td>
+<input id="pass" type="password" maxlength="30"></input>
+</td>
+</tr>
+<tr>
+<td></td>
+<td>
+<button type="submit">连接（重启设备）</button>
+</td>
+</tr>
+</table>
+</form>
+<h3>设备名称</h3>
+<form method="post">
+<table>
+<tr>
+<td></td>
+<td>
+<input id="sta_na" type="Text" maxlength="20"></input>
+</td>
+</tr>
+<tr>
+<td></td>
+<td>
+<button type="submit">更新</button>
+</td>
+</tr>
+</table>
+</form>
+<h3>MQTT（开发者平台）</h3>
+<form id="mqtt" method="post">
+<table>
+<tr>
+<td>MQTT ZZ:</td>
+<td>
+<input id="mqttzz" type="Text" maxlength="25"></input>
+</td>
+</tr>
+<tr>
+<td>MQTT MM:</td>
+<td>
+<input id="mqttmm" type="password" maxlength="50"></input>
+</td>
+</tr>
+<tr>
+<td></td>
+<td>
+<button type="submit">连接（重启设备）</button>
+</td>
+</tr>
+</table>
+</form>
+<h3>硬件升级</h3>
+<form method="post">
+<table>
+<tr>
+<td>地址:</td>
+<td>
+<input id="otapath" type="Text" maxlength="110"></input>
+</td>
+</tr>
+<tr>
+<td></td>
+<td>
+<button type="submit">检测（重启设备）</button>
+</td>
+</tr>
+</table>
+</form>
+<h3>输入</h3>
+<form method="post">
+<table>
+<tr>
+<td>控制1:</td>
+<td>
+<input id="isrio0" type="number" placeholder="4 13 15 16"></input>
+</td>
+</tr>
+<tr>
+<td>地址</td>
+<td>
+<input id="isrio0p" type="url" placeholder="远程地址(可空)"></input>
+</td>
+</tr>
+<tr>
+<td></td>
+<td>
+<button type="submit">更新配置1</button>
+</td>
+</tr>
+</table>
+</form>
+<form method="post">
+<table>
+<tr>
+<td>控制2:</td>
+<td>
+<input id="isrio5" type="number" placeholder="4 13 15 16"></input>
+</td>
+</tr>
+<tr>
+<td>地址</td>
+<td>
+<input id="isrio5p" type="url" placeholder="远程地址(可空)"></input>
+</td>
+</tr>
+<tr>
+<td></td>
+<td>
+<button type="submit">更新配置1</button>
+</td>
+</tr>
+</table>
+</form>
+<form method="post">
+<table>
+<tr>
+<td>控制3:</td>
+<td>
+<input id="isrio12" type="number" placeholder="4 13 15 16"></input>
+</td>
+</tr>
+<tr>
+<td>地址</td>
+<td>
+<input id="isrio12p" type="url" placeholder="远程地址(可空)"></input>
+</td>
+</tr>
+<tr>
+<td></td>
+<td>
+<button type="submit">更新配置1</button>
+</td>
+</tr>
+</table>
+</form>
+<form method="post">
+<table>
+<tr>
+<td>控制4:</td>
+<td>
+<input id="isrio14" type="number" placeholder="4 13 15 16"></input>
+</td>
+</tr>
+<tr>
+<td>地址</td>
+<td>
+<input id="isrio14p" type="url" placeholder="远程地址(可空)"></input>
+</td>
+</tr>
+<tr>
+<td></td>
+<td>
+<button type="submit">更新配置1</button>
+</td>
+</tr>
+</table>
+</form>
+<h3>设备信息</h3>
+<form id="restart" method="post">
+<table>
+<tr>
+<td>型号:</td>
+<td>
+<input id="xinghao" disabled="true"></input>
+</td>
+</tr>
+<tr>
+<td>OTA片区:</td>
+<td>
+<input id="otachoose" disabled="true"></input>
+</td>
+</tr>
+</table>
+</form>
+<h3>重启设备</h3>
+<form id="restart" method="post">
+<table>
+<tr>
+<td></td>
+<td>
+<button id="restart" type="submit" value="1">点我重启</button>
+</td>
+</tr>
+</table>
+</form>
+<script type='text/javascript'>
+var xmlhttp;
+function load() {
+xmlhttp = null;
+if (window.XMLHttpRequest) {// code for all new browsers
+xmlhttp = new XMLHttpRequest();
+}
+else if (window.ActiveXObject) {// code for IE5 and IE6
+xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+}
+if (xmlhttp == null) {
+alert("浏览器版本过低，无法读取数据");
+}
+test();
+}
+function getXMLDoc(url, res) {
+xmlhttp.onreadystatechange = state_Change;
+xmlhttp.open("GET", url, true);
+xmlhttp.send(null);
+function state_Change() {
+if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+if (xmlhttp.responseText != null && xmlhttp.responseText != "") {
+console.log(xmlhttp.responseText)
+res();
+}
+}
+}
+}
+function test() {
+getXMLDoc("/htmlData", lodback);
+function lodback() {
+var str = xmlhttp.responseText;
+if (str != null && str.length > 0) {
+var strs = str.split(',');
+strs.forEach(s => {
+var kv = s.split("=");
+if (kv[0] == "cmd") {
+if (kv[1] & (1 << 4)) {
+var o = document.getElementById("open4");
+o.value = "0";
+o.textContent = "已打开";
+} if (kv[1] & (1 << 16)) {
+var o = document.getElementById("open16");
+o.value = "0";
+o.textContent = "已打开";
+} if (kv[1] & (1 << 13)) {
+var o = document.getElementById("open13");
+o.value = "0";
+o.textContent = "已打开";
+} if (kv[1] & (1 << 15)) {
+var o = document.getElementById("open15");
+o.value = "0";
+o.textContent = "已打开";
+}
+}
+if (kv[0] == "mqttzz") {
+var o = document.getElementById("mqttzz");
+o.value = kv[1];
+} if (kv[0] == "mqttmm") {
+var o = document.getElementById("mqttmm");
+o.value = kv[1];
+} if (kv[0] == "xinghao") {
+var o = document.getElementById("xinghao");
+o.value = kv[1];
+} if (kv[0] == "otachoose") {
+var o = document.getElementById("otachoose");
+o.value = kv[1];
+} if (kv[0] == "otapath") {
+var o = document.getElementById("otapath");
+o.value = kv[1];
+} if (kv[0] == "isrio0") {
+var o = document.getElementById("isrio0");
+o.value = kv[1];
+} if (kv[0] == "isrio5") {
+var o = document.getElementById("isrio5");
+o.value = kv[1];
+} if (kv[0] == "isrio12") {
+var o = document.getElementById("isrio12");
+o.value = kv[1];
+} if (kv[0] == "isrio14") {
+var o = document.getElementById("isrio14");
+o.value = kv[1];
+} if (kv[0] == "ssid") {
+var o = document.getElementById("ssid");
+o.value = kv[1];
+} if (kv[0] == "pass") {
+var o = document.getElementById("pass");
+o.value = kv[1];
+} if (kv[0] == "sta_na") {
+var o = document.getElementById("sta_na");
+o.value = kv[1];
+}
+});
 
-    <h3>WIFI</h3>
-    <form id="wifi" method="post">
-        <table>
-            <tr>
-                <td>网络名称:</td>
-                <td>
-                    <input id="ssid" type="Text" maxlength="20"></input>
-                </td>
-            </tr>
-            <tr>
-                <td>网络密钥:</td>
-                <td>
-                    <input id="pass" type="password" maxlength="30"></input>
-                </td>
-            </tr>
-            <tr>
-                <td></td>
-                <td>
-                    <button type="submit">连接（重启设备）</button>
-                </td>
-            </tr>
-        </table>
-    </form>
-
-    <h3>设备名称</h3>
-    <form id="wifi" method="post">
-        <table>
-            <tr>
-                <td></td>
-                <td>
-                    <input id="sta_na" type="Text" maxlength="20"></input>
-                </td>
-            </tr>
-            <tr>
-                <td></td>
-                <td>
-                    <button type="submit">更新</button>
-                </td>
-            </tr>
-        </table>
-    </form>
-
-    <h3>MQTT（开发者平台）</h3>
-    <form id="mqtt" method="post">
-        <table>
-            <tr>
-                <td>MQTT ZZ:</td>
-                <td>
-                    <input id="mqttzz" type="Text" maxlength="25"></input>
-                </td>
-            </tr>
-            <tr>
-                <td>MQTT MM:</td>
-                <td>
-                    <input id="mqttmm" type="password" maxlength="50"></input>
-                </td>
-            </tr>
-            <tr>
-                <td></td>
-                <td>
-                    <button type="submit">连接（重启设备）</button>
-                </td>
-            </tr>
-        </table>
-    </form>
-    <h3>硬件升级</h3>
-    <form method="post">
-        <table>
-            <tr>
-                <td>地址:</td>
-                <td>
-                    <input id="otapath" type="Text" maxlength="110"></input>
-                </td>
-            </tr>
-            <tr>
-                <td></td>
-                <td>
-                    <button type="submit">检测（重启设备）</button>
-                </td>
-            </tr>
-        </table>
-    </form>
-    <h3>开关配置</h3>
-    <form method="post">
-        <table>
-            <tr>
-                <td>控制1:</td>
-                <td>
-                    <input id="isrio0" type="number"></input>
-                </td>
-            </tr>
-            <tr>
-                <td>控制2:</td>
-                <td>
-                    <input id="isrio5" type="number"></input>
-                </td>
-            </tr>
-            <tr>
-                <td>控制3:</td>
-                <td>
-                    <input id="isrio12" type="number"></input>
-                </td>
-            </tr>
-            <tr>
-                <td>控制4:</td>
-                <td>
-                    <input id="isrio14" type="number"></input>
-                </td>
-            </tr>
-            <tr>
-                <td></td>
-                <td>
-                    <button type="submit">更新</button>
-                </td>
-            </tr>
-        </table>
-    </form>
-    <h3>设备信息</h3>
-    <form id="restart" method="post">
-        <table>
-            <tr>
-                <td>型号:</td>
-                <td>
-                    <input id="xinghao" disabled="true"></input>
-                </td>
-            </tr>
-            <tr>
-                <td>OTA片区:</td>
-                <td>
-                    <input id="otachoose" disabled="true"></input>
-                </td>
-            </tr>
-        </table>
-    </form>
-    <h3>重启设备</h3>
-    <form id="restart" method="post">
-        <table>
-            <tr>
-                <td></td>
-                <td>
-                    <button id="restart" type="submit" value="1">点我重启</button>
-                </td>
-            </tr>
-        </table>
-    </form>
-    <script type='text/javascript'>
-        var xmlhttp;
-        function load() {
-            xmlhttp = null;
-            if (window.XMLHttpRequest) {// code for all new browsers
-                xmlhttp = new XMLHttpRequest();
-            }
-            else if (window.ActiveXObject) {// code for IE5 and IE6
-                xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
-            }
-            if (xmlhttp == null) {
-                alert("浏览器版本过低，无法读取数据");
-            }
-            test();
-        }
-        function getXMLDoc(url, res) {
-            xmlhttp.onreadystatechange = state_Change;
-            xmlhttp.open("GET", url, true);
-            xmlhttp.send(null);
-            function state_Change() {
-                if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-                    if (xmlhttp.responseText != null && xmlhttp.responseText != "") {
-                        console.log(xmlhttp.responseText)
-                        res();
-                    }
-                }
-            }
-        }
-        function test() {
-            getXMLDoc("/htmlData", lodback);
-            function lodback() {
-                var str = xmlhttp.responseText;
-                if (str != null && str.length > 0) {
-                    var strs = str.split(',');
-                    strs.forEach(s => {
-                        var kv = s.split("=");
-                        if (kv[0] == "cmd") {
-                            if (kv[1] & (1 << 4)) {
-                                var o = document.getElementById("open4");
-                                o.value = "0";
-                                o.textContent = "已打开";
-                            } if (kv[1] & (1 << 16)) {
-                                var o = document.getElementById("open16");
-                                o.value = "0";
-                                o.textContent = "已打开";
-                            }if (kv[1] & (1 << 13)) {
-                                var o = document.getElementById("open13");
-                                o.value = "0";
-                                o.textContent = "已打开";
-                            }if (kv[1] & (1 << 15)) {
-                                var o = document.getElementById("open15");
-                                o.value = "0";
-                                o.textContent = "已打开";
-                            }
-                        }
-                        if (kv[0] == "mqttzz") {
-                            var o = document.getElementById("mqttzz");
-                            o.value = kv[1];
-                        } if (kv[0] == "mqttmm") {
-                            var o = document.getElementById("mqttmm");
-                            o.value = kv[1];
-                        } if (kv[0] == "xinghao") {
-                            var o = document.getElementById("xinghao");
-                            o.value = kv[1];
-                        } if (kv[0] == "otachoose") {
-                            var o = document.getElementById("otachoose");
-                            o.value = kv[1];
-                        } if (kv[0] == "otapath") {
-                            var o = document.getElementById("otapath");
-                            o.value = kv[1];
-                        } if (kv[0] == "isrio0") {
-                            var o = document.getElementById("isrio0");
-                            o.value = kv[1];
-                        } if (kv[0] == "isrio5") {
-                            var o = document.getElementById("isrio5");
-                            o.value = kv[1];
-                        } if (kv[0] == "isrio12") {
-                            var o = document.getElementById("isrio12");
-                            o.value = kv[1];
-                        } if (kv[0] == "isrio14") {
-                            var o = document.getElementById("isrio14");
-                            o.value = kv[1];
-                        } if (kv[0] == "ssid") {
-                            var o = document.getElementById("ssid");
-                            o.value = kv[1];
-                        } if (kv[0] == "pass") {
-                            var o = document.getElementById("pass");
-                            o.value = kv[1];
-                        } if (kv[0] == "sta_na") {
-                            var o = document.getElementById("sta_na");
-                            o.value = kv[1];
-                        }
-                    });
-
-                }
-            }
-        }
-    </script>
+}
+}
+}
+</script>
 </body>
 </head>
 
