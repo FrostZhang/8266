@@ -1,6 +1,7 @@
 #ifndef NVACOMPENT_H
 #define NVACOMPENT_H
 #include "esp_err.h"
+#include "application.h"
 
 extern char dsdata[33];
 extern char dsdata1[33];
@@ -11,10 +12,18 @@ extern char *wifipassword;
 extern char *mqttusername;
 extern char *mqttpassword;
 extern char *ota_url;
-extern int isr_gpio0_for;
-extern int isr_gpio5_for;
-extern int isr_gpio14_for;
-extern int isr_gpio12_for;
+
+struct isr_evevt
+{
+    char* http;
+    int gpio;
+};
+
+#if defined(APP_STRIP_4) || defined(APP_STRIP_3)
+//中断 引发gpio事件
+extern struct isr_evevt isr_events[4];
+#endif
+
 extern char *wifi_sta_name;
 
 void nav_load_custom_data();

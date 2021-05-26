@@ -200,10 +200,23 @@ static esp_err_t htmlData_handle(httpd_req_t *req)
     {
         sb_appendf(sb, ",ota_url=%s", ota_url);
     }
-    sb_appendf(sb, ",isrio0=%d", isr_gpio0_for);
-    sb_appendf(sb, ",isrio5=%d", isr_gpio5_for);
-    sb_appendf(sb, ",isrio14=%d", isr_gpio14_for);
-    sb_appendf(sb, ",isrio12=%d", isr_gpio12_for);
+    if (isr_events[0].http != NULL)
+        sb_appendf(sb, ",isrio0=%s", isr_events[0].http);
+    else
+        sb_appendf(sb, ",isrio0=%d", isr_events[0].gpio);
+    if (isr_events[0].http != NULL)
+        sb_appendf(sb, ",isrio5=%s", isr_events[1].http);
+    else
+        sb_appendf(sb, ",isrio5=%d", isr_events[1].gpio);
+    if (isr_events[0].http != NULL)
+        sb_appendf(sb, ",isrio14=%s", isr_events[2].http);
+    else
+        sb_appendf(sb, ",isrio14=%d", isr_events[2].gpio);
+    if (isr_events[0].http != NULL)
+        sb_appendf(sb, ",isrio12=%s", isr_events[3].http);
+    else
+        sb_appendf(sb, ",isrio12=%d", isr_events[3].gpio);
+
     sb_appendf(sb, ",sta_na=%d", wifi_sta_name);
     char *str = sb_concat(sb);
     esp_err_t err = httpd_resp_send(req, str, strlen(str));

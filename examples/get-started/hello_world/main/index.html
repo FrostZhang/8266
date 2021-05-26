@@ -28,25 +28,25 @@
             <tr>
                 <td>开关1:</td>
                 <td>
-                    <button id="open4" type="submit" value="1">已关闭</button>
+                    <button id="open4" name="open4" type="submit" value="1">已关闭</button>
                 </td>
             </tr>
             <tr>
                 <td>开关2:</td>
                 <td>
-                    <button id="open13" type="submit" value="1">已关闭</button>
+                    <button id="open13" name="open13" type="submit" value="1">已关闭</button>
                 </td>
             </tr>
             <tr>
                 <td>开关3:</td>
                 <td>
-                    <button id="open15" type="submit" value="1">已关闭</button>
+                    <button id="open15" name="open15" type="submit" value="1">已关闭</button>
                 </td>
             </tr>
             <tr>
                 <td>开关4:</td>
                 <td>
-                    <button id="open16" type="submit" value="1">已关闭</button>
+                    <button id="open16" name="open16" type="submit" value="1">已关闭</button>
                 </td>
             </tr>
         </table>
@@ -58,21 +58,21 @@
             <tr>
                 <td>网络名称:</td>
                 <td>
-                    <input id="ssid" type="Text" maxlength="20"></input>
+                    <input id="ssid" name="ssid" type="Text" disabled="true" maxlength="20"></input>
                 </td>
             </tr>
             <tr>
                 <td>网络密钥:</td>
                 <td>
-                    <input id="pass" type="password" maxlength="30"></input>
+                    <input id="pass" name="pass" type="password" disabled="true" maxlength="30"></input>
                 </td>
             </tr>
-            <tr>
+            <!-- <tr>
                 <td></td>
                 <td>
                     <button type="submit">连接（重启设备）</button>
                 </td>
-            </tr>
+            </tr> -->
         </table>
     </form>
 
@@ -82,7 +82,7 @@
             <tr>
                 <td></td>
                 <td>
-                    <input id="sta_na" type="Text" maxlength="20"></input>
+                    <input id="sta_na" name="sta_na" type="Text" maxlength="20"></input>
                 </td>
             </tr>
             <tr>
@@ -100,13 +100,13 @@
             <tr>
                 <td>MQTT ZZ:</td>
                 <td>
-                    <input id="mqttzz" type="Text" maxlength="25"></input>
+                    <input id="mqttzz" name="mqttzz" type="Text" maxlength="25"></input>
                 </td>
             </tr>
             <tr>
                 <td>MQTT MM:</td>
                 <td>
-                    <input id="mqttmm" type="password" maxlength="50"></input>
+                    <input id="mqttmm" name="mqttmm" type="password" maxlength="50"></input>
                 </td>
             </tr>
             <tr>
@@ -123,7 +123,7 @@
             <tr>
                 <td>地址:</td>
                 <td>
-                    <input id="otapath" type="Text" maxlength="110"></input>
+                    <input id="otapath" name="otapath" type="Text" maxlength="110"></input>
                 </td>
             </tr>
             <tr>
@@ -140,25 +140,25 @@
             <tr>
                 <td>控制1:</td>
                 <td>
-                    <input id="isrio0" type="number"></input>
+                    <input id="isrio0" name="isrio0" type="number"></input>
                 </td>
             </tr>
             <tr>
                 <td>控制2:</td>
                 <td>
-                    <input id="isrio5" type="number"></input>
+                    <input id="isrio5" name="isrio5" type="number"></input>
                 </td>
             </tr>
             <tr>
                 <td>控制3:</td>
                 <td>
-                    <input id="isrio12" type="number"></input>
+                    <input id="isrio12" name="isrio12" type="number"></input>
                 </td>
             </tr>
             <tr>
                 <td>控制4:</td>
                 <td>
-                    <input id="isrio14" type="number"></input>
+                    <input id="isrio14" name="isrio14" type="number"></input>
                 </td>
             </tr>
             <tr>
@@ -192,7 +192,7 @@
             <tr>
                 <td></td>
                 <td>
-                    <button id="restart" type="submit" value="1">点我重启</button>
+                    <button id="restart" name="restart" type="submit" value="1">点我重启</button>
                 </td>
             </tr>
         </table>
@@ -242,11 +242,11 @@
                                 var o = document.getElementById("open16");
                                 o.value = "0";
                                 o.textContent = "已打开";
-                            }if (kv[1] & (1 << 13)) {
+                            } if (kv[1] & (1 << 13)) {
                                 var o = document.getElementById("open13");
                                 o.value = "0";
                                 o.textContent = "已打开";
-                            }if (kv[1] & (1 << 15)) {
+                            } if (kv[1] & (1 << 15)) {
                                 var o = document.getElementById("open15");
                                 o.value = "0";
                                 o.textContent = "已打开";

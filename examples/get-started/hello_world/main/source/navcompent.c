@@ -25,12 +25,11 @@ char *ota_url = {0}; //ota 升级地址 通常是 http://xxx.xxx/xxx
 char *wifi_sta_name = {0}; //当连接wifi 对方显示我的设备名称
 
 #if defined(APP_STRIP_4) || defined(APP_STRIP_3)
-//中断 引发gpio转换状态
-int isr_gpio0_for;
-int isr_gpio5_for;
-int isr_gpio14_for;
-int isr_gpio12_for;
+//中断 引发gpio事件
+struct isr_evevt isr_events[4];
 #endif
+
+static char *isr_es[] = {"isr_gpio0_for", "isr_gpio5_for", "isr_gpio12_for", "isr_gpio14_for"};
 
 static void read_wifi()
 {
@@ -99,7 +98,7 @@ static void read_mqtt_baidu()
         {
             ESP_LOGE(TAG, "get mattzz err %d", err);
         }
-        
+
         err = nvs_get_str(mHandleNvsRead, "password", strtemp, &len);
         if (err == ESP_OK)
         {
@@ -191,27 +190,40 @@ static void read_app_config()
             ESP_LOGI(TAG, "get str ota_url = %s", ota_url);
         }
 #if defined(APP_STRIP_4) || defined(APP_STRIP_3)
-        err = nvs_get_i32(mHandleNvsRead, "isr_gpio0_for", &isr_gpio0_for);
-        if (err != ESP_OK)
+        for (uint8_t i = 0; i < 4; i++)
         {
-            isr_gpio0_for = 4;
-        }
-        err = nvs_get_i32(mHandleNvsRead, "isr_gpio5_for", &isr_gpio0_for);
-        if (err != ESP_OK)
-        {
-            isr_gpio5_for = 13;
-        }
-        err = nvs_get_i32(mHandleNvsRead, "isr_gpio12_for", &isr_gpio0_for);
-        if (err != ESP_OK)
-        {
-            isr_gpio12_for = 15;
-        }
-        err = nvs_get_i32(mHandleNvsRead, "isr_gpio14_for", &isr_gpio0_for);
-        if (err != ESP_OK)
-        {
-            isr_gpio14_for = 16;
+            len = 127;
+            memset(strtemp, '\0', 128);
+            err = nvs_get_str(mHandleNvsRead, isr_es[i], strtemp, &len);
+            if (err != ESP_OK)
+            {
+                if (len <= 2)
+                {
+                    isr_events[i].gpio = (strtemp[0] - '0') * 10 + (strtemp[1] - '0');
+                    if (isr_events[i].gpio == -1)
+                        isr_events[i].gpio = cus_strip[i];
+                }
+                else
+                {
+                    isr_events[i].http = strdup(strtemp);
+                    if (sizeof(isr_events[i].http) < 5)
+                    {
+                        isr_events[i].gpio = cus_strip[i];
+                    }
+                    else
+                    {
+                        isr_events[i].gpio = -1;
+                    }
+                }
+            }
+            else
+            {
+                isr_events[i].gpio = cus_strip[i];
+            }
+            ESP_LOGI(TAG, "get isr event %s gpio %d", isr_events[i].http, isr_events[i].gpio);
         }
 #endif
+        len = 127;
         memset(strtemp, '\0', 128);
         err = nvs_get_str(mHandleNvsRead, "wifi_sta_name", strtemp, &len);
         if (err == ESP_OK)
@@ -228,10 +240,10 @@ static void read_app_config()
     }
     else
     {
-        isr_gpio0_for = 4;
-        isr_gpio5_for = 13;
-        isr_gpio12_for = 15;
-        isr_gpio14_for = 16;
+        for (uint8_t i = 0; i < 4; i++)
+        {
+            isr_events[i].gpio = cus_strip[i];
+        }
         wifi_sta_name = malloc(12);
         wifi_sta_name = "Asher link";
     }
@@ -376,14 +388,15 @@ extern esp_err_t nav_write_isr_for(int a, int b, int c, int d)
     esp_err_t err = nvs_open("appconfig", NVS_READWRITE, &mHandleNvsRead);
     if (err == ESP_OK)
     {
-        isr_gpio0_for = a;
-        err = nvs_set_i32(mHandleNvsRead, "isr_gpio0_for", isr_gpio0_for);
-        isr_gpio5_for = a;
-        err = nvs_set_i32(mHandleNvsRead, "isr_gpio5_for", isr_gpio5_for);
-        isr_gpio14_for = a;
-        err = nvs_set_i32(mHandleNvsRead, "isr_gpio14_for", isr_gpio14_for);
-        isr_gpio12_for = a;
-        err = nvs_set_i32(mHandleNvsRead, "isr_gpio12_for", isr_gpio12_for);
+        char strtemp[128] = {0};
+        isr_events[0].gpio = a;
+        err = nvs_set_str(mHandleNvsRead, "isr_gpio0_for", itoa(a, strtemp, 10));
+        isr_events[1].gpio = b;
+        err = nvs_set_str(mHandleNvsRead, "isr_gpio5_for", itoa(b, strtemp, 10));
+        isr_events[2].gpio = c;
+        err = nvs_set_str(mHandleNvsRead, "isr_gpio14_for", itoa(c, strtemp, 10));
+        isr_events[3].gpio = d;
+        err = nvs_set_str(mHandleNvsRead, "isr_gpio12_for", itoa(d, strtemp, 10));
     }
     nvs_close(mHandleNvsRead);
     return err;

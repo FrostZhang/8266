@@ -45,17 +45,13 @@ static const char *TAG = "Main";
 #define LEDC_TEST_FADE_TIME (1500)
 #define IR_RX_BUF_LEN 128
 
-static time_t now = 0;
 static xQueueHandle gpio_evt_queue = NULL;
 
 extern int system_get_gpio_state(gpio_num_t num);
 static void gpio_input_all(int input);
+static void gpio_input_reversal(gpio_num_t num);
+static void gpio_input_num(gpio_num_t num, int level);
 static int isr_level_temp[] = {0, 0, 0, 0};
-
-static int gpio0_itr_curstate;
-static int gpio5_itr_curstate;
-static int gpio12_itr_curstate;
-static int gpio14_itr_curstate;
 
 static void gpio_isr_handler(void *arg)
 {
@@ -85,51 +81,17 @@ static void gpio_task(void *arg)
         {
                 if (xQueueReceive(gpio_evt_queue, &io_num, portMAX_DELAY))
                 {
-                        //ESP_LOGI(TAG, "GPIO[%d] intr, val: %d\n", io_num, gpio_get_level(io_num));
-                        //vTaskDelay(500 / portTICK_RATE_MS);
-                        //GPIO_REG_WRITE(GPIO_STATUS_W1TC_ADDRESS, true); //clear interrupt mask
-                        if (io_num == GPIO_NUM_0)
+                        for (uint8_t i = 0; i < sizeof(cus_isr); i++)
                         {
-                                if (isr_gpio0_for >= GPIO_NUM_MAX)
-                                        return;
-                                if (system_get_gpio_state(isr_gpio0_for))
-                                        gpio_bit &= ~BIT(isr_gpio0_for);
-                                else
-                                        gpio_bit |= BIT(isr_gpio0_for);
+                                if (cus_isr[i] == io_num)
+                                {
+                                        gpio_input_reversal(isr_events[i].gpio);
+                                        printf("GPIO[%d] intr\n", io_num);
+                                        char *send = data_bdjs_reported(CMD, gpio_bit);
+                                        mqtt_publish(send);
+                                        data_free(send);
+                                }
                         }
-                        else if (io_num == GPIO_NUM_5)
-                        {
-                                if (isr_gpio5_for >= GPIO_NUM_MAX)
-                                        return;
-                                if (system_get_gpio_state(isr_gpio5_for))
-                                        gpio_bit &= ~BIT(isr_gpio5_for);
-                                else
-                                        gpio_bit |= BIT(isr_gpio5_for);
-                        }
-                        else if (io_num == GPIO_NUM_12)
-                        {
-                                if (isr_gpio12_for >= GPIO_NUM_MAX)
-                                        return;
-                                if (system_get_gpio_state(isr_gpio12_for))
-                                        gpio_bit &= ~BIT(isr_gpio12_for);
-                                else
-                                        gpio_bit |= BIT(isr_gpio12_for);
-                        }
-                        else if (io_num == GPIO_NUM_14)
-                        {
-                                if (isr_gpio14_for >= GPIO_NUM_MAX)
-                                        return;
-                                if (system_get_gpio_state(isr_gpio14_for))
-                                        gpio_bit &= ~BIT(isr_gpio14_for);
-                                else
-                                        gpio_bit |= BIT(isr_gpio14_for);
-                        }
-
-                        gpio_input_all(gpio_bit);
-                        printf("GPIO[%d] intr\n", io_num);
-                        char *send = data_bdjs_reported(CMD, gpio_bit);
-                        mqtt_publish(send);
-                        data_free(send);
                 }
         }
         ESP_LOGI(TAG, "gpio_task 将停止工作");
@@ -186,10 +148,6 @@ static void GpioIni(void)
                 uint8_t n = i;
                 gpio_isr_handler_add(cus_isr[n], gpio_isr_handler, (void *)cus_isr[n]);
         }
-        // gpio_isr_handler_add(GPIO_NUM_0, gpio_isr_handler, (void *)GPIO_NUM_0);
-        // gpio_isr_handler_add(GPIO_NUM_5, gpio_isr_handler, (void *)GPIO_NUM_5);
-        // gpio_isr_handler_add(GPIO_NUM_12, gpio_isr_handler, (void *)GPIO_NUM_12);
-        // gpio_isr_handler_add(GPIO_NUM_14, gpio_isr_handler, (void *)GPIO_NUM_14);
 #endif
 }
 
@@ -361,7 +319,7 @@ static void ir_tx_task(void *arg)
         vTaskDelete(NULL);
 }
 
-//同时控制所有 cus_strip 的状态
+//同时控制所有 cus_strip 的状态 包含就关闭
 static void gpio_input_all(int input)
 {
         gpio_bit = input;
@@ -369,11 +327,11 @@ static void gpio_input_all(int input)
         {
                 if (input & BIT(cus_strip[i]))
                 {
-                        gpio_set_level(cus_strip[i], 1);
+                        gpio_set_level(cus_strip[i], OFF);
                 }
                 else
                 {
-                        gpio_set_level(cus_strip[i], 0);
+                        gpio_set_level(cus_strip[i], ON);
                 }
         }
 }
@@ -381,16 +339,16 @@ static void gpio_input_all(int input)
 //控制某一个 cus_strip 的状态
 static void gpio_input_num(gpio_num_t num, int level)
 {
-        if (level != 0 || level != 1)
+        if (level != 0 && level != 1)
                 return;
         for (uint8_t i = 0; i < sizeof(cus_strip); i++)
         {
                 if (cus_strip[i] == num)
                 {
-                        if (level == 0)
-                                gpio_bit |= BIT(num);
-                        else if (level == 1)
+                        if (level == ON)
                                 gpio_bit &= ~BIT(num);
+                        else if (level == OFF)
+                                gpio_bit |= BIT(num);
                         gpio_set_level(cus_strip[i], level);
                         return;
                 }
@@ -408,13 +366,14 @@ static void gpio_input_reversal(gpio_num_t num)
                         if (system_get_gpio_state(num))
                         {
                                 gpio_bit &= ~BIT(num);
-                                gpio_set_level(cus_strip[i], OFF);
+                                gpio_set_level(cus_strip[i], ON);
                         }
                         else
                         {
                                 gpio_bit |= BIT(num);
-                                gpio_set_level(cus_strip[i], ON);
+                                gpio_set_level(cus_strip[i], OFF);
                         }
+                        ESP_LOGI(TAG, "gpio_reversal_level %d", gpio_bit);
                         return;
                 }
         }
