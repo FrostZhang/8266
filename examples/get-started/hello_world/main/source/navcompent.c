@@ -161,7 +161,6 @@ static void read_app_config()
             }
             else if (strlen(isr_events[i].http) < 4)
             {
-                free(isr_events[i].http);
                 memset(isr_events[i].http, "\0", 64);
             }
             ESP_LOGI(TAG, "get isr event %s gpio %d", isr_events[i].http, isr_events[i].gpio);
@@ -185,9 +184,7 @@ static void read_app_config()
     else
     {
         for (uint8_t i = 0; i < 4; i++)
-        {
             isr_events[i].gpio = cus_strip[i];
-        }
         wifi_sta_name = malloc(12);
         wifi_sta_name = "Asher link";
     }
