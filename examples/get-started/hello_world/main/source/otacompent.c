@@ -52,10 +52,6 @@ static void ota_task(void *pvParameter)
     char *path = ota_url;
     if (path == NULL)
     {
-        path = CONFIG_FIRMWARE_UPGRADE_URL;
-    }
-    if (path == NULL)
-    {
         callback();
         vTaskDelete(NULL);
         return;
@@ -99,7 +95,7 @@ extern void ota_check(ota_callback call)
     }
     else
     {
-        ESP_LOGI(TAG ,"already check ota version!");
+        ESP_LOGI(TAG, "already check ota version!");
         call();
     }
 }

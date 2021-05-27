@@ -120,7 +120,7 @@ padding-left: 15%;
 <tr>
 <td>地址:</td>
 <td>
-<input id="otapath" name="otapath" type="Text" maxlength="110"></input>
+<input id="ota_url" name="ota_url" type="Text" maxlength="110"></input>
 </td>
 </tr>
 <tr>
@@ -291,8 +291,8 @@ o.value = kv[1];
 } if (kv[0] == "otachoose") {
 var o = document.getElementById("otachoose");
 o.value = kv[1];
-} if (kv[0] == "otapath") {
-var o = document.getElementById("otapath");
+} if (kv[0] == "ota_url") {
+var o = document.getElementById("ota_url");
 o.value = kv[1];
 } if (kv[0] == "isr0") {
 var o = document.getElementById("isr0");
@@ -305,6 +305,18 @@ var o = document.getElementById("isr2");
 o.value = kv[1];
 } if (kv[0] == "isr3") {
 var o = document.getElementById("isr3");
+o.value = kv[1];
+} if (kv[0] == "isrp0") {
+var o = document.getElementById("isrp0");
+o.value = kv[1];
+} if (kv[0] == "isrp1") {
+var o = document.getElementById("isrp1");
+o.value = kv[1];
+} if (kv[0] == "isrp2") {
+var o = document.getElementById("isrp2");
+o.value = kv[1];
+} if (kv[0] == "isrp3") {
+var o = document.getElementById("isrp3");
 o.value = kv[1];
 } if (kv[0] == "ssid") {
 var o = document.getElementById("ssid");

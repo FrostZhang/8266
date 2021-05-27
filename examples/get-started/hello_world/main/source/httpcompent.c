@@ -58,8 +58,8 @@ static esp_err_t index_post_handler(httpd_req_t *req)
 
         char *mqttzz = NULL;
         char *mqttmm = NULL;
-        int isrindex = -1; //0-3
-        int isrvalue = -1;
+        int my_isr_index = -1; //0-3
+        int for_strip_index = -1;
         char *isrpath = NULL;
         char *ptr;
         char *p;
@@ -96,9 +96,9 @@ static esp_err_t index_post_handler(httpd_req_t *req)
             else if (strncmp(key, ISR, 3) == 0)
             {
                 char *io = substring(key, strlen(ISR), strlen(key) - strlen(ISR));
-                isrindex = atoi(io);
+                my_isr_index = atoi(io);
                 free(io);
-                isrvalue = atoi(value);
+                for_strip_index = atoi(value);
             }
             ptr = strtok_r(NULL, "&", &p);
         }
@@ -107,9 +107,9 @@ static esp_err_t index_post_handler(httpd_req_t *req)
             nav_write_mqtt_baidu_account(mqttzz, mqttmm);
             httpevent.restart = 1;
         }
-        if (isrindex > -1)
+        if (my_isr_index > -1)
         {
-            nav_write_isr_for(isrindex, isrpath, isrvalue);
+            nav_write_isr_for(my_isr_index, isrpath, for_strip_index);
         }
     }
 
@@ -217,28 +217,22 @@ static esp_err_t htmlData_handle(httpd_req_t *req)
     sb_appendf(sb, ",xinghao=%s", XINHAO);
     sb_appendf(sb, ",otachoose=%s", OTA_LABLE);
     if (ota_url != NULL)
-    {
         sb_appendf(sb, ",ota_url=%s", ota_url);
-    }
-    if (isr_events[0].http != NULL)
-        sb_appendf(sb, ",isrp0=%s", isr_events[0].http);
-    else
-        sb_appendf(sb, ",isr0=%d", isr_events[0].gpio);
-    if (isr_events[0].http != NULL)
-        sb_appendf(sb, ",isrp1=%s", isr_events[1].http);
-    else
-        sb_appendf(sb, ",isr1=%d", isr_events[1].gpio);
-    if (isr_events[0].http != NULL)
-        sb_appendf(sb, ",isrp2=%s", isr_events[2].http);
-    else
-        sb_appendf(sb, ",isr2=%d", isr_events[2].gpio);
-    if (isr_events[0].http != NULL)
-        sb_appendf(sb, ",isrp3=%s", isr_events[3].http);
-    else
-        sb_appendf(sb, ",isr3=%d", isr_events[3].gpio);
 
-    sb_appendf(sb, ",sta_na=%d", wifi_sta_name);
-    char *str = sb_concat(sb);
+    // char *str = sb_concat(sb);
+    // ESP_LOGI(TAG,"send http len: %d",strlen(str));
+    // httpd_resp_send_chunk(req, str, strlen(str));
+    // free(str);
+    // sb_reset(sb);
+    for (uint8_t i = 0; i < 4; i++)
+    {
+        sb_appendf(sb, ",isr%d=%d",i, isr_events[i].for_strip_index);
+        if (strlen(isr_events[i].ip) > 4)
+            sb_appendf(sb, ",isrp%d=%s",i, isr_events[i].ip);
+    }
+    sb_appendf(sb, ",sta_na=%s", wifi_sta_name);
+    char* str = sb_concat(sb);
+    ESP_LOGI(TAG, "send http len: %d", strlen(str));
     esp_err_t err = httpd_resp_send(req, str, strlen(str));
     free(str);
     sb_free(sb);

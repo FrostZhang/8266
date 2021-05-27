@@ -25,7 +25,7 @@ char *ota_url = {0}; //ota 升级地址 通常是 http://xxx.xxx/xxx
 char *wifi_sta_name = {0}; //当连接wifi 对方显示我的设备名称
 
 #if defined(APP_STRIP_4) || defined(APP_STRIP_3)
-//中断 引发gpio事件
+//对应 cus_strips 4 触发的事件
 struct isr_evevt isr_events[4];
 #endif
 
@@ -146,24 +146,24 @@ static void read_app_config()
         uint32_t len = 0;
         err = nvs_get_str(mHandleNvsRead, "ota_url", strtemp, &len);
         if (err == ESP_OK)
-        {
-            ota_url = malloc(len + 1);
-            strncpy(ota_url, strtemp, len);
-            ESP_LOGI(TAG, "get str ota_url = %s", ota_url);
-        }
+            ota_url = strdup(strtemp);
+        else
+            ota_url = CONFIG_FIRMWARE_UPGRADE_URL;
+        ESP_LOGI(TAG, "get str ota_url = %s", ota_url);
 #if defined(APP_STRIP_4) || defined(APP_STRIP_3)
         for (uint8_t i = 0; i < 4; i++)
         {
-            err = nvs_get_blob(mHandleNvsRead, isr_keys[i], &isr_events[i], sizeof(isr_events[i]));
+            len= sizeof(isr_events[i]);
+            err = nvs_get_blob(mHandleNvsRead, isr_keys[i], &isr_events[i], &len);
             if (err != ESP_OK)
             {
-                isr_events[i].gpio = cus_strip[i];
+                isr_events[i].for_strip_index = i;
             }
-            else if (strlen(isr_events[i].http) < 4)
+            else if (strlen(isr_events[i].ip) < 4)
             {
-                memset(isr_events[i].http, "\0", 64);
+                memset(isr_events[i].ip, "\0", 64);
             }
-            ESP_LOGI(TAG, "get isr event %s gpio %d", isr_events[i].http, isr_events[i].gpio);
+            ESP_LOGI(TAG, "get isr event %s strip %d", isr_events[i].ip, isr_events[i].for_strip_index);
         }
 #endif
         len = 127;
@@ -173,18 +173,18 @@ static void read_app_config()
         {
             wifi_sta_name = malloc(len + 1);
             strncpy(wifi_sta_name, strtemp, len);
-            ESP_LOGI(TAG, "get str wifi_sta_name = %s", wifi_sta_name);
         }
         else
         {
             wifi_sta_name = malloc(12);
             wifi_sta_name = "Asher link";
         }
+        ESP_LOGI(TAG, "get wifi_sta: %s", wifi_sta_name);
     }
     else
     {
         for (uint8_t i = 0; i < 4; i++)
-            isr_events[i].gpio = cus_strip[i];
+            isr_events[i].for_strip_index = i;
         wifi_sta_name = malloc(12);
         wifi_sta_name = "Asher link";
     }
@@ -322,19 +322,21 @@ extern esp_err_t nav_write_wifi_sta_name(char sta_name[32])
     return err;
 }
 
-//写入中断 0 5 14 3 引发什么gpio转换状态 （模拟开关 控制灯泡）
-//index 0 1 2 3
-extern esp_err_t nav_write_isr_for(int index, char url[64], int gpio)
+//写入中断  （模拟开关 控制灯泡）
+//index cus_isr 序号
+//for_strip_index 是 cus_strip 序号
+extern esp_err_t nav_write_isr_for(int index, char url[64], int for_strip_index)
 {
     nvs_handle mHandleNvsRead;
     //将airkiss获取的wifi写入内存
     esp_err_t err = nvs_open("appconfig", NVS_READWRITE, &mHandleNvsRead);
     if (err == ESP_OK)
     {
-        strcpy(isr_events[index].http, url);
-        isr_events[index].http[strnlen(url, 63)] = '\0'; //结尾添0 仿异常数据
-        isr_events[index].gpio = gpio;
+        strcpy(isr_events[index].ip, url);
+        isr_events[index].ip[strnlen(url, 63)] = '\0'; //结尾添0 仿异常数据
+        isr_events[index].for_strip_index = for_strip_index;
         nvs_set_blob(mHandleNvsRead, isr_keys[index], &isr_events[index], sizeof(isr_events[index]));
+        ESP_LOGI(TAG,"write isr %d url:%s strip:%d",index,url,for_strip_index);
     }
     nvs_close(mHandleNvsRead);
     return err;

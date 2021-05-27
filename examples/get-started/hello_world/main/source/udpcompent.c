@@ -11,7 +11,7 @@ static const char *TAG = "udp";
 
 #define CONFIG_EXAMPLE_IPV4 1
 static const char *HOST_IP_ADDR = "255.255.255.255";
-u16_t PORT = 8266;
+u16_t PORT = 49154;
 int sock = -1;
 struct sockaddr_in destAddr = {0};
 udp_callback_t callback;
@@ -36,8 +36,7 @@ extern void udp_client_sendto(const char *ip, const char *data)
         if (sock < 0)
                 ESP_LOGE(TAG, "udp 没有启用");
         destAddr.sin_addr.s_addr = inet_addr(ip);
-        destAddr.sin_family = AF_INET;
-        destAddr.sin_port = htons(PORT);
+        ESP_LOGI(TAG, "udp send %s %s", ip, data);
         int err = sendto(sock, data, strlen(data), 0, (struct sockaddr *)&destAddr, sizeof(destAddr));
         if (err < 0)
                 ESP_LOGE(TAG, "Error occured during sending: errno %d", errno);
@@ -77,10 +76,11 @@ static void udp_client_task(void *pvParameters)
                         break;
                 }
                 ESP_LOGI(TAG, "Socket created");
+                udp_client_send("udp ini");
                 while (handel != NULL)
                 {
 
-                        struct sockaddr_in sourceAddr; // Large enough for both IPv4 or IPv6
+                        static struct sockaddr_in sourceAddr; // Large enough for both IPv4 or IPv6
                         socklen_t socklen = sizeof(sourceAddr);
                         int len = recvfrom(sock, rx_buffer, sizeof(rx_buffer) - 1, 0, (struct sockaddr *)&sourceAddr, &socklen);
 
@@ -93,9 +93,10 @@ static void udp_client_task(void *pvParameters)
                         // // Data received
                         // else
                         // {
-                        //         rx_buffer[len] = 0; // Null-terminate whatever we received and treat like a string
-                        //         ESP_LOGI(TAG, "Received %d bytes from %s:", len, addr_str);
-                        //         ESP_LOGI(TAG, "%s", rx_buffer);
+                        inet_ntoa_r(sourceAddr.sin_addr, addr_str, sizeof(addr_str) - 1);
+                        rx_buffer[len] = 0; // Null-terminate whatever we received and treat like a string
+                        ESP_LOGI(TAG, "Received %d bytes from %s:", len, addr_str);
+                        ESP_LOGI(TAG, "%s", rx_buffer);
                         // }
                         callback(rx_buffer, len);
                         vTaskDelay(200 / portTICK_PERIOD_MS);

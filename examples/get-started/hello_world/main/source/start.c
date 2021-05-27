@@ -85,9 +85,9 @@ static void gpio_task(void *arg)
                         {
                                 if (cus_isr[i] == io_num)
                                 {
-                                        if (strlen(isr_events[i].http) < 4)
+                                        if (strlen(isr_events[i].ip) < 4)
                                         {
-                                                gpio_input_reversal(isr_events[i].gpio);
+                                                gpio_input_reversal(cus_strip[isr_events[i].for_strip_index]);
                                                 printf("GPIO[%d] intr\n", io_num);
                                                 char *send = data_bdjs_reported(CMD, gpio_bit);
                                                 mqtt_publish(send);
@@ -96,8 +96,8 @@ static void gpio_task(void *arg)
                                         else
                                         {
                                                 char string[5] = {0};
-                                                char *send = data_bdjs_reported_string(OUTPUT0, itoa(isr_events[i].gpio, string, 10));
-                                                udp_client_sendto(isr_events[i].http, send);
+                                                char *send = data_bdjs_reported_string(OUTPUT0, itoa(isr_events[i].for_strip_index, string, 10));
+                                                udp_client_sendto(isr_events[i].ip, send);
                                                 data_free(send);
                                         }
                                 }
@@ -491,7 +491,8 @@ extern esp_err_t udpcallback(char *rec, uint len)
                 if (ans->output0 != NULL)
                 {
                         printf("udp get reversal %s \n", ans->output0);
-                        gpio_input_reversal(atoi(ans->output0));
+                        //得到 cus_strip 序号
+                        gpio_input_reversal(cus_strip[atoi(ans->output0)]);
                         char *send = data_bdjs_reported(CMD, gpio_bit);
                         mqtt_publish(send);
                         data_free(send);
