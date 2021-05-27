@@ -15,7 +15,7 @@ extern char *ota_url;
 
 struct isr_evevt
 {
-    char* http;
+    char http[64];
     int gpio;
 };
 
@@ -32,5 +32,5 @@ esp_err_t nav_write_mqtt_baidu_account(char ssid[32], char pass[64]);
 esp_err_t nav_write_ds(char dso[32], int num);
 esp_err_t nav_write_ota(char otapath[128]);
 esp_err_t nav_write_wifi_sta_name(char sta_name[32]);
-esp_err_t nav_write_isr_for(int index, char url[128], int gpio);
+esp_err_t nav_write_isr_for(int index, char url[64], int gpio);
 #endif

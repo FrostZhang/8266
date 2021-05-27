@@ -38,35 +38,20 @@ static void read_wifi()
     //打开数据库，打开一个数据库就相当于会返回一个句柄
     if (err == ESP_OK)
     {
-        //读取 字符串
-        char ssid[32] = {0};
-        uint32_t len = sizeof(ssid);
-        err = nvs_get_str(mHandleNvsRead, "ssid", ssid, &len);
-
+        char strtemp[64] = {0};
+        uint32_t len = 32;
+        err = nvs_get_str(mHandleNvsRead, "ssid", strtemp, &len);
         if (err == ESP_OK)
-        {
-            wifissid = malloc(sizeof(ssid));
-            strncpy(wifissid, ssid, sizeof(ssid));
-            ESP_LOGI(TAG, "read wifi ssid = %s ", wifissid);
-        }
-        char pass[64] = {0};
-        len = sizeof(pass);
-        err = nvs_get_str(mHandleNvsRead, "pass", pass, &len);
+            wifissid = strdup(strtemp);
+        len = 64;
+        err = nvs_get_str(mHandleNvsRead, "pass", strtemp, &len);
         if (err == ESP_OK)
-        {
-            wifipassword = malloc(sizeof(pass));
-            strncpy(wifipassword, pass, sizeof(pass));
-            ESP_LOGI(TAG, "read wifi pass = %s", wifipassword);
-        }
+            wifipassword = strdup(strtemp);
     }
     if (wifissid == NULL || strlen(wifissid) < 4)
-    {
         wifissid = CONFIG_ESP_WIFI_SSID;
-    }
     if (wifipassword == NULL || strlen(wifipassword) < 4)
-    {
         wifipassword = CONFIG_ESP_WIFI_PASSWORD;
-    }
     ESP_LOGI(TAG, "read wifi %s %s", wifissid, wifipassword);
     nvs_close(mHandleNvsRead);
 }
@@ -81,16 +66,11 @@ static void read_mqtt_baidu()
         uint32_t len = 32;
         err = nvs_get_str(mHandleNvsRead, "username", strtemp, &len);
         if (err == ESP_OK)
-        {
-            mqttusername = malloc(len + 1);
-            strncpy(mqttusername, strtemp, len);
-        }
+            mqttusername = strdup(strtemp);
+        len = 64;
         err = nvs_get_str(mHandleNvsRead, "password", strtemp, &len);
         if (err == ESP_OK)
-        {
-            mqttpassword = malloc(len + 1);
-            strncpy(mqttpassword, strtemp, len);
-        }
+            mqttpassword = strdup(strtemp);
     }
     if (mqttusername == NULL || strlen(mqttusername) < 4)
     {
@@ -111,7 +91,6 @@ static void read_ds()
     //打开数据库，打开一个数据库就相当于会返回一个句柄
     if (err == ESP_OK)
     {
-        //读取 字符串
         char strtemp[64] = {0};
         uint32_t len = sizeof(strtemp);
         err = nvs_get_str(mHandleNvsRead, "dsdata", strtemp, &len);
@@ -122,9 +101,7 @@ static void read_ds()
             ESP_LOGI(TAG, "get str dsdata = %s ", dsdata);
         }
         else
-        {
             ESP_LOGE(TAG, "get dsdata err %d", err);
-        }
         err = nvs_get_str(mHandleNvsRead, "dsdata1", strtemp, &len);
         if (err == ESP_OK)
         {
@@ -133,9 +110,7 @@ static void read_ds()
             ESP_LOGI(TAG, "get str dsdata1 = %s ", dsdata1);
         }
         else
-        {
             ESP_LOGE(TAG, "get dsdata1 err %d", err);
-        }
         err = nvs_get_str(mHandleNvsRead, "dsdata2", strtemp, &len);
         if (err == ESP_OK)
         {
@@ -144,9 +119,7 @@ static void read_ds()
             ESP_LOGI(TAG, "get str dsdata2 = %s ", dsdata2);
         }
         else
-        {
             ESP_LOGE(TAG, "get dsdata2 err %d", err);
-        }
         err = nvs_get_str(mHandleNvsRead, "dsdata3", strtemp, &len);
         if (err == ESP_OK)
         {
@@ -155,15 +128,10 @@ static void read_ds()
             ESP_LOGI(TAG, "get str dsdata3 = %s ", dsdata3);
         }
         else
-        {
             ESP_LOGE(TAG, "get dsdata3 err %d", err);
-        }
     }
     else
-    {
-        ESP_LOGE(TAG, "nvs_open err %d", err);
-    }
-
+        ESP_LOGE(TAG, "nvs dont have dsdata data %d", err);
     nvs_close(mHandleNvsRead);
 }
 
@@ -186,8 +154,7 @@ static void read_app_config()
 #if defined(APP_STRIP_4) || defined(APP_STRIP_3)
         for (uint8_t i = 0; i < 4; i++)
         {
-            len = 128 + 4;
-            err = nvs_get_blob(mHandleNvsRead, isr_keys[i], &isr_events[i], &len);
+            err = nvs_get_blob(mHandleNvsRead, isr_keys[i], &isr_events[i], sizeof(isr_events[i]));
             if (err != ESP_OK)
             {
                 isr_events[i].gpio = cus_strip[i];
@@ -195,7 +162,7 @@ static void read_app_config()
             else if (strlen(isr_events[i].http) < 4)
             {
                 free(isr_events[i].http);
-                isr_events[i].http = NULL;
+                memset(isr_events[i].http, "\0", 64);
             }
             ESP_LOGI(TAG, "get isr event %s gpio %d", isr_events[i].http, isr_events[i].gpio);
         }
@@ -258,7 +225,6 @@ extern esp_err_t nav_write_mqtt_baidu_account(char ssid[32], char pass[64])
         char strtemp[64] = {0};
         strcpy(strtemp, ssid);
         err = nvs_set_str(mHandleNvsRead, "username", strtemp);
-
         ESP_LOGI("写入mqttzz %s", strtemp);
         strcpy(strtemp, pass);
         err = nvs_set_str(mHandleNvsRead, "password", strtemp);
@@ -360,18 +326,18 @@ extern esp_err_t nav_write_wifi_sta_name(char sta_name[32])
 }
 
 //写入中断 0 5 14 3 引发什么gpio转换状态 （模拟开关 控制灯泡）
-extern esp_err_t nav_write_isr_for(int index, char url[128], int gpio)
+//index 0 1 2 3
+extern esp_err_t nav_write_isr_for(int index, char url[64], int gpio)
 {
     nvs_handle mHandleNvsRead;
     //将airkiss获取的wifi写入内存
     esp_err_t err = nvs_open("appconfig", NVS_READWRITE, &mHandleNvsRead);
     if (err == ESP_OK)
     {
-        char stetemp[128] = {0};
-        strcpy(stetemp, url);
-        isr_events[index].http = stetemp;
+        strcpy(isr_events[index].http, url);
+        isr_events[index].http[strnlen(url, 63)] = '\0'; //结尾添0 仿异常数据
         isr_events[index].gpio = gpio;
-        nvs_set_blob(mHandleNvsRead, isr_keys[index], &isr_events[index], 128 + 4);
+        nvs_set_blob(mHandleNvsRead, isr_keys[index], &isr_events[index], sizeof(isr_events[index]));
     }
     nvs_close(mHandleNvsRead);
     return err;

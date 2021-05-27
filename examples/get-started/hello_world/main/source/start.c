@@ -85,7 +85,7 @@ static void gpio_task(void *arg)
                         {
                                 if (cus_isr[i] == io_num)
                                 {
-                                        if (isr_events[i].http == NULL || strlen(isr_events[i].http) < 4)
+                                        if (strlen(isr_events[i].http) < 4)
                                         {
                                                 gpio_input_reversal(isr_events[i].gpio);
                                                 printf("GPIO[%d] intr\n", io_num);

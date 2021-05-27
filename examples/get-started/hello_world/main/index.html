@@ -136,21 +136,15 @@ padding-left: 15%;
 <table>
 <tr>
 <td>控制1:</td>
-<td>
-<input id="isrio0" name="isrio0" type="number" placeholder="4 13 15 16"></input>
-</td>
+<td><input id="isr0" name="isr0" type="number" placeholder="0-3" min="0" max ="3"></input></td>
 </tr>
 <tr>
 <td>地址</td>
-<td>
-<input id="isrio0p" name="isriop0" type="text" placeholder="远程地址(可空)"></input>
-</td>
+<td><input id="isrp0" name="isrp0" type="text" placeholder="远程地址(可空)" maxlength="15"></input></td>
 </tr>
 <tr>
 <td></td>
-<td>
-<button type="submit">更新配置1</button>
-</td>
+<td><button type="submit">更新配置</button></td>
 </tr>
 </table>
 </form>
@@ -158,21 +152,15 @@ padding-left: 15%;
 <table>
 <tr>
 <td>控制2:</td>
-<td>
-<input id="isrio5" name="isrio5" type="number" placeholder="4 13 15 16"></input>
-</td>
+<td><input id="isr1" name="isr1" type="number" placeholder="0-3" min="0" max ="3"></input></td>
 </tr>
 <tr>
 <td>地址</td>
-<td>
-<input id="isrio5p" name="isriop5" type="text" placeholder="远程地址(可空)"></input>
-</td>
+<td><input id="isrp1" name="isrp1" type="text" placeholder="远程地址(可空)" maxlength="15"></input></td>
 </tr>
 <tr>
 <td></td>
-<td>
-<button type="submit">更新配置1</button>
-</td>
+<td><button type="submit">更新配置</button></td>
 </tr>
 </table>
 </form>
@@ -180,21 +168,15 @@ padding-left: 15%;
 <table>
 <tr>
 <td>控制3:</td>
-<td>
-<input id="isrio12" name="isrio12" type="number" placeholder="4 13 15 16"></input>
-</td>
+<td><input id="isr2" name="isr2" type="number" placeholder="0-3" min="0" max ="3"></input></td>
 </tr>
 <tr>
 <td>地址</td>
-<td>
-<input id="isrio12p" name="isriop12" type="text" placeholder="远程地址(可空)"></input>
-</td>
+<td><input id="isrp2" name="isrp2" type="text" placeholder="远程地址(可空)" maxlength="15"></input></td>
 </tr>
 <tr>
 <td></td>
-<td>
-<button type="submit">更新配置1</button>
-</td>
+<td><button type="submit">更新配置</button></td>
 </tr>
 </table>
 </form>
@@ -202,21 +184,15 @@ padding-left: 15%;
 <table>
 <tr>
 <td>控制4:</td>
-<td>
-<input id="isrio14" name="isrio14" type="number" placeholder="4 13 15 16"></input>
-</td>
+<td><input id="isr3" name="isr3" type="number" placeholder="0-3" min="0" max ="3"></input></td>
 </tr>
 <tr>
 <td>地址</td>
-<td>
-<input id="isrio14p" name="isriop14"  type="text" placeholder="远程地址(可空)"></input>
-</td>
+<td><input id="isrp3" name="isrp3"  type="text" placeholder="远程地址(可空)" maxlength="15"></input></td>
 </tr>
 <tr>
 <td></td>
-<td>
-<button type="submit">更新配置1</button>
-</td>
+<td><button type="submit">更新配置</button></td>
 </tr>
 </table>
 </form>
@@ -318,17 +294,17 @@ o.value = kv[1];
 } if (kv[0] == "otapath") {
 var o = document.getElementById("otapath");
 o.value = kv[1];
-} if (kv[0] == "isrio0") {
-var o = document.getElementById("isrio0");
+} if (kv[0] == "isr0") {
+var o = document.getElementById("isr0");
 o.value = kv[1];
-} if (kv[0] == "isrio5") {
-var o = document.getElementById("isrio5");
+} if (kv[0] == "isr1") {
+var o = document.getElementById("isr1");
 o.value = kv[1];
-} if (kv[0] == "isrio12") {
-var o = document.getElementById("isrio12");
+} if (kv[0] == "isr2") {
+var o = document.getElementById("isr2");
 o.value = kv[1];
-} if (kv[0] == "isrio14") {
-var o = document.getElementById("isrio14");
+} if (kv[0] == "isr3") {
+var o = document.getElementById("isr3");
 o.value = kv[1];
 } if (kv[0] == "ssid") {
 var o = document.getElementById("ssid");

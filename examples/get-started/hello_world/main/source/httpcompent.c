@@ -18,8 +18,8 @@ static const char *BDJS = "bdjs";
 static const char *DATA = "data";
 static const char *SPACE = " ";
 static const char *LOGIN = "login";
-static const char *ISRIO = "isrio";
-static const char *ISRIOP = "isriop";
+static const char *ISR = "isr";
+static const char *ISRP = "isrp";
 
 static const char *TAG = "http";
 
@@ -58,9 +58,9 @@ static esp_err_t index_post_handler(httpd_req_t *req)
 
         char *mqttzz = NULL;
         char *mqttmm = NULL;
-        int isrio = -1;
-        int isriov = -1;
-        char *isriop = NULL;
+        int isrindex = -1; //0-3
+        int isrvalue = -1;
+        char *isrpath = NULL;
         char *ptr;
         char *p;
         ptr = strtok_r(buf, "&", &p);
@@ -89,16 +89,16 @@ static esp_err_t index_post_handler(httpd_req_t *req)
                 httpevent.bdjs = value;
                 httpevent.bdjs[strlen(value)] = '\0';
             }
-            else if (strncmp(key, ISRIOP, 6) == 0)
+            else if (strncmp(key, ISRP, 4) == 0)
             {
-                isriop = value;
+                isrpath = value;
             }
-            else if (strncmp(key, ISRIO, 5) == 0)
+            else if (strncmp(key, ISR, 3) == 0)
             {
-                char *io = substring(key, strlen(ISRIO), strlen(key) - strlen(ISRIO));
-                isrio = atoi(io);
+                char *io = substring(key, strlen(ISR), strlen(key) - strlen(ISR));
+                isrindex = atoi(io);
                 free(io);
-                isriov = atoi(value);
+                isrvalue = atoi(value);
             }
             ptr = strtok_r(NULL, "&", &p);
         }
@@ -107,16 +107,9 @@ static esp_err_t index_post_handler(httpd_req_t *req)
             nav_write_mqtt_baidu_account(mqttzz, mqttmm);
             httpevent.restart = 1;
         }
-        if (isrio > -1)
+        if (isrindex > -1)
         {
-            for (uint8_t i = 0; i < 4; i++)
-            {
-                if (cus_isr[i] == isrio)
-                {
-                    nav_write_isr_for(i, isriop, isriov);
-                    break;
-                }
-            }
+            nav_write_isr_for(isrindex, isrpath, isrvalue);
         }
     }
 
@@ -228,21 +221,21 @@ static esp_err_t htmlData_handle(httpd_req_t *req)
         sb_appendf(sb, ",ota_url=%s", ota_url);
     }
     if (isr_events[0].http != NULL)
-        sb_appendf(sb, ",isrio0=%s", isr_events[0].http);
+        sb_appendf(sb, ",isrp0=%s", isr_events[0].http);
     else
-        sb_appendf(sb, ",isrio0=%d", isr_events[0].gpio);
+        sb_appendf(sb, ",isr0=%d", isr_events[0].gpio);
     if (isr_events[0].http != NULL)
-        sb_appendf(sb, ",isrio5=%s", isr_events[1].http);
+        sb_appendf(sb, ",isrp1=%s", isr_events[1].http);
     else
-        sb_appendf(sb, ",isrio5=%d", isr_events[1].gpio);
+        sb_appendf(sb, ",isr1=%d", isr_events[1].gpio);
     if (isr_events[0].http != NULL)
-        sb_appendf(sb, ",isrio14=%s", isr_events[2].http);
+        sb_appendf(sb, ",isrp2=%s", isr_events[2].http);
     else
-        sb_appendf(sb, ",isrio14=%d", isr_events[2].gpio);
+        sb_appendf(sb, ",isr2=%d", isr_events[2].gpio);
     if (isr_events[0].http != NULL)
-        sb_appendf(sb, ",isrio12=%s", isr_events[3].http);
+        sb_appendf(sb, ",isrp3=%s", isr_events[3].http);
     else
-        sb_appendf(sb, ",isrio12=%d", isr_events[3].gpio);
+        sb_appendf(sb, ",isr3=%d", isr_events[3].gpio);
 
     sb_appendf(sb, ",sta_na=%d", wifi_sta_name);
     char *str = sb_concat(sb);
