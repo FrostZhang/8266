@@ -38,8 +38,8 @@ static const char *TAG = "Main";
 #define IR_RX_IO_NUM GPIO_NUM_5
 #define IR_TX_IO_NUM GPIO_NUM_14
 #define LEDC_IO_NUM GPIO_NUM_12
-#define DHT11_IO_NUM GPIO_NUM_1
-#define DS18B20_IO_NUM GPIO_NUM_1
+#define DHT11_IO_NUM GPIO_NUM_5
+#define DS18B20_IO_NUM GPIO_NUM_5
 
 #define LEDC_TEST_DUTY (4096)
 #define LEDC_TEST_FADE_TIME (1500)
@@ -127,7 +127,7 @@ static void GpioIni(void)
                 io_conf.pin_bit_mask |= BIT(cus_strip[i]);
         gpio_config(&io_conf);
         os_delay_us(20); //延时20MS 等配置完毕
-        // vTaskDelay(100 / portTICK_RATE_MS);
+
         for (uint8_t i = 0; i < sizeof(cus_strip); i++)
                 gpio_set_level(cus_strip[i], 0);
         io_conf.pin_bit_mask = GPIO_Pin_2;
@@ -143,7 +143,7 @@ static void GpioIni(void)
         io_conf.pull_down_en = 0;
         io_conf.pull_up_en = 0;
         io_conf.pin_bit_mask = 0;
-        for (uint8_t i = 0; i < sizeof(cus_isr); i++)
+        for (uint8_t i = 0; i < 4; i++)
                 io_conf.pin_bit_mask |= BIT(cus_isr[i]);
         io_conf.intr_type = GPIO_INTR_ANYEDGE;
         gpio_config(&io_conf);
@@ -153,7 +153,7 @@ static void GpioIni(void)
         xTaskCreate(gpio_task, "gpio_task", 2048, NULL, 1, NULL);
         gpio_install_isr_service(0);
         //不知道会不会闭包
-        for (uint8_t i = 0; i < sizeof(cus_isr); i++)
+        for (uint8_t i = 0; i < 4; i++)
         {
                 uint8_t n = i;
                 gpio_isr_handler_add(cus_isr[n], gpio_isr_handler, (void *)cus_isr[n]);
@@ -485,13 +485,16 @@ extern esp_err_t udpcallback(char *rec, uint len)
         char *data = malloc(len + 1);
         strncpy(data, rec, len);
         ESP_LOGI(TAG, "UDP REC %s", data);
-        if (strncmp(data,"{",1)) 
+        if (strncmp(data, "{", 1))
         {
                 data_res *ans = data_decode_bdjs(data);
                 if (ans->output0 != NULL)
                 {
                         printf("udp get reversal %s \n", ans->output0);
                         gpio_input_reversal(atoi(ans->output0));
+                        char *send = data_bdjs_reported(CMD, gpio_bit);
+                        mqtt_publish(send);
+                        data_free(send);
                 }
         }
         data_free(data);
