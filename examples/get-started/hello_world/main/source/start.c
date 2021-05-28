@@ -480,10 +480,10 @@ static esp_err_t sntp_connect_callback(sntp_event *call)
 }
 
 //udp收到信息 现在走的协议是 百度的协议
-extern esp_err_t udpcallback(char *rec, uint len)
+extern esp_err_t udpcallback(udp_event *call)
 {
-        char *data = malloc(len + 1);
-        strncpy(data, rec, len);
+        char *data = malloc(call->len + 1);
+        strncpy(data, call->recdata, call->len);
         ESP_LOGI(TAG, "UDP REC %s", data);
         if (strncmp(data, "{", 1))
         {
