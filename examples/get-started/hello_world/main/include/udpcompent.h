@@ -17,4 +17,5 @@ void udp_client_bord(const char *data);
 void udp_client_start(udp_callback_t callback);
 void udp_client_sendto2(const char *ip, const char *data);
 void udp_client_sendto(in_addr_t addr, const char *data);
+void udp_client_stop();
 #endif

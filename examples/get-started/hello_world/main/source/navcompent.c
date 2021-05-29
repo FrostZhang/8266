@@ -153,7 +153,7 @@ static void read_app_config()
 #if defined(APP_STRIP_4) || defined(APP_STRIP_3)
         for (uint8_t i = 0; i < 4; i++)
         {
-            len= sizeof(isr_events[i]);
+            len = sizeof(isr_events[i]);
             err = nvs_get_blob(mHandleNvsRead, isr_keys[i], &isr_events[i], &len);
             if (err != ESP_OK)
             {
@@ -332,11 +332,19 @@ extern esp_err_t nav_write_isr_for(int index, char url[64], int for_strip_index)
     esp_err_t err = nvs_open("appconfig", NVS_READWRITE, &mHandleNvsRead);
     if (err == ESP_OK)
     {
-        strcpy(isr_events[index].ip, url);
-        isr_events[index].ip[strnlen(url, 63)] = '\0'; //结尾添0 仿异常数据
+        if (url == NULL || strlen(url) < 4)
+        {
+            strcpy(isr_events[index].ip, "localip");
+        }
+        else
+        {
+            strcpy(isr_events[index].ip, url);
+            isr_events[index].ip[strnlen(url, 63)] = '\0'; //结尾添0 仿异常数据
+        }
         isr_events[index].for_strip_index = for_strip_index;
         nvs_set_blob(mHandleNvsRead, isr_keys[index], &isr_events[index], sizeof(isr_events[index]));
-        ESP_LOGI(TAG,"write isr %d url:%s strip:%d",index,url,for_strip_index);
+        nvs_commit(mHandleNvsRead);
+        ESP_LOGI(TAG, "write isr %d url:%s strip:%d", index, url, for_strip_index);
     }
     nvs_close(mHandleNvsRead);
     return err;

@@ -21,7 +21,7 @@ extern void udp_client_bord(const char *data)
                 ESP_LOGE(TAG, "Error occured during sending: sock %d", sock);
                 return;
         }
-        sendAddr.sin_addr.s_addr = -1;
+        sendAddr.sin_addr.s_addr = IPADDR_BROADCAST;
         printf("udp_client_send %s %d %d \n", data, sendAddr.sin_addr.s_addr, sendAddr.sin_port);
         int err = sendto(sock, data, strlen(data), 0, (struct sockaddr *)&sendAddr, sizeof(sendAddr));
         if (err < 0)
@@ -32,6 +32,11 @@ extern void udp_client_bord(const char *data)
 
 extern void udp_client_sendto2(const char *ip, const char *data)
 {
+        if (strlen(ip) > 12)
+        {
+                ESP_LOGE(TAG, "udp sendto addr err %s", ip);
+                return;
+        }
         udp_client_sendto(inet_addr(ip), data);
 }
 
@@ -39,6 +44,8 @@ extern void udp_client_sendto(in_addr_t addr, const char *data)
 {
         if (sock < 0)
                 ESP_LOGE(TAG, "udp 没有启用");
+        if (addr < 0)
+                ESP_LOGE(TAG, "udp sendto addr err");
         sendAddr.sin_addr.s_addr = addr;
         ESP_LOGI(TAG, "udp send %d %s", addr, data);
         int err = sendto(sock, data, strlen(data), 0, (struct sockaddr *)&sendAddr, sizeof(sendAddr));
@@ -78,7 +85,6 @@ static void udp_client_task(void *pvParameters)
                         ESP_LOGE(TAG, "Unable to create socket: errno %d", errno);
                         break;
                 }
-                ESP_LOGI(TAG, "Socket created");
                 static struct sockaddr_in mysock = {0};
                 mysock.sin_addr.s_addr = LocalIP->addr; //以wifi得到的ip  初始化udp
                 mysock.sin_family = AF_INET;
@@ -88,6 +94,7 @@ static void udp_client_task(void *pvParameters)
                 {
                         ESP_LOGE(TAG, "Socket unable to bind: errno %d", errno);
                 }
+                ESP_LOGI(TAG, "Socket created local ip :%d", mysock.sin_addr.s_addr);
                 while (state)
                 {
                         static struct sockaddr_in reciveAddr; // Large enough for both IPv4 or IPv6
@@ -101,13 +108,13 @@ static void udp_client_task(void *pvParameters)
                         else
                         {
                                 inet_ntoa_r(reciveAddr.sin_addr, addr_str, sizeof(addr_str) - 1);
-                                rx_buffer[len] = 0;
+                                rx_buffer[len] = '\0';
                                 ESP_LOGI(TAG, "Received %d bytes from %s:", len, addr_str);
                                 event_t.addr = reciveAddr.sin_addr.s_addr;
                                 event_t.len = len;
                                 event_t.recdata = rx_buffer;
                                 callback(&event_t);
-                                udp_client_sendto(reciveAddr.sin_addr.s_addr, "get mes");
+                                //udp_client_sendto(reciveAddr.sin_addr.s_addr, "get mes");
                         }
                         vTaskDelay(200 / portTICK_PERIOD_MS);
                 }

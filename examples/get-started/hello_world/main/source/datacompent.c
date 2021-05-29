@@ -1,8 +1,8 @@
 #include "cJSON.h"
 
 #include "datacompent.h"
-#include "esp_log.h"
-#include "stdio.h"
+#include "application.h"
+#include "navcompent.h"
 
 const char *REPORTED = "reported";   //reported
 const char *CMD = "cmd";             //cmd
@@ -16,7 +16,7 @@ static const char *TAG = "data";
 
 static cJSON *jsonSender;
 static data_res callback_data;
-
+static const char *SPACE = " ";
 //malloc data_res. creat josn
 extern void data_initialize()
 {
@@ -80,10 +80,55 @@ extern data_res *data_decode_bdjs(char *data)
             cJSON *jsono0 = cJSON_GetObjectItem(reporter, OUTPUT0);
             if (jsono0 != NULL && cJSON_IsString(jsono0))
             {
-                callback_data.output0 = jsoncmd->valuestring;
+                callback_data.output0 =  jsono0->valuestring;
             }
         }
         cJSON_Delete(json);
     }
     return &callback_data;
+}
+
+//获得设备所有状态 需要free 结果
+extern char *data_get_sysmes()
+{
+    StringBuilder *sb = sb_create();
+    sb_appendf(sb, "cmd=%d,", gpio_bit);
+    if (wifissid != NULL)
+        sb_appendf(sb, "ssid=%s", wifissid);
+    if (wifipassword != NULL)
+        sb_appendf(sb, ",pass=%s", wifipassword);
+    if (mqttusername != NULL)
+        sb_appendf(sb, ",mqttzz=%s", mqttusername);
+    if (mqttpassword != NULL)
+        sb_appendf(sb, ",mqttmm=%s", mqttpassword);
+    sb_appendf(sb, ",xh=%s", XINHAO);
+    sb_appendf(sb, ",oc=%s", OTA_LABLE);
+    if (ota_url != NULL)
+        sb_appendf(sb, ",ou=%s", ota_url);
+    for (uint8_t i = 0; i < 4; i++)
+    {
+        sb_appendf(sb, ",isr%d=%d", i, isr_events[i].for_strip_index);
+        if (strlen(isr_events[i].ip) > 4)
+            sb_appendf(sb, ",isrp%d=%s", i, isr_events[i].ip);
+    }
+    sb_appendf(sb, ",na=%s", wifi_sta_name);
+    char *str = sb_concat(sb);
+    sb_free(sb);
+    return str;
+}
+
+//获得设备所有定时 需要free 结果
+extern char *data_get_dsdata()
+{
+    StringBuilder *sb = sb_create();
+    sb_append(sb, dsdata);
+    sb_append(sb, SPACE);
+    sb_append(sb, dsdata1);
+    sb_append(sb, SPACE);
+    sb_append(sb, dsdata2);
+    sb_append(sb, SPACE);
+    sb_append(sb, dsdata3);
+    char *ds = sb_concat(sb);
+    sb_free(sb);
+    return ds;
 }

@@ -80,7 +80,7 @@ padding-left: 15%;
 <tr>
 <td></td>
 <td>
-<input id="sta_na" name="sta_na" type="Text" maxlength="20"></input>
+<input id="na" name="na" type="Text" maxlength="20"></input>
 </td>
 </tr>
 <tr>
@@ -120,7 +120,7 @@ padding-left: 15%;
 <tr>
 <td>地址:</td>
 <td>
-<input id="ota_url" name="ota_url" type="Text" maxlength="110"></input>
+<input id="ou" name="ou" type="Text" maxlength="110"></input>
 </td>
 </tr>
 <tr>
@@ -136,7 +136,7 @@ padding-left: 15%;
 <table>
 <tr>
 <td>控制1:</td>
-<td><input id="isr0" name="isr0" type="number" placeholder="0-3" min="0" max ="3"></input></td>
+<td><input id="isr0" name="isr0" type="number" placeholder="0-3" min="0" max ="3" required="required"></input></td>
 </tr>
 <tr>
 <td>地址</td>
@@ -152,7 +152,7 @@ padding-left: 15%;
 <table>
 <tr>
 <td>控制2:</td>
-<td><input id="isr1" name="isr1" type="number" placeholder="0-3" min="0" max ="3"></input></td>
+<td><input id="isr1" name="isr1" type="number" placeholder="0-3" min="0" max ="3" required="required"></input></td>
 </tr>
 <tr>
 <td>地址</td>
@@ -168,7 +168,7 @@ padding-left: 15%;
 <table>
 <tr>
 <td>控制3:</td>
-<td><input id="isr2" name="isr2" type="number" placeholder="0-3" min="0" max ="3"></input></td>
+<td><input id="isr2" name="isr2" type="number" placeholder="0-3" min="0" max ="3" required="required"></input></td>
 </tr>
 <tr>
 <td>地址</td>
@@ -184,7 +184,7 @@ padding-left: 15%;
 <table>
 <tr>
 <td>控制4:</td>
-<td><input id="isr3" name="isr3" type="number" placeholder="0-3" min="0" max ="3"></input></td>
+<td><input id="isr3" name="isr3" type="number" placeholder="0-3" min="0" max ="3" required="required"></input></td>
 </tr>
 <tr>
 <td>地址</td>
@@ -202,13 +202,13 @@ padding-left: 15%;
 <tr>
 <td>型号:</td>
 <td>
-<input id="xinghao" name="xinghao" disabled="true"></input>
+<input id="xh" name="xh" disabled="true"></input>
 </td>
 </tr>
 <tr>
 <td>OTA片区:</td>
 <td>
-<input id="otachoose" name="otachoose" disabled="true"></input>
+<input id="oc" name="oc" disabled="true"></input>
 </td>
 </tr>
 </table>
@@ -285,14 +285,14 @@ o.value = kv[1];
 } if (kv[0] == "mqttmm") {
 var o = document.getElementById("mqttmm");
 o.value = kv[1];
-} if (kv[0] == "xinghao") {
-var o = document.getElementById("xinghao");
+} if (kv[0] == "xh") {
+var o = document.getElementById("xh");
 o.value = kv[1];
-} if (kv[0] == "otachoose") {
-var o = document.getElementById("otachoose");
+} if (kv[0] == "oc") {
+var o = document.getElementById("oc");
 o.value = kv[1];
-} if (kv[0] == "ota_url") {
-var o = document.getElementById("ota_url");
+} if (kv[0] == "ou") {
+var o = document.getElementById("ou");
 o.value = kv[1];
 } if (kv[0] == "isr0") {
 var o = document.getElementById("isr0");
@@ -324,8 +324,8 @@ o.value = kv[1];
 } if (kv[0] == "pass") {
 var o = document.getElementById("pass");
 o.value = kv[1];
-} if (kv[0] == "sta_na") {
-var o = document.getElementById("sta_na");
+} if (kv[0] == "na") {
+var o = document.getElementById("na");
 o.value = kv[1];
 }
 });

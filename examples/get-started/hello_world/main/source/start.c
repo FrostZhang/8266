@@ -85,10 +85,10 @@ static void gpio_task(void *arg)
                         {
                                 if (cus_isr[i] == io_num)
                                 {
-                                        if (strlen(isr_events[i].ip) < 4)
+                                        printf("GPIO[%d] intr\n", io_num);
+                                        if (strlen(isr_events[i].ip) < 9)
                                         {
                                                 gpio_input_reversal(cus_strip[isr_events[i].for_strip_index]);
-                                                printf("GPIO[%d] intr\n", io_num);
                                                 char *send = data_bdjs_reported(CMD, gpio_bit);
                                                 mqtt_publish(send);
                                                 data_free(send);
@@ -97,7 +97,7 @@ static void gpio_task(void *arg)
                                         {
                                                 char string[5] = {0};
                                                 char *send = data_bdjs_reported_string(OUTPUT0, itoa(isr_events[i].for_strip_index, string, 10));
-                                                udp_client_sendto(isr_events[i].ip, send);
+                                                udp_client_sendto2(isr_events[i].ip, send);
                                                 data_free(send);
                                         }
                                 }
@@ -482,12 +482,17 @@ static esp_err_t sntp_connect_callback(sntp_event *call)
 //udp收到信息 现在走的协议是 百度的协议
 extern esp_err_t udpcallback(udp_event *call)
 {
-        char *data = malloc(call->len + 1);
-        strncpy(data, call->recdata, call->len);
-        ESP_LOGI(TAG, "UDP REC %s", data);
-        if (strncmp(data, "{", 1))
+        ESP_LOGI(TAG, "UDP REC %s", call->recdata);
+        printf("UDP Stack %ld\n", uxTaskGetStackHighWaterMark(NULL));
+        if (strncmp(call->recdata, "reqeust", 7) == 0)
         {
-                data_res *ans = data_decode_bdjs(data);
+                char *sysdata = data_get_sysmes();
+                udp_client_sendto(call->addr, sysdata);
+                free(sysdata);
+        }
+        else if (strncmp(call->recdata, "{", 1) == 0)
+        {
+                data_res *ans = data_decode_bdjs(call->recdata);
                 if (ans->output0 != NULL)
                 {
                         printf("udp get reversal %s \n", ans->output0);
@@ -498,7 +503,7 @@ extern esp_err_t udpcallback(udp_event *call)
                         data_free(send);
                 }
         }
-        data_free(data);
+        //data_free(data);
         return ESP_OK;
 }
 
@@ -524,6 +529,7 @@ static esp_err_t wifi_callback(net_callback call)
         {
                 ESP_LOGE(TAG, "收到WiFi断开消息");
                 sntpcompent_stop();
+                udp_client_stop();
                 //os_delay_us(2000);
                 //http_server_end();  不能停  有bug  mqtt 也不能停
         }

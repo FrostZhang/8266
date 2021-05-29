@@ -1,14 +1,13 @@
 
 #include <esp_http_server.h>
-#include "stdlib.h"
-#include "httpcompent.h"
 #include <sys/param.h> //MIN
 
-#include "navcompent.h"
 #include "start.h"
-#include <string.h>
+#include "httpcompent.h"
 #include "sntpcompent.h"
 #include "application.h"
+#include "datacompent.h"
+#include "navcompent.h"
 
 static const char *MQTTZZ = "mqttzz";
 static const char *MQTTMM = "mqttmm";
@@ -16,7 +15,7 @@ static const char *OPENSTR = "open";
 static const char *RESTART = "restart";
 static const char *BDJS = "bdjs";
 static const char *DATA = "data";
-static const char *SPACE = " ";
+
 static const char *LOGIN = "login";
 static const char *ISR = "isr";
 static const char *ISRP = "isrp";
@@ -166,20 +165,10 @@ static esp_err_t ds_handle(httpd_req_t *req)
         }
         free(buf);
     }
-
-    StringBuilder *sb = sb_create();
-    sb_append(sb, dsdata);
-    sb_append(sb, SPACE);
-    sb_append(sb, dsdata1);
-    sb_append(sb, SPACE);
-    sb_append(sb, dsdata2);
-    sb_append(sb, SPACE);
-    sb_append(sb, dsdata3);
-    char *ds = sb_concat(sb);
+    char *ds = data_get_dsdata();
     ESP_LOGI(TAG, "Send dsfatas => data: %s", ds);
     httpd_resp_send(req, ds, strlen(ds));
     free(ds);
-    sb_free(sb);
     return ESP_OK;
 }
 
@@ -204,38 +193,10 @@ static httpd_uri_t heartbeat = {
 
 static esp_err_t htmlData_handle(httpd_req_t *req)
 {
-    StringBuilder *sb = sb_create();
-    sb_appendf(sb, "cmd=%d,", gpio_bit);
-    if (wifissid != NULL)
-        sb_appendf(sb, "ssid=%s", wifissid);
-    if (wifipassword != NULL)
-        sb_appendf(sb, ",pass=%s", wifipassword);
-    if (mqttusername != NULL)
-        sb_appendf(sb, ",mqttzz=%s", mqttusername);
-    if (mqttpassword != NULL)
-        sb_appendf(sb, ",mqttmm=%s", mqttpassword);
-    sb_appendf(sb, ",xinghao=%s", XINHAO);
-    sb_appendf(sb, ",otachoose=%s", OTA_LABLE);
-    if (ota_url != NULL)
-        sb_appendf(sb, ",ota_url=%s", ota_url);
-
-    // char *str = sb_concat(sb);
-    // ESP_LOGI(TAG,"send http len: %d",strlen(str));
-    // httpd_resp_send_chunk(req, str, strlen(str));
-    // free(str);
-    // sb_reset(sb);
-    for (uint8_t i = 0; i < 4; i++)
-    {
-        sb_appendf(sb, ",isr%d=%d",i, isr_events[i].for_strip_index);
-        if (strlen(isr_events[i].ip) > 4)
-            sb_appendf(sb, ",isrp%d=%s",i, isr_events[i].ip);
-    }
-    sb_appendf(sb, ",sta_na=%s", wifi_sta_name);
-    char* str = sb_concat(sb);
+    char *str = data_get_sysmes();
     ESP_LOGI(TAG, "send http len: %d", strlen(str));
     esp_err_t err = httpd_resp_send(req, str, strlen(str));
     free(str);
-    sb_free(sb);
     return err;
 }
 
