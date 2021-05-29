@@ -32,7 +32,7 @@ extern void udp_client_bord(const char *data)
 
 extern void udp_client_sendto2(const char *ip, const char *data)
 {
-        if (strlen(ip) > 12)
+        if (strlen(ip) > 15)
         {
                 ESP_LOGE(TAG, "udp sendto addr err %s", ip);
                 return;

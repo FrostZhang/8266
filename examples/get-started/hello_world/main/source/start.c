@@ -484,7 +484,7 @@ extern esp_err_t udpcallback(udp_event *call)
 {
         ESP_LOGI(TAG, "UDP REC %s", call->recdata);
         printf("UDP Stack %ld\n", uxTaskGetStackHighWaterMark(NULL));
-        if (strncmp(call->recdata, "reqeust", 7) == 0)
+        if (strncmp(call->recdata, "request", 7) == 0)
         {
                 char *sysdata = data_get_sysmes();
                 udp_client_sendto(call->addr, sysdata);
