@@ -14,7 +14,6 @@
 #include "ds18b20.h"
 #include "driver/adc.h"
 #include "driver/hw_timer.h"
-#include "driver/ledc.h"
 #include "driver/ir_rx.h"
 #include "driver/ir_tx.h"
 #include "sh1106_s.h"
@@ -29,6 +28,7 @@
 #include "iot_button.h"
 #include "application.h"
 #include "otacompent.h"
+#include "ledccompent.h"
 
 //0    1  2     3  4  5  12   13 14 15 16
 //boot TX light RX io IR LEDC io IR io x
@@ -36,14 +36,10 @@
 static const char *TAG = "Main";
 
 #define IR_RX_IO_NUM GPIO_NUM_5
+#define IR_RX_BUF_LEN 128
 #define IR_TX_IO_NUM GPIO_NUM_14
-#define LEDC_IO_NUM GPIO_NUM_12
 #define DHT11_IO_NUM GPIO_NUM_5
 #define DS18B20_IO_NUM GPIO_NUM_5
-
-#define LEDC_TEST_DUTY (4096)
-#define LEDC_TEST_FADE_TIME (1500)
-#define IR_RX_BUF_LEN 128
 
 static xQueueHandle gpio_evt_queue = NULL;
 
@@ -199,46 +195,6 @@ static void TaskCreatDht11(void *p)
         vTaskDelete(NULL);
 }
 
-//呼吸灯
-static void LEDC(void *p)
-{
-#if defined(APP_STRIP_4) || defined(APP_STRIP_3)
-        ESP_LOGE(TAG, "当前是strip 模式 不可以使用 gpio12");
-        return;
-#endif
-        ledc_timer_config_t ledc_timer = {
-            .duty_resolution = LEDC_TIMER_13_BIT, // resolution of PWM duty
-            .freq_hz = 5000,                      // frequency of PWM signal
-            .speed_mode = LEDC_HIGH_SPEED_MODE,   // timer mode
-            .timer_num = LEDC_TIMER_0             // timer index
-        };
-        // Set configuration of timer0 for high speed channels
-        ledc_timer_config(&ledc_timer);
-        ledc_channel_config_t ledc_channel = {
-            .channel = LEDC_CHANNEL_0,
-            .duty = 0,
-            .gpio_num = LEDC_IO_NUM,
-            .speed_mode = LEDC_HIGH_SPEED_MODE,
-            .hpoint = 0,
-            .timer_sel = LEDC_TIMER_0};
-
-        ledc_channel_config(&ledc_channel);
-        ledc_fade_func_install(0);
-        while (1)
-        {
-                ledc_set_fade_with_time(ledc_channel.speed_mode,
-                                        ledc_channel.channel, LEDC_TEST_DUTY, LEDC_TEST_FADE_TIME);
-                ledc_fade_start(ledc_channel.speed_mode,
-                                ledc_channel.channel, LEDC_FADE_NO_WAIT);
-                vTaskDelay(LEDC_TEST_FADE_TIME / portTICK_PERIOD_MS);
-                ledc_set_fade_with_time(ledc_channel.speed_mode,
-                                        ledc_channel.channel, 0, LEDC_TEST_FADE_TIME);
-                ledc_fade_start(ledc_channel.speed_mode,
-                                ledc_channel.channel, LEDC_FADE_NO_WAIT);
-                vTaskDelay(LEDC_TEST_FADE_TIME / portTICK_PERIOD_MS);
-        }
-}
-
 static esp_err_t ir_rx_nec_code_check(ir_rx_nec_data_t nec_code)
 {
         if ((nec_code.addr1 != ((~nec_code.addr2) & 0xff)))
@@ -257,8 +213,8 @@ static esp_err_t ir_rx_nec_code_check(ir_rx_nec_data_t nec_code)
 //红外接收
 static void ir_rx_task(void *arg)
 {
-#if defined(APP_STRIP_4) || defined(APP_STRIP_3)
-        ESP_LOGE(TAG, "ir_rx_task 当前是strip 模式 不可以使用 gpio5");
+#if !defined(APP_IR)
+        ESP_LOGE(TAG, "ir_rx_task 当前不是ir_rx_task 模式 不可以使用 gpio5");
         vTaskDelete(NULL);
         return;
 #endif
@@ -290,7 +246,7 @@ static void ir_rx_task(void *arg)
 //红外发射
 static void ir_tx_task(void *arg)
 {
-#if defined(APP_STRIP_4) || defined(APP_STRIP_3)
+#if !defined(APP_IR)
         ESP_LOGE(TAG, "ir_tx_task 当前是strip 模式 不可以使用 gpio14");
         vTaskDelete(NULL);
         return;
@@ -410,6 +366,24 @@ extern int system_get_gpio_state(gpio_num_t num)
         return 0;
 }
 
+static void ledc_set_color(int setc)
+{
+        if (setc == 0xfffffff)
+        {
+                int color[3] = {0};
+                ledc_setcolor(color);
+        }
+        else
+        {
+                int g = (setc >> 16) & 0xff;
+                int b = (setc >> 8) & 0xff;
+                int r = (setc & 0xff);
+                int color[3] = {r * 16, b * 16, g * 16};
+                ESP_LOGI(TAG, "set ledc color %d %d %d", r, b, g);
+                ledc_setcolor(color);
+        }
+}
+
 //http收到控制信息回调
 extern esp_err_t system_http_callback(http_event *call)
 {
@@ -419,10 +393,14 @@ extern esp_err_t system_http_callback(http_event *call)
                 if (ans->cmd != -1)
                 {
                         printf("HTTP get cmd %d \n", ans->cmd);
+#if defined(APP_STRIP_4) || defined(APP_STRIP_3)
                         gpio_input_all(ans->cmd);
                         char *send = data_bdjs_reported(CMD, ans->cmd);
                         mqtt_publish(send);
                         data_free(send);
+#elif defined(APP_LEDC)
+                        ledc_set_color(ans->cmd);
+#endif
                 }
         }
         else if (call->gpio > -1)
@@ -449,7 +427,11 @@ static esp_err_t mqttcallback(char *rec)
         data_res *ans = data_decode_bdjs(rec);
         if (ans->cmd != -1)
         {
+#if defined(APP_STRIP_4) || defined(APP_STRIP_3)
                 gpio_input_all(ans->cmd);
+#elif defined(APP_LEDC)
+                ledc_set_color(ans->cmd);
+#endif
         }
         return ESP_OK;
 }
@@ -493,9 +475,11 @@ extern esp_err_t udpcallback(udp_event *call)
         else if (strncmp(call->recdata, "{", 1) == 0)
         {
                 data_res *ans = data_decode_bdjs(call->recdata);
+                //接收 其他物理开关 发送的指令
                 if (ans->output0 != NULL)
                 {
                         printf("udp get reversal %s \n", ans->output0);
+
                         //得到 cus_strip 序号
                         gpio_input_reversal(cus_strip[atoi(ans->output0)]);
                         char *send = data_bdjs_reported(CMD, gpio_bit);
@@ -510,10 +494,10 @@ extern esp_err_t udpcallback(udp_event *call)
 //ota 检查结束
 static esp_err_t ota_callback_handel()
 {
-        //http_clent_start();
         http_server_start();
         sntp_start(sntp_connect_callback);
         udp_client_start(udpcallback);
+        ledc_ini(LEDC_IO_NUM0, LEDC_IO_NUM1, LEDC_IO_NUM2, 2);
         return ESP_OK;
 }
 
@@ -531,7 +515,6 @@ static esp_err_t wifi_callback(net_callback call)
                 sntpcompent_stop();
                 udp_client_stop();
                 //os_delay_us(2000);
-                //http_server_end();  不能停  有bug  mqtt 也不能停
         }
         return ESP_OK;
 }
@@ -605,8 +588,12 @@ void app_main()
 
         //xTaskCreate(TaskCreatDht11, "TaskCreatDht11", 1024, NULL, 4, NULL);
         //xTaskCreate(Taskds18b20, "Taskds18b20", 1024, NULL, 3, NULL);
-        //xTaskCreate(LEDC, "LEDC", 4096, NULL, 8, NULL);
 
         xTaskCreate(ir_rx_task, "ir_rx_task", 2048, NULL, 5, NULL);
         xTaskCreate(ir_tx_task, "ir_tx_task", 2048, NULL, 5, NULL);
+
+        vTaskDelay(5000 / portTICK_RATE_MS);
+
+        //int color[3] = {231 * 2048 / 255, 174 * 2048 / 255, 45 * 2048 / 255};
+        //ledc_setcolor(color);
 }

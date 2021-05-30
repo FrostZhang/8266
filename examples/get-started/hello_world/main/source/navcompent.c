@@ -24,10 +24,8 @@ char *ota_url = {0}; //ota 升级地址 通常是 http://xxx.xxx/xxx
 
 char *wifi_sta_name = {0}; //当连接wifi 对方显示我的设备名称
 
-#if defined(APP_STRIP_4) || defined(APP_STRIP_3)
 //对应 cus_strips 4 触发的事件
 struct isr_evevt isr_events[4];
-#endif
 
 static char *isr_keys[] = {"isr_gpio0_for", "isr_gpio5_for", "isr_gpio12_for", "isr_gpio14_for"};
 

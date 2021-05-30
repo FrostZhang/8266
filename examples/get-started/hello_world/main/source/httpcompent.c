@@ -38,6 +38,8 @@ static esp_err_t index_post_handler(httpd_req_t *req)
     char buf[100];
     int ret, remaining = req->content_len;
     reset_callback_data();
+    //需要返回index 主页
+    int needbackindex = 1;  
     while (remaining > 0)
     {
         if ((ret = httpd_req_recv(req, buf,
@@ -85,6 +87,7 @@ static esp_err_t index_post_handler(httpd_req_t *req)
                 httpevent.restart = 1;
             else if (strcmp(key, BDJS) == 0)
             {
+                needbackindex = 0;
                 httpevent.bdjs = value;
                 httpevent.bdjs[strlen(value)] = '\0';
             }
@@ -113,11 +116,19 @@ static esp_err_t index_post_handler(httpd_req_t *req)
     }
 
     system_http_callback(&httpevent);
-    vTaskDelay(100 / portTICK_PERIOD_MS);
-    const char *resp_str = (const char *)req->user_ctx;
-    httpd_resp_send_chunk(req, resp_str, strlen(resp_str));
-    httpd_resp_send_chunk(req, NULL, 0);
-    printf("http Stack %ld\n", uxTaskGetStackHighWaterMark(NULL));
+    if (needbackindex)
+    {
+        vTaskDelay(100 / portTICK_PERIOD_MS);
+        const char *resp_str = (const char *)req->user_ctx;
+        httpd_resp_send_chunk(req, resp_str, strlen(resp_str));
+        httpd_resp_send_chunk(req, NULL, 0);
+        printf("http Stack %ld\n", uxTaskGetStackHighWaterMark(NULL));
+    }
+    else
+    {
+        httpd_resp_send_chunk(req, "ok", 2);
+        httpd_resp_send_chunk(req, NULL, 0);
+    }
     return ESP_OK;
 }
 

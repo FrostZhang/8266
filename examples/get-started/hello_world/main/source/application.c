@@ -4,26 +4,24 @@
 #include "esp_system.h"
 #include "esp_ota_ops.h"
 
-
 #define BURSIZE 2048
+
 #if defined(APP_STRIP_4)
 char *XINHAO = "strip_4";
 #elif defined(APP_STRIP_3)
 char *XINHAO = "strip_3";
-#elif defined(APP_IR_RELAY)
+#elif defined(APP_IR)
 char *XINHAO = "ir_relay";
+#elif defined(APP_LEDC)
+char *XINHAO = "ledc";
 #endif
 
 char *OTA_LABLE;
 struct tm timeinfo = {0};
 int wifi_connect;
-xQueueHandle wifi_queue;
-
-#if defined(APP_STRIP_4)||defined(APP_STRIP_3)
 uint8_t cus_isr[] = {GPIO_NUM_0, GPIO_NUM_5, GPIO_NUM_12, GPIO_NUM_14};
 uint8_t cus_strip[] = {GPIO_NUM_4, GPIO_NUM_13, GPIO_NUM_15, GPIO_NUM_16};
 int gpio_bit;   //包含1-32开关的状态
-#endif
 
 static int hex2dec(char c)
 {

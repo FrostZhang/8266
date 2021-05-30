@@ -105,6 +105,7 @@ extern char *data_get_sysmes()
     sb_appendf(sb, ",oc=%s", OTA_LABLE);
     if (ota_url != NULL)
         sb_appendf(sb, ",ou=%s", ota_url);
+    
     for (uint8_t i = 0; i < 4; i++)
     {
         sb_appendf(sb, ",isr%d=%d", i, isr_events[i].for_strip_index);

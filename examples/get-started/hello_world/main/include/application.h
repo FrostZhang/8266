@@ -12,9 +12,21 @@
 #include "esp_log.h" //标准的esp 打印
 #include "esp_err.h" //标准的esp err 回调
 
-#define APP_STRIP_4 1   //插排 4 孔
-#define APP_STRIP_3 0   //插排 3 孔
-#define APP_IR_RELAY 0  //红外 
+#define ON 0
+#define OPEN 0
+#define OFF 1
+#define CLOSE 1 
+
+// #define APP_STRIP_4  1  //插排 4 孔
+// #define APP_STRIP_3  0  //插排 3 孔
+// #define APP_IR 0  //红外 
+#define APP_LEDC 1  //ledc 
+
+#if defined(APP_LEDC)
+#define LEDC_IO_NUM0 GPIO_NUM_12
+#define LEDC_IO_NUM1 GPIO_NUM_15
+#define LEDC_IO_NUM2 GPIO_NUM_14
+#endif
 
 void http_url_encode(char url[]);
 void http_url_decode(char url[]);
@@ -24,20 +36,13 @@ void print_free_heap_size();
 int strSearch(char *str1, char *str2);
 char *substring(char *src, int pos, int length);
 
-extern char* XINHAO;
-extern char* OTA_LABLE;
-extern struct tm timeinfo;  //当前时间
+extern char* XINHAO;        //型号
+extern char* OTA_LABLE;     //当前载入的是那个 ota 扇区
+extern struct tm timeinfo;  //当前时间 由sntp 算的
 extern int wifi_connect;    //当前是否连了wifi
-#if defined(APP_STRIP_4)||defined(APP_STRIP_3)
-#define ON 0
-#define OPEN 0
-#define OFF 1
-#define CLOSE 1 
-extern int gpio_bit; 
 extern uint8_t cus_strip[4];
 extern uint8_t cus_isr[4];
-#endif
 
-extern xQueueHandle wifi_queue;
+extern int gpio_bit; 
 
 #endif

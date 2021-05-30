@@ -1,6 +1,5 @@
 #ifndef NVACOMPENT_H
 #define NVACOMPENT_H
-#include "esp_err.h"
 #include "application.h"
 
 extern char dsdata[33];
@@ -19,10 +18,8 @@ struct isr_evevt
     int for_strip_index;
 };
 
-#if defined(APP_STRIP_4) || defined(APP_STRIP_3)
 //中断 引发gpio事件
 extern struct isr_evevt isr_events[4];
-#endif
 
 extern char *wifi_sta_name;
 
