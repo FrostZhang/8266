@@ -366,24 +366,52 @@ extern int system_get_gpio_state(gpio_num_t num)
         return 0;
 }
 
+#if defined(APP_LEDC)
+static int color[3];
+static int colorblack[3] = {0};
+//设置灯光颜色
 static void ledc_set_color(int setc)
 {
         gpio_bit = setc;
         if (setc == LEDC_CLOSE)
         {
-                int color[3] = {0};
-                ledc_setcolor(color);
+                ledc_setcolor(colorblack);
         }
         else
         {
-                int g = (setc >> 16) & 0xff;
-                int b = (setc >> 8) & 0xff;
-                int r = (setc & 0xff);
-                int color[3] = {r * 16, b * 16, g * 16};
-                ESP_LOGI(TAG, "set ledc color %d %d %d", r, b, g);
+                color[2] = (setc >> 16) & 0xff;
+                color[1] = (setc >> 8) & 0xff;
+                color[0] = (setc & 0xff);
+                for (uint8_t i = 0; i < 3; i++)
+                {
+                        color[i] *=16;
+                }
+                ESP_LOGI(TAG, "set ledc color %d %d %d", color[0], color[1], color[2]);
                 ledc_setcolor(color);
         }
 }
+
+//反转 灯光开关
+static void ledc_reversal()
+{
+        if (gpio_bit == LEDC_CLOSE)
+        {
+                if (color[0] == 0 && color[1] == 0 && color[2] == 0)
+                {
+                        ledc_change_state(2);
+                }
+                else
+                {
+                        ledc_setcolor(color);
+                }
+        }
+        else
+        {
+                gpio_bit = LEDC_CLOSE;
+                ledc_setcolor(colorblack);
+        }
+}
+#endif
 
 //http收到控制信息回调
 extern esp_err_t system_http_callback(http_event *call)
@@ -401,6 +429,9 @@ extern esp_err_t system_http_callback(http_event *call)
                         data_free(send);
 #elif defined(APP_LEDC)
                         ledc_set_color(ans->cmd);
+                        char *send = data_bdjs_reported(CMD, ans->cmd);
+                        mqtt_publish(send);
+                        data_free(send);
 #endif
                 }
         }
@@ -427,7 +458,9 @@ static esp_err_t mqttcallback(char *rec)
 {
         data_res *ans = data_decode_bdjs(rec);
         if (ans == NULL)
+        {
                 return ESP_OK;
+        }
         else if (ans->cmd != -1)
         {
 #if defined(APP_STRIP_4) || defined(APP_STRIP_3)

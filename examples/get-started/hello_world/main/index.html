@@ -148,6 +148,7 @@
         function getXMLDoc(url, res) {
             xmlhttp.onreadystatechange = state_Change;
             xmlhttp.open("GET", url, true);
+            xmlhttp.send(null);
             function state_Change() {
                 if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
                     if (xmlhttp.responseText != null && xmlhttp.responseText != "") {
@@ -269,7 +270,7 @@
                 document.body.insertBefore(form, inserbeforeEle);
             }
         }
-        BuildWithXH("ledc");
+        //BuildWithXH("ledc");
         function LoadData() {
             getXMLDoc("/htmlData", lodback);
             function lodback() {

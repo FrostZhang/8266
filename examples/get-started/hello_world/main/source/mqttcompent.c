@@ -22,8 +22,8 @@ static const char *getAcc = "$baidu/iot/shadow/%s/get/accepted";
 static const char *get = "$baidu/iot/shadow/%s/get";
 static const char *up = "$baidu/iot/shadow/%s/update";
 
-static char *uptopic = {0};     //"$baidu/iot/shadow/Asher8266/update";
-      //userid = Asher8266
+static char *uptopic = {0}; //"$baidu/iot/shadow/Asher8266/update";
+                            //userid = Asher8266
 //             .username = "t0eff28/Asher8266",
 //             .password = "uEzltFewLsAaMQnZ",
 static mqtt_callback_t callback;
@@ -41,7 +41,8 @@ static void regist_baidu()
         sprintf(sub, getAcc, userid);
         esp_mqtt_client_subscribe(client, sub, 0);
         vTaskDelay(50 / portTICK_RATE_MS);
-        char *send = data_bdjs_request(userid);
+        extern char *mqttusername;
+        char *send = data_bdjs_request(mqttusername);
         memset(sub, '\0', 56);
         sprintf(sub, get, userid);
         //向系统请求 服务器缓存的 数据
@@ -177,7 +178,7 @@ extern esp_err_t mqtt_app_start(mqtt_callback_t call)
             .lwt_topic = uptopic,
             .lwt_msg = lwt_ms,
             .lwt_msg_len = strlen(lwt_ms),
-            .task_stack = 1024*3
+            .task_stack = 1024 * 8
             // .user_context = (void *)your_context
         };
 

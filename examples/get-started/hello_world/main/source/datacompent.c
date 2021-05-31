@@ -34,10 +34,11 @@ extern char *data_bdjs_reported(const char *key, int number)
     if (userid != NULL)
     {
         increment++;
-        char id[8] = userid;
-        id[strlen(userid)] = '\0';
-        strcat(id, itoa(increment));
-        cJSON_AddItemToObject(jsonSender, REQUESTID, id);
+        char id[16] = {0};
+        strcat(id, userid);
+        char num[8] = {0};
+        strcat(id, itoa(increment, num, 10));
+        cJSON_AddItemToObject(jsonSender, REQUESTID, cJSON_CreateString(id));
     }
     char *res = cJSON_PrintUnformatted(jsonSender);
     cJSON_DeleteItemFromObject(jsonSender, REQUESTID);
@@ -54,10 +55,11 @@ extern char *data_bdjs_reported_string(const char *key, const char *value)
     if (userid != NULL)
     {
         increment++;
-        char id[8] = userid;
-        id[strlen(userid)] = '\0';
-        strcat(id, itoa(increment));
-        cJSON_AddItemToObject(jsonSender, REQUESTID, id);
+        char id[16] = {0};
+        strcat(id, userid);
+        char num[8] = {0};
+        strcat(id, itoa(increment, num, 10));
+        cJSON_AddItemToObject(jsonSender, REQUESTID, cJSON_CreateString(id));
     }
     char *res = cJSON_PrintUnformatted(jsonSender);
     cJSON_DeleteItemFromObject(jsonSender, REQUESTID);
@@ -87,17 +89,18 @@ extern data_res *data_decode_bdjs(char *data)
     callback_data.cmd = -1;
     if (NULL != json)
     {
+        cJSON *jsonrequest = cJSON_GetObjectItem(json, REQUESTID);
+        if (jsonrequest != NULL && cJSON_IsString(jsonrequest))
+        {
+            if (userid != NULL && strncmp(jsonrequest->valuestring, userid, strlen(userid)) == 0)
+            {
+                return NULL; //忽略自己发的信息
+            }
+            //ESP_LOGI(TAG, "jsonrequest id %s %s %d", jsonrequest->valuestring, userid, strlen(userid));
+        }
         cJSON *reporter = cJSON_GetObjectItem(json, REPORTED);
         if (NULL != reporter)
         {
-            cJSON *jsonrequest = cJSON_GetObjectItem(reporter, REQUESTID);
-            if (jsonrequest != NULL && cJSON_IsString(jsonrequest))
-            {
-                if (userid != NULL && strncmp(jsonrequest, userid, strlen(userid) > 0))
-                {
-                    return NULL;    //忽略自己发的信息
-                }
-            }
             cJSON *jsoncmd = cJSON_GetObjectItem(reporter, CMD);
             if (jsoncmd != NULL && cJSON_IsNumber(jsoncmd))
             {

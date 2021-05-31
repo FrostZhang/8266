@@ -8,8 +8,7 @@
 #define LEDC_HS_CH0_CHANNEL LEDC_CHANNEL_0
 #define LEDC_HS_CH1_CHANNEL LEDC_CHANNEL_1
 #define LEDC_HS_CH2_CHANNEL LEDC_CHANNEL_2
-#define LEDC_TEST_DUTY (4096)
-#define LEDC_TEST_FADE_TIME (1500)
+#define LEDC_TEST_FADE_TIME (100)
 #define IR_RX_BUF_LEN 128
 ledc_channel_config_t ledc_channel[3];
 static int gpio_r;
@@ -131,16 +130,19 @@ extern void ledc_setcolor(int color[3])
     if (light_style != 0)
     {
         light_style = 0;
-        vTaskDelay(fadetime / portTICK_PERIOD_MS);
+        //vTaskDelay(fadetime / portTICK_PERIOD_MS);
     }
-    ESP_LOGI(TAG, "set color %d %d %d", color[0], color[1], color[2]);
+    //ESP_LOGI(TAG, "set color %d %d %d", color[0], color[1], color[2]);
     for (int ch = 0; ch < 3; ch++)
     {
         ledc_set_fade_with_time(ledc_channel[ch].speed_mode,
-                                ledc_channel[ch].channel, color[ch], 500);
+                                ledc_channel[ch].channel, color[ch], fadetime);
         ledc_fade_start(ledc_channel[ch].speed_mode,
-                        ledc_channel[ch].channel, LEDC_FADE_NO_WAIT);
+                        ledc_channel[ch].channel, LEDC_FADE_WAIT_DONE);
+        // ledc_set_duty(ledc_channel[ch].speed_mode, ledc_channel[ch].channel, color[ch]);
+        // ledc_update_duty(ledc_channel[ch].speed_mode, ledc_channel[ch].channel);
     }
+    //vTaskDelay(500 / portTICK_PERIOD_MS);
 }
 
 extern void ledc_set_fadtime(int time)

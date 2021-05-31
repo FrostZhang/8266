@@ -137,7 +137,13 @@ extern void system_pilot_light(int is_on)
 
 extern void print_free_heap_size()
 {
-    printf("esp_system free heap size: %d\n", esp_get_free_heap_size());
+    int size = esp_get_free_heap_size();
+    printf("esp_system free heap size: %d\n", size);
+    if (size<5000)
+    {
+        system_restart();
+    }
+    
 }
 
 int strSearch(char *str1, char *str2)
