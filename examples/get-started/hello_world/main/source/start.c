@@ -368,7 +368,8 @@ extern int system_get_gpio_state(gpio_num_t num)
 
 static void ledc_set_color(int setc)
 {
-        if (setc == 0xfffffff)
+        gpio_bit = setc;
+        if (setc == LEDC_CLOSE)
         {
                 int color[3] = {0};
                 ledc_setcolor(color);
@@ -425,7 +426,9 @@ extern esp_err_t system_http_callback(http_event *call)
 static esp_err_t mqttcallback(char *rec)
 {
         data_res *ans = data_decode_bdjs(rec);
-        if (ans->cmd != -1)
+        if (ans == NULL)
+                return ESP_OK;
+        else if (ans->cmd != -1)
         {
 #if defined(APP_STRIP_4) || defined(APP_STRIP_3)
                 gpio_input_all(ans->cmd);

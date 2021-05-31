@@ -26,6 +26,7 @@
 #define LEDC_IO_NUM0 GPIO_NUM_12
 #define LEDC_IO_NUM1 GPIO_NUM_15
 #define LEDC_IO_NUM2 GPIO_NUM_14
+#define LEDC_CLOSE 0xfffffff
 #endif
 
 void http_url_encode(char url[]);
@@ -42,7 +43,7 @@ extern struct tm timeinfo;  //当前时间 由sntp 算的
 extern int wifi_connect;    //当前是否连了wifi
 extern uint8_t cus_strip[4];
 extern uint8_t cus_isr[4];
-
+extern char *userid;
 extern int gpio_bit; 
 
 #endif

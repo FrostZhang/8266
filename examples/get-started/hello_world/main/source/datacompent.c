@@ -17,6 +17,7 @@ static const char *TAG = "data";
 static cJSON *jsonSender;
 static data_res callback_data;
 static const char *SPACE = " ";
+static int increment;
 //malloc data_res. creat josn
 extern void data_initialize()
 {
@@ -30,7 +31,16 @@ extern char *data_bdjs_reported(const char *key, int number)
     cJSON *reporter = cJSON_CreateObject();
     cJSON_AddItemToObject(jsonSender, REPORTED, reporter);
     cJSON_AddItemToObject(reporter, key, cJSON_CreateNumber(number));
+    if (userid != NULL)
+    {
+        increment++;
+        char id[8] = userid;
+        id[strlen(userid)] = '\0';
+        strcat(id, itoa(increment));
+        cJSON_AddItemToObject(jsonSender, REQUESTID, id);
+    }
     char *res = cJSON_PrintUnformatted(jsonSender);
+    cJSON_DeleteItemFromObject(jsonSender, REQUESTID);
     cJSON_DeleteItemFromObject(jsonSender, REPORTED);
     return res;
 }
@@ -41,7 +51,16 @@ extern char *data_bdjs_reported_string(const char *key, const char *value)
     cJSON *reporter = cJSON_CreateObject();
     cJSON_AddItemToObject(jsonSender, REPORTED, reporter);
     cJSON_AddItemToObject(reporter, key, cJSON_CreateString(value));
+    if (userid != NULL)
+    {
+        increment++;
+        char id[8] = userid;
+        id[strlen(userid)] = '\0';
+        strcat(id, itoa(increment));
+        cJSON_AddItemToObject(jsonSender, REQUESTID, id);
+    }
     char *res = cJSON_PrintUnformatted(jsonSender);
+    cJSON_DeleteItemFromObject(jsonSender, REQUESTID);
     cJSON_DeleteItemFromObject(jsonSender, REPORTED);
     return res;
 }
@@ -71,6 +90,14 @@ extern data_res *data_decode_bdjs(char *data)
         cJSON *reporter = cJSON_GetObjectItem(json, REPORTED);
         if (NULL != reporter)
         {
+            cJSON *jsonrequest = cJSON_GetObjectItem(reporter, REQUESTID);
+            if (jsonrequest != NULL && cJSON_IsString(jsonrequest))
+            {
+                if (userid != NULL && strncmp(jsonrequest, userid, strlen(userid) > 0))
+                {
+                    return NULL;    //忽略自己发的信息
+                }
+            }
             cJSON *jsoncmd = cJSON_GetObjectItem(reporter, CMD);
             if (jsoncmd != NULL && cJSON_IsNumber(jsoncmd))
             {
@@ -80,7 +107,7 @@ extern data_res *data_decode_bdjs(char *data)
             cJSON *jsono0 = cJSON_GetObjectItem(reporter, OUTPUT0);
             if (jsono0 != NULL && cJSON_IsString(jsono0))
             {
-                callback_data.output0 =  jsono0->valuestring;
+                callback_data.output0 = jsono0->valuestring;
             }
         }
         cJSON_Delete(json);
@@ -92,7 +119,7 @@ extern data_res *data_decode_bdjs(char *data)
 extern char *data_get_sysmes()
 {
     StringBuilder *sb = sb_create();
-    sb_appendf(sb, "cmd=%d,", gpio_bit);
+    sb_appendf(sb, "xh=%s", XINHAO);
     if (wifissid != NULL)
         sb_appendf(sb, "ssid=%s", wifissid);
     if (wifipassword != NULL)
@@ -101,17 +128,18 @@ extern char *data_get_sysmes()
         sb_appendf(sb, ",mqttzz=%s", mqttusername);
     if (mqttpassword != NULL)
         sb_appendf(sb, ",mqttmm=%s", mqttpassword);
-    sb_appendf(sb, ",xh=%s", XINHAO);
     sb_appendf(sb, ",oc=%s", OTA_LABLE);
     if (ota_url != NULL)
         sb_appendf(sb, ",ou=%s", ota_url);
-    
+#if defined(APP_STRIP_4) || defined(APP_STRIP_3)
+    sb_appendf(sb, ",cmd=%d,", gpio_bit);
     for (uint8_t i = 0; i < 4; i++)
     {
         sb_appendf(sb, ",isr%d=%d", i, isr_events[i].for_strip_index);
         if (strlen(isr_events[i].ip) > 4)
             sb_appendf(sb, ",isrp%d=%s", i, isr_events[i].ip);
     }
+#endif
     sb_appendf(sb, ",na=%s", wifi_sta_name);
     char *str = sb_concat(sb);
     sb_free(sb);

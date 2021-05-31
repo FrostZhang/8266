@@ -22,6 +22,7 @@ int wifi_connect;
 uint8_t cus_isr[] = {GPIO_NUM_0, GPIO_NUM_5, GPIO_NUM_12, GPIO_NUM_14};
 uint8_t cus_strip[] = {GPIO_NUM_4, GPIO_NUM_13, GPIO_NUM_15, GPIO_NUM_16};
 int gpio_bit;   //包含1-32开关的状态
+char *userid = {0}; //唯一ID 来自百度天工物
 
 static int hex2dec(char c)
 {

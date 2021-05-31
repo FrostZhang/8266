@@ -23,7 +23,7 @@ static const char *get = "$baidu/iot/shadow/%s/get";
 static const char *up = "$baidu/iot/shadow/%s/update";
 
 static char *uptopic = {0};     //"$baidu/iot/shadow/Asher8266/update";
-static char *userid = {0};      //Asher8266
+      //userid = Asher8266
 //             .username = "t0eff28/Asher8266",
 //             .password = "uEzltFewLsAaMQnZ",
 static mqtt_callback_t callback;

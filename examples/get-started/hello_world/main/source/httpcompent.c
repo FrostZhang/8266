@@ -71,7 +71,6 @@ static esp_err_t index_post_handler(httpd_req_t *req)
             char *newp = ptr;
             char *key = strtok_r(newp, "=", &p2);
             char *value = strtok_r(NULL, "=", &p2);
-
             if (strcmp(key, MQTTZZ) == 0)
                 mqttzz = value;
             else if (strcmp(key, MQTTMM) == 0)
@@ -82,6 +81,7 @@ static esp_err_t index_post_handler(httpd_req_t *req)
                 httpevent.gpio = atoi(io);
                 free(io);
                 httpevent.gpio_level = atoi(value);
+                
             }
             else if (strcmp(key, RESTART) == 0)
                 httpevent.restart = 1;

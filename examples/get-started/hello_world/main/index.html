@@ -3,337 +3,310 @@
 <link rel='icon' href='data:;base64,='>
 
 <head>
-<meta charset='utf-8'>
-<meta name='viewport' content='width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0'>
-<title>AsherLink</title>
-<style>
-button {
-min-width: 180px;
-}
+    <meta charset='utf-8'>
+    <meta name='viewport' content='width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0'>
+    <title>AsherLink</title>
+    <style>
+        button {
+            min-width: 180px;
+        }
 
-td {
-min-width: 75px;
-}
+        td {
+            min-width: 75px;
+        }
 
-table {
-padding-left: 15%;
-}
-</style>
+        table {
+            padding-left: 15%;
+        }
+    </style>
 
 <body id="body" onload="load()">
-<h1>Asher-Link</h1>
-<h3>输出</h3>
-<form id="gpio" method="post">
-<table>
-<tr>
-<td>开关1:</td>
-<td>
-<button id="open4" name="open4" type="submit" value="1">已关闭</button>
-</td>
-</tr>
-<tr>
-<td>开关2:</td>
-<td>
-<button id="open13" name="open13" type="submit" value="1">已关闭</button>
-</td>
-</tr>
-<tr>
-<td>开关3:</td>
-<td>
-<button id="open15" name="open15" type="submit" value="1">已关闭</button>
-</td>
-</tr>
-<tr>
-<td>开关4:</td>
-<td>
-<button id="open16" name="open16" type="submit" value="1">已关闭</button>
-</td>
-</tr>
-</table>
-</form>
-<h3>WIFI</h3>
-<form id="wifi" method="post">
-<table>
-<tr>
-<td>网络名称:</td>
-<td>
-<input id="ssid" name="ssid" type="Text" maxlength="20" disabled ="true"></input>
-</td>
-</tr>
-<tr>
-<td>网络密钥:</td>
-<td>
-<input id="pass" name="pass" type="password" maxlength="30" disabled ="true"></input>
-</td>
-</tr>
-<tr>
-<td></td>
-<td>
-<button type="submit">连接（重启设备）</button>
-</td>
-</tr>
-</table>
-</form>
-<h3>设备名称</h3>
-<form method="post">
-<table>
-<tr>
-<td></td>
-<td>
-<input id="na" name="na" type="Text" maxlength="20"></input>
-</td>
-</tr>
-<tr>
-<td></td>
-<td>
-<button type="submit">更新</button>
-</td>
-</tr>
-</table>
-</form>
-<h3>MQTT（开发者平台）</h3>
-<form id="mqtt" method="post">
-<table>
-<tr>
-<td>MQTT ZZ:</td>
-<td>
-<input id="mqttzz" name="mqttzz" type="Text" maxlength="25"></input>
-</td>
-</tr>
-<tr>
-<td>MQTT MM:</td>
-<td>
-<input id="mqttmm" name="mqttmm" type="password" maxlength="50"></input>
-</td>
-</tr>
-<tr>
-<td></td>
-<td>
-<button type="submit">连接（重启设备）</button>
-</td>
-</tr>
-</table>
-</form>
-<h3>硬件升级</h3>
-<form method="post">
-<table>
-<tr>
-<td>地址:</td>
-<td>
-<input id="ou" name="ou" type="Text" maxlength="110"></input>
-</td>
-</tr>
-<tr>
-<td></td>
-<td>
-<button type="submit">检测（重启设备）</button>
-</td>
-</tr>
-</table>
-</form>
-<h3>输入</h3>
-<form method="post">
-<table>
-<tr>
-<td>控制1:</td>
-<td><input id="isr0" name="isr0" type="number" placeholder="0-3" min="0" max ="3" required="required"></input></td>
-</tr>
-<tr>
-<td>地址</td>
-<td><input id="isrp0" name="isrp0" type="text" placeholder="远程地址(可空)" maxlength="15"></input></td>
-</tr>
-<tr>
-<td></td>
-<td><button type="submit">更新配置</button></td>
-</tr>
-</table>
-</form>
-<form method="post">
-<table>
-<tr>
-<td>控制2:</td>
-<td><input id="isr1" name="isr1" type="number" placeholder="0-3" min="0" max ="3" required="required"></input></td>
-</tr>
-<tr>
-<td>地址</td>
-<td><input id="isrp1" name="isrp1" type="text" placeholder="远程地址(可空)" maxlength="15"></input></td>
-</tr>
-<tr>
-<td></td>
-<td><button type="submit">更新配置</button></td>
-</tr>
-</table>
-</form>
-<form method="post">
-<table>
-<tr>
-<td>控制3:</td>
-<td><input id="isr2" name="isr2" type="number" placeholder="0-3" min="0" max ="3" required="required"></input></td>
-</tr>
-<tr>
-<td>地址</td>
-<td><input id="isrp2" name="isrp2" type="text" placeholder="远程地址(可空)" maxlength="15"></input></td>
-</tr>
-<tr>
-<td></td>
-<td><button type="submit">更新配置</button></td>
-</tr>
-</table>
-</form>
-<form method="post">
-<table>
-<tr>
-<td>控制4:</td>
-<td><input id="isr3" name="isr3" type="number" placeholder="0-3" min="0" max ="3" required="required"></input></td>
-</tr>
-<tr>
-<td>地址</td>
-<td><input id="isrp3" name="isrp3"  type="text" placeholder="远程地址(可空)" maxlength="15"></input></td>
-</tr>
-<tr>
-<td></td>
-<td><button type="submit">更新配置</button></td>
-</tr>
-</table>
-</form>
-<h3>设备信息</h3>
-<form method="post">
-<table>
-<tr>
-<td>型号:</td>
-<td>
-<input id="xh" name="xh" disabled="true"></input>
-</td>
-</tr>
-<tr>
-<td>OTA片区:</td>
-<td>
-<input id="oc" name="oc" disabled="true"></input>
-</td>
-</tr>
-</table>
-</form>
-<h3>重启设备</h3>
-<form method="post">
-<table>
-<tr>
-<td></td>
-<td>
-<button id="restart" name="restart" type="submit" value="1">点我重启</button>
-</td>
-</tr>
-</table>
-</form>
-<script type='text/javascript'>
-var xmlhttp;
-function load() {
-xmlhttp = null;
-if (window.XMLHttpRequest) {// code for all new browsers
-xmlhttp = new XMLHttpRequest();
-}
-else if (window.ActiveXObject) {// code for IE5 and IE6
-xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
-}
-if (xmlhttp == null) {
-alert("浏览器版本过低，无法读取数据");
-}
-test();
-}
-function getXMLDoc(url, res) {
-xmlhttp.onreadystatechange = state_Change;
-xmlhttp.open("GET", url, true);
-xmlhttp.send(null);
-function state_Change() {
-if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
-if (xmlhttp.responseText != null && xmlhttp.responseText != "") {
-console.log(xmlhttp.responseText)
-res();
-}
-}
-}
-}
-function test() {
-getXMLDoc("/htmlData", lodback);
-function lodback() {
-var str = xmlhttp.responseText;
-if (str != null && str.length > 0) {
-var strs = str.split(',');
-strs.forEach(s => {
-var kv = s.split("=");
-if (kv[0] == "cmd") {
-if (kv[1] & (1 << 4)) {
-var o = document.getElementById("open4");
-o.value = "0";
-o.textContent = "已打开";
-} if (kv[1] & (1 << 16)) {
-var o = document.getElementById("open16");
-o.value = "0";
-o.textContent = "已打开";
-} if (kv[1] & (1 << 13)) {
-var o = document.getElementById("open13");
-o.value = "0";
-o.textContent = "已打开";
-} if (kv[1] & (1 << 15)) {
-var o = document.getElementById("open15");
-o.value = "0";
-o.textContent = "已打开";
-}
-}
-if (kv[0] == "mqttzz") {
-var o = document.getElementById("mqttzz");
-o.value = kv[1];
-} if (kv[0] == "mqttmm") {
-var o = document.getElementById("mqttmm");
-o.value = kv[1];
-} if (kv[0] == "xh") {
-var o = document.getElementById("xh");
-o.value = kv[1];
-} if (kv[0] == "oc") {
-var o = document.getElementById("oc");
-o.value = kv[1];
-} if (kv[0] == "ou") {
-var o = document.getElementById("ou");
-o.value = kv[1];
-} if (kv[0] == "isr0") {
-var o = document.getElementById("isr0");
-o.value = kv[1];
-} if (kv[0] == "isr1") {
-var o = document.getElementById("isr1");
-o.value = kv[1];
-} if (kv[0] == "isr2") {
-var o = document.getElementById("isr2");
-o.value = kv[1];
-} if (kv[0] == "isr3") {
-var o = document.getElementById("isr3");
-o.value = kv[1];
-} if (kv[0] == "isrp0") {
-var o = document.getElementById("isrp0");
-o.value = kv[1];
-} if (kv[0] == "isrp1") {
-var o = document.getElementById("isrp1");
-o.value = kv[1];
-} if (kv[0] == "isrp2") {
-var o = document.getElementById("isrp2");
-o.value = kv[1];
-} if (kv[0] == "isrp3") {
-var o = document.getElementById("isrp3");
-o.value = kv[1];
-} if (kv[0] == "ssid") {
-var o = document.getElementById("ssid");
-o.value = kv[1];
-} if (kv[0] == "pass") {
-var o = document.getElementById("pass");
-o.value = kv[1];
-} if (kv[0] == "na") {
-var o = document.getElementById("na");
-o.value = kv[1];
-}
-});
+    <h1>Asher-Link</h1>
+    <h3 id="insert">WIFI</h3>
+    <form id="wifi" method="post">
+        <table>
+            <tr>
+                <td>网络名称:</td>
+                <td>
+                    <input id="ssid" name="ssid" type="Text" maxlength="20" disabled="true"></input>
+                </td>
+            </tr>
+            <tr>
+                <td>网络密钥:</td>
+                <td>
+                    <input id="pass" name="pass" type="password" maxlength="30" disabled="true"></input>
+                </td>
+            </tr>
+            <!-- <tr>
+                <td></td>
+                <td>
+                    <button type="submit">连接（重启设备）</button>
+                </td>
+            </tr> -->
+        </table>
+    </form>
+    <h3>设备名称</h3>
+    <form method="post">
+        <table>
+            <tr>
+                <td></td>
+                <td>
+                    <input id="na" name="na" type="Text" maxlength="20" disabled="true"></input>
+                </td>
+            </tr>
+            <!-- <tr>
+                <td></td>
+                <td>
+                    <button type="submit">更新</button>
+                </td>
+            </tr> -->
+        </table>
+    </form>
+    <h3>MQTT（开发者平台）</h3>
+    <form id="mqtt" method="post">
+        <table>
+            <tr>
+                <td>MQTT ZZ:</td>
+                <td>
+                    <input id="mqttzz" name="mqttzz" type="Text" maxlength="25" disabled="true"></input>
+                </td>
+            </tr>
+            <tr>
+                <td>MQTT MM:</td>
+                <td>
+                    <input id="mqttmm" name="mqttmm" type="password" maxlength="50" disabled="true"></input>
+                </td>
+            </tr>
+            <!-- <tr>
+                <td></td>
+                <td>
+                    <button type="submit">连接（重启设备）</button>
+                </td>
+            </tr> -->
+        </table>
+    </form>
+    <h3>硬件升级</h3>
+    <form method="post">
+        <table>
+            <tr>
+                <td>地址:</td>
+                <td>
+                    <input id="ou" name="ou" type="Text" maxlength="110"></input>
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>
+                    <button type="submit">检测（重启设备）</button>
+                </td>
+            </tr>
+        </table>
+    </form>
+    <h3>设备信息</h3>
+    <form method="post">
+        <table>
+            <tr>
+                <td>型号:</td>
+                <td>
+                    <input id="xh" name="xh" disabled="true"></input>
+                </td>
+            </tr>
+            <tr>
+                <td>OTA片区:</td>
+                <td>
+                    <input id="oc" name="oc" disabled="true"></input>
+                </td>
+            </tr>
+        </table>
+    </form>
+    <h3>重启设备</h3>
+    <form method="post">
+        <table>
+            <tr>
+                <td></td>
+                <td>
+                    <button id="restart" name="restart" type="submit" value="1">点我重启</button>
+                </td>
+            </tr>
+        </table>
+    </form>
+    <script type='text/javascript'>
+        var xmlhttp;
+        function load() {
+            xmlhttp = null;
+            if (window.XMLHttpRequest) {// code for all new browsers
+                xmlhttp = new XMLHttpRequest();
+            }
+            else if (window.ActiveXObject) {// code for IE5 and IE6
+                xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+            }
+            if (xmlhttp == null) {
+                alert("浏览器版本过低，无法读取数据");
+            }
+            LoadData();
+        }
+        function getXMLDoc(url, res) {
+            xmlhttp.onreadystatechange = state_Change;
+            xmlhttp.open("GET", url, true);
+            function state_Change() {
+                if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                    if (xmlhttp.responseText != null && xmlhttp.responseText != "") {
+                        console.log(xmlhttp.responseText)
+                        res();
+                    }
+                }
+            }
+        }
 
-}
-}
-}
-</script>
+        var inserbeforeEle = document.getElementById("insert");
+        function BuildWithXH(xh) {
+            if (xh == "strip_4") {
+                var strip_4 = [4, 13, 15, 16];
+                h3 = document.createElement("h3");
+                h3.textContent = "输出";
+                document.body.insertBefore(h3, inserbeforeEle);
+                form = document.createElement("form");
+                form.setAttribute("method", "post");
+                table = document.createElement("table");
+                for (let index = 0; index < 4; index++) {
+                    td = document.createElement("td");
+                    tr = document.createElement("tr");
+                    td.textContent = "开关" + strip_4[index];
+                    td2 = document.createElement("td");
+                    button = document.createElement("button");
+                    button.name = button.id = "open" + strip_4[index];
+                    button.type = "submit";
+                    button.textContent = "已关闭";
+                    tr.append(td, td2);
+                    td2.append(button);
+                    table.append(tr);
+                }
+                form.append(table);
+                document.body.insertBefore(form, inserbeforeEle);
+
+                h3 = document.createElement("h3");
+                h3.textContent = "输入";
+                document.body.insertBefore(h3, inserbeforeEle);
+                form = document.createElement("form");
+                form.setAttribute("method", "post");
+                table = document.createElement("table");
+                for (let index = 0; index < 4; index++) {
+                    tr = document.createElement("tr");
+                    td = document.createElement("td");
+                    td.textContent = "控制" + index;
+                    td2 = document.createElement("td");
+                    tr.append(td, td2);
+                    input = document.createElement("input");
+                    td2.append(input);
+                    input.id = input.name = "isr" + index;
+                    input.type = "number";
+                    input.placeholder = "0-3";
+                    input.min = 0;
+                    input.max = 3;
+                    input.required = "required";
+                    table.append(tr);
+
+                    tr = document.createElement("tr");
+                    td = document.createElement("td");
+                    td.textContent = "地址：";
+                    td2 = document.createElement("td");
+                    tr.append(td, td2);
+                    input = document.createElement("input");
+                    td2.append(input);
+                    input.id = input.name = "isrp" + index;
+                    input.type = "text";
+                    input.placeholder = "local";
+                    input.maxlength = 15;
+                    table.append(tr);
+
+                    tr = document.createElement("tr");
+                    td = document.createElement("td");
+                    td2 = document.createElement("td");
+                    tr.append(td, td2);
+                    button = document.createElement("button");
+                    td2.append(button);
+                    button.type = "submit";
+                    button.textContent = "更新配置";
+                    table.append(tr);
+                }
+                form.append(table);
+                document.body.insertBefore(form, inserbeforeEle);
+
+                serializeForm
+            }
+            if (xh == "ledc") {
+                h3 = document.createElement("h3");
+                h3.textContent = "色彩";
+                document.body.insertBefore(h3, inserbeforeEle);
+                form = document.createElement("form");
+                form.setAttribute("method", "get");
+                table = document.createElement("table");
+
+                tr = document.createElement("tr");
+                td = document.createElement("td");
+                td.textContent = "选择";
+                td2 = document.createElement("td");
+                tr.append(td, td2);
+                input = document.createElement("input");
+                td2.append(input);
+                input.id = input.name = "col";
+                input.type = "color";
+                input.required = "required";
+                table.append(tr);
+
+                tr = document.createElement("tr");
+                td = document.createElement("td");
+                td2 = document.createElement("td");
+                tr.append(td, td2);
+                button = document.createElement("button");
+                td2.append(button);
+                button.type = "submit";
+                button.textContent = "发送";
+                table.append(tr);
+
+                form.createElement
+                form.append(table);
+                document.body.insertBefore(form, inserbeforeEle);
+            }
+        }
+        BuildWithXH("ledc");
+        function LoadData() {
+            getXMLDoc("/htmlData", lodback);
+            function lodback() {
+                var str = xmlhttp.responseText;
+                xh = "";
+                if (str != null && str.length > 0) {
+                    var strs = str.split(',');
+                    strs.forEach(s => {
+                        var kv = s.split("=");
+                        if (kv[0] == "cmd") {
+                            if (xh == "strip_4") {
+                                for (let index = 0; index < 17; index++) {
+                                    if (kv[1] & (1 << index)) {
+                                        var o = document.getElementById("open" + index);
+                                        if (0 != null) {
+                                            o.value = "0";
+                                            o.textContent = "已打开";
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        else {
+                            var temp = document.getElementById(kv[0]);
+                            if (temp != null) {
+                                temp.value = kv[1];
+                            }
+                            if (kv[0] == "xh") {
+                                xh = kv[1];
+                                BuildWithXH(kv[1]);
+                            }
+                        }
+                    });
+                }
+            }
+        }
+    </script>
 </body>
 </head>
 
