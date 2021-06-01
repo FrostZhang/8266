@@ -97,6 +97,7 @@ static void udp_client_task(void *pvParameters)
                 ESP_LOGI(TAG, "Socket created local ip :%d", mysock.sin_addr.s_addr);
                 while (state)
                 {
+                        printf("udp Stack %ld\n", uxTaskGetStackHighWaterMark(NULL));
                         static struct sockaddr_in reciveAddr; // Large enough for both IPv4 or IPv6
                         socklen_t socklen = sizeof(reciveAddr);
                         int len = recvfrom(sock, rx_buffer, sizeof(rx_buffer) - 1, 0, (struct sockaddr *)&reciveAddr, &socklen);
@@ -133,7 +134,7 @@ extern void udp_client_start(udp_callback_t call)
 {
         callback = call;
         state = true;
-        xTaskCreate(udp_client_task, "udp_client", 1024 * 8, NULL, 5, &handel);
+        xTaskCreate(udp_client_task, "udp_client", 1024 * 4, NULL, 5, &handel);
 }
 
 extern void udp_client_stop()

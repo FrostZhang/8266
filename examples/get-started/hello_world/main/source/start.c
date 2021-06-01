@@ -367,8 +367,8 @@ extern int system_get_gpio_state(gpio_num_t num)
 }
 
 #if defined(APP_LEDC)
-static int color[3];
-static int colorblack[3] = {0};
+static int color[4];
+static int colorblack[4] = {0};
 //设置灯光颜色
 static void ledc_set_color(int setc)
 {
@@ -386,7 +386,7 @@ static void ledc_set_color(int setc)
         }
         else
         {
-                ledc_setcolor(color);
+                ledc_setcolor(&color);
                 ESP_LOGI(TAG, "set ledc color %d %d %d", color[0], color[1], color[2]);
         }
 }
@@ -394,22 +394,22 @@ static void ledc_set_color(int setc)
 //反转 灯光开关
 static void ledc_reversal()
 {
-        if (gpio_bit == LEDC_CLOSE)
-        {
-                if (color[0] == 0 && color[1] == 0 && color[2] == 0)
-                {
-                        ledc_change_state(2);
-                }
-                else
-                {
-                        ledc_setcolor(color);
-                }
-        }
-        else
-        {
-                gpio_bit = LEDC_CLOSE;
-                ledc_setcolor(colorblack);
-        }
+        // if (gpio_bit == LEDC_CLOSE)
+        // {
+        //         if (color[0] == 0 && color[1] == 0 && color[2] == 0)
+        //         {
+        //                 ledc_change_state(2);
+        //         }
+        //         else
+        //         {
+        //                 ledc_setcolor(color);
+        //         }
+        // }
+        // else
+        // {
+        //         gpio_bit = LEDC_CLOSE;
+        //         ledc_setcolor(colorblack);
+        // }
 }
 #endif
 
@@ -419,7 +419,7 @@ extern esp_err_t system_http_callback(http_event *call)
         if (call->bdjs != NULL)
         {
                 data_res *ans = data_decode_bdjs(call->bdjs);
-                if (ans->cmd != -1)
+                if (ans->cmd != -2)
                 {
                         printf("HTTP get cmd %d \n", ans->cmd);
 #if defined(APP_STRIP_4) || defined(APP_STRIP_3)
@@ -432,6 +432,7 @@ extern esp_err_t system_http_callback(http_event *call)
                         char *send = data_bdjs_reported(CMD, ans->cmd);
                         mqtt_publish(send);
                         data_free(send);
+                        print_free_heap_size();
 #endif
                 }
         }
@@ -461,7 +462,7 @@ static esp_err_t mqttcallback(char *rec)
         {
                 return ESP_OK;
         }
-        else if (ans->cmd != -1)
+        else if (ans->cmd != -2)
         {
 #if defined(APP_STRIP_4) || defined(APP_STRIP_3)
                 gpio_input_all(ans->cmd);

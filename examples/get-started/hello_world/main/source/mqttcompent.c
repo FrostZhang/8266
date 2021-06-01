@@ -178,7 +178,7 @@ extern esp_err_t mqtt_app_start(mqtt_callback_t call)
             .lwt_topic = uptopic,
             .lwt_msg = lwt_ms,
             .lwt_msg_len = strlen(lwt_ms),
-            .task_stack = 1024 * 8
+            .task_stack = 1024 * 5
             // .user_context = (void *)your_context
         };
 

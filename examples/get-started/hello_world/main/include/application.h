@@ -26,7 +26,6 @@
 #define LEDC_IO_NUM0 GPIO_NUM_12
 #define LEDC_IO_NUM1 GPIO_NUM_15
 #define LEDC_IO_NUM2 GPIO_NUM_14
-#define LEDC_CLOSE 0xfffffff
 #endif
 
 void http_url_encode(char url[]);

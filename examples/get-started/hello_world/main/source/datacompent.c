@@ -86,7 +86,7 @@ extern void data_free(void *object)
 extern data_res *data_decode_bdjs(char *data)
 {
     cJSON *json = cJSON_Parse(data);
-    callback_data.cmd = -1;
+    callback_data.cmd = -2;
     if (NULL != json)
     {
         cJSON *jsonrequest = cJSON_GetObjectItem(json, REQUESTID);
@@ -94,9 +94,10 @@ extern data_res *data_decode_bdjs(char *data)
         {
             if (userid != NULL && strncmp(jsonrequest->valuestring, userid, strlen(userid)) == 0)
             {
-                return NULL; //忽略自己发的信息
+                ESP_LOGI(TAG, "ignore self mes !"); //忽略自己发的信息
+                cJSON_Delete(json);
+                return NULL;
             }
-            //ESP_LOGI(TAG, "jsonrequest id %s %s %d", jsonrequest->valuestring, userid, strlen(userid));
         }
         cJSON *reporter = cJSON_GetObjectItem(json, REPORTED);
         if (NULL != reporter)
@@ -124,7 +125,7 @@ extern char *data_get_sysmes()
     StringBuilder *sb = sb_create();
     sb_appendf(sb, "xh=%s", XINHAO);
     if (wifissid != NULL)
-        sb_appendf(sb, "ssid=%s", wifissid);
+        sb_appendf(sb, ",ssid=%s", wifissid);
     if (wifipassword != NULL)
         sb_appendf(sb, ",pass=%s", wifipassword);
     if (mqttusername != NULL)
