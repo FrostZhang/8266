@@ -102,10 +102,14 @@ static void LEDC(void *p)
             vTaskDelay(fadetime / portTICK_PERIOD_MS);
         }
     }
+    ledc_fade_func_uninstall();
+    vTaskDelete(NULL);
 }
 
 extern void ledc_ini(int r, int b, int g, int style)
 {
+    if (isini)
+        return;
     if (r == b || r == g || b == g)
     {
         ESP_LOGE(TAG, "输入gpio err");
@@ -126,6 +130,8 @@ extern void ledc_change_state(int style)
 
 extern void ledc_setcolor(int color[3])
 {
+    if (!isini)
+        return;
     if (light_style != 0)
     {
         light_style = 0;

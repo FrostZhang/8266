@@ -551,6 +551,7 @@ static esp_err_t wifi_callback(net_callback call)
                 ESP_LOGE(TAG, "收到WiFi断开消息");
                 sntpcompent_stop();
                 udp_client_stop();
+                ledc_deini();
                 //os_delay_us(2000);
         }
         return ESP_OK;
