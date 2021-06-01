@@ -373,21 +373,21 @@ static int colorblack[3] = {0};
 static void ledc_set_color(int setc)
 {
         gpio_bit = setc;
-        if (setc == LEDC_CLOSE)
+        color[0] = (setc & 0xff);       //r
+        color[1] = (setc >> 8) & 0xff;  //g
+        color[2] = (setc >> 16) & 0xff; //b  //当r=g=100 b是彩灯fade时长
+        color[3] = (setc >> 24) & 0xff; //光照强度 0-255
+        ledc_set_lumen(color[3]);
+        if (color[0] == 100 && color[1] == 100)
         {
-                ledc_setcolor(colorblack);
+                ledc_change_state(2);
+                ledc_set_fadtime(color[2] * 100);
+                ESP_LOGI(TAG, "set ledc rainbow %d", color[2]);
         }
         else
         {
-                color[2] = (setc >> 16) & 0xff;
-                color[1] = (setc >> 8) & 0xff;
-                color[0] = (setc & 0xff);
-                for (uint8_t i = 0; i < 3; i++)
-                {
-                        color[i] *=16;
-                }
-                ESP_LOGI(TAG, "set ledc color %d %d %d", color[0], color[1], color[2]);
                 ledc_setcolor(color);
+                ESP_LOGI(TAG, "set ledc color %d %d %d", color[0], color[1], color[2]);
         }
 }
 

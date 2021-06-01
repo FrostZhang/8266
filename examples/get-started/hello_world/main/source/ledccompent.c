@@ -8,7 +8,6 @@
 #define LEDC_HS_CH0_CHANNEL LEDC_CHANNEL_0
 #define LEDC_HS_CH1_CHANNEL LEDC_CHANNEL_1
 #define LEDC_HS_CH2_CHANNEL LEDC_CHANNEL_2
-#define LEDC_TEST_FADE_TIME (100)
 #define IR_RX_BUF_LEN 128
 ledc_channel_config_t ledc_channel[3];
 static int gpio_r;
@@ -17,9 +16,9 @@ static int gpio_b;
 static const char *TAG = "ledc";
 int light_style;
 bool isini;
-static int fadetime = LEDC_TEST_FADE_TIME;
-int color_state1[6][3] = {{4096, 0, 0}, {0, 4096, 0}, {0, 0, 4096}, {4096, 4096, 0}, {4096, 0, 4096}, {0, 4096, 4096}};
-
+static int fadetime = 1000;
+static int rainbow[6][3] = {{255, 0, 0}, {0, 255, 0}, {0, 0, 255}, {255, 255, 0}, {255, 0, 255}, {0, 255, 255}};
+static int lumen = 16;
 static void LEDC(void *p)
 {
 #if !defined(APP_LEDC)
@@ -80,12 +79,12 @@ static void LEDC(void *p)
             continue;
         }
 
-        if (light_style == 1 || light_style == 2)
+        if (light_style >= 1)
         {
             for (ch = 0; ch < 3; ch++)
             {
                 ledc_set_fade_with_time(ledc_channel[ch].speed_mode,
-                                        ledc_channel[ch].channel, color_state1[loop][ch], fadetime);
+                                        ledc_channel[ch].channel, rainbow[loop][ch] * lumen, fadetime);
                 ledc_fade_start(ledc_channel[ch].speed_mode,
                                 ledc_channel[ch].channel, LEDC_FADE_NO_WAIT);
             }
@@ -136,7 +135,7 @@ extern void ledc_setcolor(int color[3])
     for (int ch = 0; ch < 3; ch++)
     {
         ledc_set_fade_with_time(ledc_channel[ch].speed_mode,
-                                ledc_channel[ch].channel, color[ch], fadetime);
+                                ledc_channel[ch].channel, color[ch] * lumen, 100);
         ledc_fade_start(ledc_channel[ch].speed_mode,
                         ledc_channel[ch].channel, LEDC_FADE_WAIT_DONE);
         // ledc_set_duty(ledc_channel[ch].speed_mode, ledc_channel[ch].channel, color[ch]);
@@ -145,6 +144,7 @@ extern void ledc_setcolor(int color[3])
     //vTaskDelay(500 / portTICK_PERIOD_MS);
 }
 
+//输入彩虹变色速度 100-4000
 extern void ledc_set_fadtime(int time)
 {
     if (time < 100)
@@ -152,6 +152,12 @@ extern void ledc_set_fadtime(int time)
         time = 100;
     }
     fadetime = time;
+}
+
+//输入光强度 0-255
+extern void ledc_set_lumen(int lu)
+{
+    lumen = lu * 0.0625f;
 }
 
 extern void ledc_deini()
