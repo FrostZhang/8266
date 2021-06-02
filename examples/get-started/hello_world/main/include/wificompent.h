@@ -7,7 +7,7 @@ extern ip4_addr_t *LocalIP;
 typedef enum
 {
     WIFI_ERR = 0,
-    WIFI_CONNNECT,
+    WIFI_CONNNECT,  //连接或重连
     WIFI_Disconnect,
 } net_callback;
 

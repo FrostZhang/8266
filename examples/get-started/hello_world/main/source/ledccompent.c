@@ -10,9 +10,9 @@
 #define LEDC_HS_CH2_CHANNEL LEDC_CHANNEL_2
 #define IR_RX_BUF_LEN 128
 ledc_channel_config_t ledc_channel[3];
-static int gpio_r;
-static int gpio_g;
-static int gpio_b;
+//static int gpio_r;
+//static int gpio_g;
+//static int gpio_b;
 static const char *TAG = "ledc";
 static int light_style;
 static bool isini;
@@ -78,7 +78,6 @@ static void LEDC(void *p)
             loop = -1;
             continue;
         }
-
         if (light_style >= 1)
         {
             for (ch = 0; ch < 3; ch++)
@@ -109,18 +108,21 @@ static void LEDC(void *p)
 extern void ledc_ini(int r, int b, int g, int style)
 {
     if (isini)
+    {
+        ESP_LOGE(TAG, "already have ledc");
         return;
+    }
     if (r == b || r == g || b == g)
     {
         ESP_LOGE(TAG, "输入gpio err");
         return;
     }
     light_style = style;
-    isini = style;
+    isini = 1;
     ledc_channel[0].gpio_num = r;
     ledc_channel[1].gpio_num = b;
     ledc_channel[2].gpio_num = g;
-    xTaskCreate(LEDC, "LEDC", 4096, NULL, 8, NULL);
+    xTaskCreate(LEDC, "LEDC", 1024 * 4, NULL, 8, NULL);
 }
 
 extern void ledc_change_state(int style)
@@ -166,7 +168,9 @@ extern void ledc_set_lumen(int lu)
     lumen = lu * 0.0625f;
 }
 
+//暂时被废弃
 extern void ledc_deini()
 {
-    isini = 0;
+
+    //isini = 0;
 }

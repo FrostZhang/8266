@@ -21,8 +21,15 @@ static int increment;
 //malloc data_res. creat josn
 extern void data_initialize()
 {
-    jsonSender = cJSON_CreateObject();
-    ESP_LOGD(TAG, "data_initialize");
+    if (jsonSender == NULL)
+    {
+        jsonSender = cJSON_CreateObject();
+        ESP_LOGD(TAG, "data_initialize");
+    }
+    else
+    {
+        ESP_LOGD(TAG, "data already initialized");
+    }
 }
 
 //得到json {"reported":{key:number}} 用完后请调用 datafree

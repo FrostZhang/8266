@@ -16,7 +16,7 @@ static const char *RESTART = "restart";
 static const char *BDJS = "bdjs";
 static const char *DATA = "data";
 
-static const char *LOGIN = "login";
+//static const char *LOGIN = "login";
 static const char *ISR = "isr";
 static const char *ISRP = "isrp";
 
@@ -248,7 +248,10 @@ static esp_err_t stop_webserver(httpd_handle_t server)
 extern esp_err_t http_server_start()
 {
     if (server != NULL)
-        return;
+    {
+        ESP_LOGI(TAG, "already have httpserver");
+        return ESP_OK;
+    }
     httpd_handle_t handle = start_webserver();
     if (handle != NULL)
     {

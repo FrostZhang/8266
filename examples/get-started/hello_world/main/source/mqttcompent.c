@@ -28,7 +28,6 @@ static char *uptopic = {0}; //"$baidu/iot/shadow/Asher8266/update";
 //             .password = "uEzltFewLsAaMQnZ",
 static mqtt_callback_t callback;
 static int isConnect;
-static int isregist;
 
 //连接成功后 注册百度相关的topic
 static void regist_baidu()

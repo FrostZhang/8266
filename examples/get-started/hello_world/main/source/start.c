@@ -104,11 +104,6 @@ static void gpio_task(void *arg)
         vTaskDelete(NULL);
 }
 
-// static void button_press_5s_cb(void *arg)
-// {
-//         print_free_heap_size();
-// }
-
 //初始化gpio
 static void GpioIni(void)
 {
@@ -368,7 +363,7 @@ extern int system_get_gpio_state(gpio_num_t num)
 
 #if defined(APP_LEDC)
 static int color[4];
-static int colorblack[4] = {0};
+//static int colorblack[4] = {0};
 //设置灯光颜色
 static void ledc_set_color(int setc)
 {
@@ -386,7 +381,7 @@ static void ledc_set_color(int setc)
         }
         else
         {
-                ledc_setcolor(&color);
+                ledc_setcolor(color);
                 ESP_LOGI(TAG, "set ledc color %d %d %d", color[0], color[1], color[2]);
         }
 }
@@ -620,7 +615,7 @@ static void print_sys()
 void app_main()
 {
         print_sys();
-        GpioIni();
+        GpioIni();      //默认全关
         nav_load_custom_data();
         wifi_connect_start(wifi_callback);
 
@@ -630,7 +625,7 @@ void app_main()
         xTaskCreate(ir_rx_task, "ir_rx_task", 2048, NULL, 5, NULL);
         xTaskCreate(ir_tx_task, "ir_tx_task", 2048, NULL, 5, NULL);
 
-        vTaskDelay(5000 / portTICK_RATE_MS);
+        //vTaskDelay(5000 / portTICK_RATE_MS);
 
         //int color[3] = {231 * 2048 / 255, 174 * 2048 / 255, 45 * 2048 / 255};
         //ledc_setcolor(color);

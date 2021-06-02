@@ -44,8 +44,8 @@ extern void udp_client_sendto(in_addr_t addr, const char *data)
 {
         if (sock < 0)
                 ESP_LOGE(TAG, "udp 没有启用");
-        if (addr < 0)
-                ESP_LOGE(TAG, "udp sendto addr err");
+        // if (addr < 0)
+        //         ESP_LOGE(TAG, "udp sendto addr err");
         sendAddr.sin_addr.s_addr = addr;
         ESP_LOGI(TAG, "udp send %d %s", addr, data);
         int err = sendto(sock, data, strlen(data), 0, (struct sockaddr *)&sendAddr, sizeof(sendAddr));
@@ -126,6 +126,7 @@ static void udp_client_task(void *pvParameters)
                         close(sock);
                 }
         }
+        ESP_LOGI(TAG, "udp dispose!");
         vTaskDelete(NULL);
 }
 
