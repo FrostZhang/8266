@@ -17,7 +17,7 @@ static const char *TAG = "data";
 static cJSON *jsonSender;
 static data_res callback_data;
 static const char *SPACE = " ";
-static int increment;
+static uint64_t increment;
 //malloc data_res. creat josn
 extern void data_initialize()
 {
@@ -29,6 +29,21 @@ extern void data_initialize()
     else
     {
         ESP_LOGD(TAG, "data already initialized");
+    }
+}
+
+static void reset()
+{
+    callback_data.cmd = -2;
+    if (callback_data.cmd1 != NULL)
+    {
+        free(callback_data.cmd1);
+        callback_data.cmd1 = NULL;
+    }
+    if (callback_data.output0 != NULL)
+    {
+        free(callback_data.output0);
+        callback_data.output0 = NULL;
     }
 }
 
@@ -93,7 +108,7 @@ extern void data_free(void *object)
 extern data_res *data_decode_bdjs(char *data)
 {
     cJSON *json = cJSON_Parse(data);
-    callback_data.cmd = -2;
+    reset();
     if (NULL != json)
     {
         cJSON *jsonrequest = cJSON_GetObjectItem(json, REQUESTID);
@@ -114,11 +129,17 @@ extern data_res *data_decode_bdjs(char *data)
             {
                 callback_data.cmd = jsoncmd->valueint;
             }
-
+            cJSON *jsoncmd1 = cJSON_GetObjectItem(reporter, CMD1);
+            if (jsoncmd1 != NULL && cJSON_IsString(jsoncmd1))
+            {
+                callback_data.cmd1 = malloc(strlen(jsoncmd1->valuestring) + 1);
+                strcpy(callback_data.cmd1, jsoncmd1->valuestring);
+            }
             cJSON *jsono0 = cJSON_GetObjectItem(reporter, OUTPUT0);
             if (jsono0 != NULL && cJSON_IsString(jsono0))
             {
-                callback_data.output0 = jsono0->valuestring;
+                callback_data.output0 = malloc(strlen(jsono0->valuestring) + 1);
+                strcpy(callback_data.output0, jsono0->valuestring);
             }
         }
         cJSON_Delete(json);

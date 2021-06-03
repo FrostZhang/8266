@@ -363,9 +363,9 @@ extern int system_get_gpio_state(gpio_num_t num)
 
 #if defined(APP_LEDC)
 static int color[4];
-//static int colorblack[4] = {0};
+static int colorblack[4] = {0};
 //设置灯光颜色
-static void ledc_set_color(int setc)
+static void ledc_colorful(int setc)
 {
         gpio_bit = setc;
         color[0] = (setc & 0xff);       //r
@@ -373,16 +373,27 @@ static void ledc_set_color(int setc)
         color[2] = (setc >> 16) & 0xff; //b  //当r=g=100 b是彩灯fade时长
         color[3] = (setc >> 24) & 0xff; //光照强度 0-255
         ledc_set_lumen(color[3]);
-        if (color[0] == 100 && color[1] == 100)
+        if (color[0] == 255 && color[1] == 255 && color[2] == 255)
         {
-                ledc_change_state(2);
-                ledc_set_fadtime(color[2] * 100);
-                ESP_LOGI(TAG, "set ledc rainbow %d", color[2]);
+                //白色 米黄
+                ledc_set_colorful(colorblack);
+                ledc_set_huang(color[3]);
+                ESP_LOGI(TAG, "set ledc write %d", color[3]);
         }
         else
         {
-                ledc_setcolor(color);
-                ESP_LOGI(TAG, "set ledc color %d %d %d", color[0], color[1], color[2]);
+                ledc_set_huang(0);
+                if (color[0] == 100 && color[1] == 100)
+                {
+                        ledc_change_state(2);
+                        ledc_set_fadtime(color[2] * 100);
+                        ESP_LOGI(TAG, "set ledc rainbow %d", color[2]);
+                }
+                else
+                {
+                        ledc_set_colorful(color);
+                        ESP_LOGI(TAG, "set ledc color %d %d %d", color[0], color[1], color[2]);
+                }
         }
 }
 
@@ -423,12 +434,15 @@ extern esp_err_t system_http_callback(http_event *call)
                         mqtt_publish(send);
                         data_free(send);
 #elif defined(APP_LEDC)
-                        ledc_set_color(ans->cmd);
+                        ledc_colorful(ans->cmd);
                         char *send = data_bdjs_reported(CMD, ans->cmd);
                         mqtt_publish(send);
                         data_free(send);
                         print_free_heap_size();
 #endif
+                }
+                else if (ans->cmd1 != NULL)
+                {
                 }
         }
         else if (call->gpio > -1)
@@ -462,7 +476,7 @@ static esp_err_t mqttcallback(char *rec)
 #if defined(APP_STRIP_4) || defined(APP_STRIP_3)
                 gpio_input_all(ans->cmd);
 #elif defined(APP_LEDC)
-                ledc_set_color(ans->cmd);
+                ledc_colorful(ans->cmd);
 #endif
         }
         return ESP_OK;
@@ -529,7 +543,7 @@ static esp_err_t ota_callback_handel()
         http_server_start();
         sntp_start(sntp_connect_callback);
         udp_client_start(udpcallback);
-        ledc_ini(LEDC_IO_NUM0, LEDC_IO_NUM1, LEDC_IO_NUM2, 2);
+        ledc_ini(LEDC_IO_NUM0, LEDC_IO_NUM1, LEDC_IO_NUM2, 2, LEDC_IO_NUM3);
         return ESP_OK;
 }
 
@@ -615,7 +629,7 @@ static void print_sys()
 void app_main()
 {
         print_sys();
-        GpioIni();      //默认全关
+        GpioIni(); //默认全关
         nav_load_custom_data();
         wifi_connect_start(wifi_callback);
 

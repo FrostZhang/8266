@@ -8,8 +8,9 @@
 #define LEDC_HS_CH0_CHANNEL LEDC_CHANNEL_0
 #define LEDC_HS_CH1_CHANNEL LEDC_CHANNEL_1
 #define LEDC_HS_CH2_CHANNEL LEDC_CHANNEL_2
+#define LEDC_HS_CH3_CHANNEL LEDC_CHANNEL_3;
 #define IR_RX_BUF_LEN 128
-ledc_channel_config_t ledc_channel[3];
+ledc_channel_config_t ledc_channel[4];
 //static int gpio_r;
 //static int gpio_g;
 //static int gpio_b;
@@ -22,7 +23,8 @@ static int lumen = 16;
 static void LEDC(void *p)
 {
 #if !defined(APP_LEDC)
-    ESP_LOGE(TAG, "当前不是APP_LEDC模式 不可以使用 gpio12");
+    ESP_LOGE(TAG, "当前不是APP_LEDC模式");
+    vTaskDelete(NULL);
     return;
 #endif
     ledc_timer_config_t ledc_timer = {
@@ -57,8 +59,14 @@ static void LEDC(void *p)
     ledc_channel[2].hpoint = 0;
     ledc_channel[2].timer_sel = LEDC_HS_TIMER;
 
+    ledc_channel[3].channel = LEDC_HS_CH3_CHANNEL;
+    ledc_channel[3].duty = 0;
+    ledc_channel[3].speed_mode = LEDC_HS_MODE;
+    ledc_channel[3].hpoint = 0;
+    ledc_channel[3].timer_sel = LEDC_HS_TIMER;
+
     int ch;
-    for (ch = 0; ch < 3; ch++)
+    for (ch = 0; ch < 4; ch++)
     {
         ledc_channel_config(&ledc_channel[ch]);
     }
@@ -105,7 +113,8 @@ static void LEDC(void *p)
     vTaskDelete(NULL);
 }
 
-extern void ledc_ini(int r, int b, int g, int style)
+//设备由一个彩灯和一个白/黄灯组成 分开控制
+extern void ledc_ini(int r, int b, int g, int style, int huang)
 {
     if (isini)
     {
@@ -122,6 +131,7 @@ extern void ledc_ini(int r, int b, int g, int style)
     ledc_channel[0].gpio_num = r;
     ledc_channel[1].gpio_num = b;
     ledc_channel[2].gpio_num = g;
+    ledc_channel[3].gpio_num = huang;
     xTaskCreate(LEDC, "LEDC", 1024 * 4, NULL, 8, NULL);
 }
 
@@ -130,7 +140,8 @@ extern void ledc_change_state(int style)
     light_style = style;
 }
 
-extern void ledc_setcolor(int color[3])
+//控制七彩灯
+extern void ledc_set_colorful(int color[3])
 {
     if (!isini)
         return;
@@ -150,6 +161,17 @@ extern void ledc_setcolor(int color[3])
         // ledc_update_duty(ledc_channel[ch].speed_mode, ledc_channel[ch].channel);
     }
     //vTaskDelay(500 / portTICK_PERIOD_MS);
+}
+
+//单独控制黄灯
+extern void ledc_set_huang(int strength)
+{
+    if (!isini)
+        return;
+    ledc_set_fade_with_time(ledc_channel[3].speed_mode,
+                            ledc_channel[3].channel, strength * lumen, 100);
+    ledc_fade_start(ledc_channel[3].speed_mode,
+                    ledc_channel[3].channel, LEDC_FADE_WAIT_DONE);
 }
 
 //输入彩虹变色速度 100-4000
