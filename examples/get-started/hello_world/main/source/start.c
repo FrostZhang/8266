@@ -341,26 +341,6 @@ static void gpio_input_reversal(gpio_num_t num)
         ESP_LOGE(TAG, "%d 不在自定义控制列表", num);
 }
 
-//定时器 回调
-extern void system_ds_callback(gpio_num_t num, int isopen)
-{
-        printf("ds callback %d 回调 %d isopen %d\n", gpio_bit, num, isopen);
-        gpio_input_num(num, isopen);
-        char *send = data_bdjs_reported(CMD, gpio_bit);
-        mqtt_publish(send);
-        data_free(send);
-}
-
-//判断gpio的开关状态
-extern int system_get_gpio_state(gpio_num_t num)
-{
-        if (gpio_bit & BIT(num))
-        {
-                return 1;
-        }
-        return 0;
-}
-
 #if defined(APP_LEDC)
 static int color[4];
 static int colorblack[4] = {0};
@@ -418,6 +398,46 @@ static void ledc_reversal()
         // }
 }
 #endif
+
+//定时器 回调
+extern void system_ds_callback(gpio_num_t num, int isopen)
+{
+        printf("ds callback %d 回调 %d isopen %d\n", gpio_bit, num, isopen);
+#if defined(APP_STRIP_4) || defined(APP_STRIP_3)
+        gpio_input_num(num, isopen);
+        char *send = data_bdjs_reported(CMD, gpio_bit);
+        mqtt_publish(send);
+        data_free(send);
+#elif defined(APP_LEDC)
+        if (isopen)
+        {
+                if (color[3] ==0)
+                {
+                        ledc_colorful(-1);
+                }
+        }
+        else
+        {
+                if (color[3] !=0)
+                {
+                        ledc_colorful(0);
+                }
+        }
+        char *send = data_bdjs_reported(CMD, gpio_bit);
+        mqtt_publish(send);
+        data_free(send);
+#endif
+}
+
+//判断gpio的开关状态
+extern int system_get_gpio_state(gpio_num_t num)
+{
+        if (gpio_bit & BIT(num))
+        {
+                return 1;
+        }
+        return 0;
+}
 
 //http收到控制信息回调
 extern esp_err_t system_http_callback(http_event *call)
