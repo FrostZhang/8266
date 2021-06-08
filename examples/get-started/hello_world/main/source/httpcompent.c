@@ -19,6 +19,7 @@ static const char *DATA = "data";
 //static const char *LOGIN = "login";
 static const char *ISR = "isr";
 static const char *ISRP = "isrp";
+static const char *COL = "col";
 
 static const char *TAG = "http";
 
@@ -101,6 +102,14 @@ static esp_err_t index_post_handler(httpd_req_t *req)
                 my_isr_index = atoi(io);
                 free(io);
                 for_strip_index = atoi(value);
+            }
+            else if (strncmp(key, COL, 3))
+            {
+                if (value == NULL)
+                {
+                    char *va = substring(value, 1, 6);
+                    
+                }
             }
             ptr = strtok_r(NULL, "&", &p);
         }

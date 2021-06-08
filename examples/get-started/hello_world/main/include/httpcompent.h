@@ -5,9 +5,10 @@
 typedef struct http_event
 {
     int restart;
-    int gpio;   
+    int gpio;
     int gpio_level; //0 on 1 off 2 reval
-    char* bdjs;
+    char *bdjs;
+    int cmd; //
 } http_event;
 
 typedef http_event *http_event_handle_t;
