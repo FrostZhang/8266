@@ -196,3 +196,37 @@ extern void ledc_deini()
 
     //isini = 0;
 }
+
+//color: r|g<<8|b<<16|a<<24
+static int color[4];
+static int colorblack[4] = {0};
+extern void ledc_color(int setc)
+{
+    color[0] = (setc & 0xff);       //r
+    color[1] = (setc >> 8) & 0xff;  //g
+    color[2] = (setc >> 16) & 0xff; //b  //当r=g=100 b是彩灯fade时长
+    color[3] = (setc >> 24) & 0xff; //光照强度 0-255
+    ledc_set_lumen(color[3]);
+    if (color[0] == 255 && color[1] == 255 && color[2] == 255)
+    {
+        //白色 米黄
+        ledc_set_colorful(colorblack);
+        ledc_set_huang(color[3]);
+        ESP_LOGI(TAG, "set ledc write %d", color[3]);
+    }
+    else
+    {
+        ledc_set_huang(0);
+        if (color[0] == 100 && color[1] == 100)
+        {
+            ledc_change_state(2);
+            ledc_set_fadtime(color[2] * 100);
+            ESP_LOGI(TAG, "set ledc rainbow %d", color[2]);
+        }
+        else
+        {
+            ledc_set_colorful(color);
+            ESP_LOGI(TAG, "set ledc color %d %d %d", color[0], color[1], color[2]);
+        }
+    }
+}

@@ -29,6 +29,8 @@
 #define LEDC_IO_NUM3 GPIO_NUM_13
 #endif
 
+int hex2dec(char c);
+char dec2hex(short int c);
 void http_url_encode(char url[]);
 void http_url_decode(char url[]);
 void system_restart();

@@ -9,4 +9,5 @@ void ledc_set_fadtime(int time);
 void ledc_change_state(int state);
 void ledc_set_lumen(int lu); 
 void ledc_set_huang(int strength);
+void ledc_color(int setc);
 #endif

@@ -47,6 +47,7 @@ extern int system_get_gpio_state(gpio_num_t num);
 static void gpio_input_all(int input);
 static void gpio_input_reversal(gpio_num_t num);
 static void gpio_input_num(gpio_num_t num, int level);
+//防止物理开关接触不良
 static int isr_level_temp[] = {0, 0, 0, 0};
 
 static void gpio_isr_handler(void *arg)
@@ -280,7 +281,7 @@ static void ir_tx_task(void *arg)
         vTaskDelete(NULL);
 }
 
-//同时控制所有 cus_strip 的状态 包含就关闭
+//同时控制所有 cus_strip 的状态 包含关闭
 static void gpio_input_all(int input)
 {
         gpio_bit = input;
@@ -342,60 +343,11 @@ static void gpio_input_reversal(gpio_num_t num)
 }
 
 #if defined(APP_LEDC)
-static int color[4];
-static int colorblack[4] = {0};
 //设置灯光颜色
-static void ledc_colorful(int setc)
+static void change_color(int setc)
 {
         gpio_bit = setc;
-        color[0] = (setc & 0xff);       //r
-        color[1] = (setc >> 8) & 0xff;  //g
-        color[2] = (setc >> 16) & 0xff; //b  //当r=g=100 b是彩灯fade时长
-        color[3] = (setc >> 24) & 0xff; //光照强度 0-255
-        ledc_set_lumen(color[3]);
-        if (color[0] == 255 && color[1] == 255 && color[2] == 255)
-        {
-                //白色 米黄
-                ledc_set_colorful(colorblack);
-                ledc_set_huang(color[3]);
-                ESP_LOGI(TAG, "set ledc write %d", color[3]);
-        }
-        else
-        {
-                ledc_set_huang(0);
-                if (color[0] == 100 && color[1] == 100)
-                {
-                        ledc_change_state(2);
-                        ledc_set_fadtime(color[2] * 100);
-                        ESP_LOGI(TAG, "set ledc rainbow %d", color[2]);
-                }
-                else
-                {
-                        ledc_set_colorful(color);
-                        ESP_LOGI(TAG, "set ledc color %d %d %d", color[0], color[1], color[2]);
-                }
-        }
-}
-
-//反转 灯光开关
-static void ledc_reversal()
-{
-        // if (gpio_bit == LEDC_CLOSE)
-        // {
-        //         if (color[0] == 0 && color[1] == 0 && color[2] == 0)
-        //         {
-        //                 ledc_change_state(2);
-        //         }
-        //         else
-        //         {
-        //                 ledc_setcolor(color);
-        //         }
-        // }
-        // else
-        // {
-        //         gpio_bit = LEDC_CLOSE;
-        //         ledc_setcolor(colorblack);
-        // }
+        ledc_color(setc);
 }
 #endif
 
@@ -411,17 +363,11 @@ extern void system_ds_callback(gpio_num_t num, int isopen)
 #elif defined(APP_LEDC)
         if (isopen)
         {
-                if (color[3] ==0)
-                {
-                        ledc_colorful(-1);
-                }
+                change_color(-1);
         }
         else
         {
-                if (color[3] !=0)
-                {
-                        ledc_colorful(0);
-                }
+                change_color(0);
         }
         char *send = data_bdjs_reported(CMD, gpio_bit);
         mqtt_publish(send);
@@ -454,7 +400,7 @@ extern esp_err_t system_http_callback(http_event *call)
                         mqtt_publish(send);
                         data_free(send);
 #elif defined(APP_LEDC)
-                        ledc_colorful(ans->cmd);
+                        change_color(ans->cmd);
                         char *send = data_bdjs_reported(CMD, ans->cmd);
                         mqtt_publish(send);
                         data_free(send);
@@ -496,7 +442,7 @@ static esp_err_t mqttcallback(char *rec)
 #if defined(APP_STRIP_4) || defined(APP_STRIP_3)
                 gpio_input_all(ans->cmd);
 #elif defined(APP_LEDC)
-                ledc_colorful(ans->cmd);
+                change_color(ans->cmd);
 #endif
         }
         return ESP_OK;

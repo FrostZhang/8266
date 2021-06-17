@@ -24,7 +24,8 @@ uint8_t cus_strip[] = {GPIO_NUM_4, GPIO_NUM_13, GPIO_NUM_15, GPIO_NUM_16};
 int gpio_bit;   //包含1-32开关的状态
 char *userid = {0}; //唯一ID 来自百度天工物
 
-static int hex2dec(char c)
+//16进制转10进制
+extern int hex2dec(char c)
 {
     if ('0' <= c && c <= '9')
     {
@@ -44,7 +45,8 @@ static int hex2dec(char c)
     }
 }
 
-static char dec2hex(short int c)
+//10进制转16进制
+extern char dec2hex(short int c)
 {
     if (0 <= c && c <= 9)
     {
