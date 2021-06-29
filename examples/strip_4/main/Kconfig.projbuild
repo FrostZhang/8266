@@ -1,0 +1,33 @@
+menu "strip_4 Configuration"
+
+config ESP_WIFI_SSID
+    string "WiFi SSID"
+    default "myssid"
+    help
+	SSID (network name) for the example to connect to.
+
+config ESP_WIFI_PASSWORD
+    string "WiFi Password"
+    default "mypassword"
+    help
+	WiFi password (WPA or WPA2) for the example to use.
+
+config ESP_MQTT_ZZ
+    string "MQTT ZZ"
+    default "zz"
+    help
+	MQTT for the mqtt to connect to.
+
+config ESP_MQTT_MM
+    string "MQTT MM"
+    default "mm"
+    help
+    MQTT for the mqtt to connect to.
+    
+config OTA_UPGRADE_URL
+    string "OTA upgrade url endpoint"
+    default "https://192.168.0.3:8070/hello-world.bin"
+    help
+        URL of server which hosts the firmware
+        image.
+endmenu

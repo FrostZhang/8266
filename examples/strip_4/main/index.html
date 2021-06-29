@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang='ch'>
+<link rel='icon' href='data:;base64,='>
+
+<head>
+    <meta charset='utf-8'>
+    <meta name='viewport' content='width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0'>
+    <title>AsherLink</title>
+    <style>
+        button {
+            min-width: 180px;
+        }
+
+        td {
+            min-width: 75px;
+        }
+
+        table {
+            padding-left: 15%;
+        }
+    </style>
+
+<body id="body" onload="load()">
+    <h1>Asher-Link</h1>
+    <h3 id="insert">WIFI</h3>
+    <form id="wifi" method="post">
+        <table>
+            <tr>
+                <td>网络名称:</td>
+                <td>
+                    <input id="ssid" name="ssid" type="Text" maxlength="20" disabled="true"></input>
+                </td>
+            </tr>
+            <tr>
+                <td>网络密钥:</td>
+                <td>
+                    <input id="pass" name="pass" type="password" maxlength="30" disabled="true"></input>
+                </td>
+            </tr>
+            <!-- <tr>
+                <td></td>
+                <td>
+                    <button type="submit">连接（重启设备）</button>
+                </td>
+            </tr> -->
+        </table>
+    </form>
+    <h3>设备名称</h3>
+    <form method="post">
+        <table>
+            <tr>
+                <td></td>
+                <td>
+                    <input id="na" name="na" type="Text" maxlength="20" disabled="true"></input>
+                </td>
+            </tr>
+            <!-- <tr>
+                <td></td>
+                <td>
+                    <button type="submit">更新</button>
+                </td>
+            </tr> -->
+        </table>
+    </form>
+    <h3>MQTT（开发者平台）</h3>
+    <form id="mqtt" method="post">
+        <table>
+            <tr>
+                <td>MQTT ZZ:</td>
+                <td>
+                    <input id="mqttzz" name="mqttzz" type="Text" maxlength="25" disabled="true"></input>
+                </td>
+            </tr>
+            <tr>
+                <td>MQTT MM:</td>
+                <td>
+                    <input id="mqttmm" name="mqttmm" type="password" maxlength="50" disabled="true"></input>
+                </td>
+            </tr>
+            <!-- <tr>
+                <td></td>
+                <td>
+                    <button type="submit">连接（重启设备）</button>
+                </td>
+            </tr> -->
+        </table>
+    </form>
+    <h3>硬件升级</h3>
+    <form method="post">
+        <table>
+            <tr>
+                <td>地址:</td>
+                <td>
+                    <input id="ou" name="ou" type="Text" maxlength="110"></input>
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>
+                    <button type="submit">检测（重启设备）</button>
+                </td>
+            </tr>
+        </table>
+    </form>
+    <h3>设备信息</h3>
+    <form method="post">
+        <table>
+            <tr>
+                <td>型号:</td>
+                <td>
+                    <input id="xh" name="xh" disabled="true"></input>
+                </td>
+            </tr>
+            <tr>
+                <td>OTA片区:</td>
+                <td>
+                    <input id="oc" name="oc" disabled="true"></input>
+                </td>
+            </tr>
+        </table>
+    </form>
+    <h3>重启设备</h3>
+    <form method="post">
+        <table>
+            <tr>
+                <td></td>
+                <td>
+                    <button id="restart" name="restart" type="submit" value="1">点我重启</button>
+                </td>
+            </tr>
+        </table>
+    </form>
+    <script type='text/javascript'>
+        var xmlhttp;
+        function load() {
+            xmlhttp = null;
+            if (window.XMLHttpRequest) {// code for all new browsers
+                xmlhttp = new XMLHttpRequest();
+            }
+            else if (window.ActiveXObject) {// code for IE5 and IE6
+                xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+            }
+            if (xmlhttp == null) {
+                alert("浏览器版本过低，无法读取数据");
+            }
+            LoadData();
+        }
+        function getXMLDoc(url, res) {
+            xmlhttp.onreadystatechange = state_Change;
+            xmlhttp.open("GET", url, true);
+            xmlhttp.send(null);
+            function state_Change() {
+                if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+                    if (xmlhttp.responseText != null && xmlhttp.responseText != "") {
+                        console.log(xmlhttp.responseText)
+                        res();
+                    }
+                }
+            }
+        }
+
+        var inserbeforeEle = document.getElementById("insert");
+        function BuildWithXH(xh) {
+            if (xh == "strip_4") {
+                var strip_4 = [4, 13, 15, 16];
+                h3 = document.createElement("h3");
+                h3.textContent = "输出";
+                document.body.insertBefore(h3, inserbeforeEle);
+                form = document.createElement("form");
+                form.setAttribute("method", "post");
+                table = document.createElement("table");
+                for (let index = 0; index < 4; index++) {
+                    td = document.createElement("td");
+                    tr = document.createElement("tr");
+                    td.textContent = "开关" + strip_4[index];
+                    td2 = document.createElement("td");
+                    button = document.createElement("button");
+                    button.name = button.id = "open" + strip_4[index];
+                    button.type = "submit";
+                    button.textContent = "已关闭";
+                    tr.append(td, td2);
+                    td2.append(button);
+                    table.append(tr);
+                }
+                form.append(table);
+                document.body.insertBefore(form, inserbeforeEle);
+
+                h3 = document.createElement("h3");
+                h3.textContent = "输入";
+                document.body.insertBefore(h3, inserbeforeEle);
+                form = document.createElement("form");
+                form.setAttribute("method", "post");
+                table = document.createElement("table");
+                for (let index = 0; index < 4; index++) {
+                    tr = document.createElement("tr");
+                    td = document.createElement("td");
+                    td.textContent = "控制" + index;
+                    td2 = document.createElement("td");
+                    tr.append(td, td2);
+                    input = document.createElement("input");
+                    td2.append(input);
+                    input.id = input.name = "isr" + index;
+                    input.type = "number";
+                    input.placeholder = "0-3";
+                    input.min = 0;
+                    input.max = 3;
+                    input.required = "required";
+                    table.append(tr);
+
+                    tr = document.createElement("tr");
+                    td = document.createElement("td");
+                    td.textContent = "地址：";
+                    td2 = document.createElement("td");
+                    tr.append(td, td2);
+                    input = document.createElement("input");
+                    td2.append(input);
+                    input.id = input.name = "isrp" + index;
+                    input.type = "text";
+                    input.placeholder = "local";
+                    input.maxlength = 15;
+                    table.append(tr);
+
+                    tr = document.createElement("tr");
+                    td = document.createElement("td");
+                    td2 = document.createElement("td");
+                    tr.append(td, td2);
+                    button = document.createElement("button");
+                    td2.append(button);
+                    button.type = "submit";
+                    button.textContent = "更新配置";
+                    table.append(tr);
+                }
+                form.append(table);
+                document.body.insertBefore(form, inserbeforeEle);
+
+                serializeForm
+            }
+            if (xh == "ledc") {
+                h3 = document.createElement("h3");
+                h3.textContent = "色彩";
+                document.body.insertBefore(h3, inserbeforeEle);
+                form = document.createElement("form");
+                form.setAttribute("method", "post");
+                table = document.createElement("table");
+
+                tr = document.createElement("tr");
+                td = document.createElement("td");
+                td.textContent = "选择";
+                td2 = document.createElement("td");
+                tr.append(td, td2);
+                input = document.createElement("input");
+                td2.append(input);
+                input.id = input.name = "col";
+                input.type = "color";
+                input.required = "required";
+                table.append(tr);
+
+                tr = document.createElement("tr");
+                td = document.createElement("td");
+                td2 = document.createElement("td");
+                tr.append(td, td2);
+                button = document.createElement("button");
+                td2.append(button);
+                button.type = "submit";
+                button.textContent = "发送";
+                table.append(tr);
+
+                form.createElement
+                form.append(table);
+                document.body.insertBefore(form, inserbeforeEle);
+            }
+        }
+        //BuildWithXH("ledc");
+        function LoadData() {
+            getXMLDoc("/htmlData", lodback);
+            function lodback() {
+                var str = xmlhttp.responseText;
+                xh = "";
+                if (str != null && str.length > 0) {
+                    var strs = str.split(',');
+                    strs.forEach(s => {
+                        var kv = s.split("=");
+                        if (kv[0] == "cmd") {
+                            if (xh == "strip_4") {
+                                for (let index = 0; index < 17; index++) {
+                                    if (kv[1] & (1 << index)) {
+                                        var o = document.getElementById("open" + index);
+                                        if (0 != null) {
+                                            o.value = "0";
+                                            o.textContent = "已打开";
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        else {
+                            var temp = document.getElementById(kv[0]);
+                            if (temp != null) {
+                                temp.value = kv[1];
+                            }
+                            if (kv[0] == "xh") {
+                                xh = kv[1];
+                                BuildWithXH(kv[1]);
+                            }
+                        }
+                    });
+                }
+            }
+        }
+    </script>
+</body>
+</head>
+
+</html>
