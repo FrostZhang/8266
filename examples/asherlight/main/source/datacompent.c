@@ -202,14 +202,6 @@ extern char *data_get_sysmes()
     sb_appendf(sb, ",oc=%s", OTA_LABLE);
     if (ota_url != NULL)
         sb_appendf(sb, ",ou=%s", ota_url);
-
-    for (uint8_t i = 0; i < 4; i++)
-    {
-        sb_appendf(sb, ",%s=%d,", KEYS[i], system_get_gpio_state(cus_strip[i]));
-        sb_appendf(sb, ",isr%d=%d", i, isr_events[i].for_strip_index);
-        if (strlen(isr_events[i].ip) > 4)
-            sb_appendf(sb, ",isrp%d=%s", i, isr_events[i].ip);
-    }
     sb_appendf(sb, ",na=%s", wifi_sta_name);
     char *str = sb_concat(sb);
     sb_free(sb);
