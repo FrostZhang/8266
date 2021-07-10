@@ -68,21 +68,21 @@
             <tr>
                 <td>MQTT ZZ:</td>
                 <td>
-                    <input id="mqttzz" name="mqttzz" type="Text" maxlength="25" disabled="true"></input>
+                    <input id="mqttzz" name="mqttzz" type="Text" maxlength="25"></input>
                 </td>
             </tr>
             <tr>
                 <td>MQTT MM:</td>
                 <td>
-                    <input id="mqttmm" name="mqttmm" type="password" maxlength="50" disabled="true"></input>
+                    <input id="mqttmm" name="mqttmm" type="password" maxlength="50"></input>
                 </td>
             </tr>
-            <!-- <tr>
+            <tr>
                 <td></td>
                 <td>
                     <button type="submit">连接（重启设备）</button>
                 </td>
-            </tr> -->
+            </tr>
         </table>
     </form>
     <h3>硬件升级</h3>
@@ -172,10 +172,10 @@
                 for (let index = 0; index < 4; index++) {
                     td = document.createElement("td");
                     tr = document.createElement("tr");
-                    td.textContent = "开关" + strip_4[index];
+                    td.textContent = "开关" + index;
                     td2 = document.createElement("td");
                     button = document.createElement("button");
-                    button.name = button.id = "open" + strip_4[index];
+                    button.name = button.id = "cmd" + index;
                     button.type = "submit";
                     button.textContent = "已关闭";
                     tr.append(td, td2);
@@ -232,42 +232,6 @@
                 }
                 form.append(table);
                 document.body.insertBefore(form, inserbeforeEle);
-
-                serializeForm
-            }
-            if (xh == "ledc") {
-                h3 = document.createElement("h3");
-                h3.textContent = "色彩";
-                document.body.insertBefore(h3, inserbeforeEle);
-                form = document.createElement("form");
-                form.setAttribute("method", "post");
-                table = document.createElement("table");
-
-                tr = document.createElement("tr");
-                td = document.createElement("td");
-                td.textContent = "选择";
-                td2 = document.createElement("td");
-                tr.append(td, td2);
-                input = document.createElement("input");
-                td2.append(input);
-                input.id = input.name = "col";
-                input.type = "color";
-                input.required = "required";
-                table.append(tr);
-
-                tr = document.createElement("tr");
-                td = document.createElement("td");
-                td2 = document.createElement("td");
-                tr.append(td, td2);
-                button = document.createElement("button");
-                td2.append(button);
-                button.type = "submit";
-                button.textContent = "发送";
-                table.append(tr);
-
-                form.createElement
-                form.append(table);
-                document.body.insertBefore(form, inserbeforeEle);
             }
         }
         //BuildWithXH("ledc");
@@ -280,28 +244,13 @@
                     var strs = str.split(',');
                     strs.forEach(s => {
                         var kv = s.split("=");
-                        if (kv[0] == "cmd") {
-                            if (xh == "strip_4") {
-                                for (let index = 0; index < 17; index++) {
-                                    if (kv[1] & (1 << index)) {
-                                        var o = document.getElementById("open" + index);
-                                        if (0 != null) {
-                                            o.value = "0";
-                                            o.textContent = "已打开";
-                                        }
-                                    }
-                                }
-                            }
+                        var temp = document.getElementById(kv[0]);
+                        if (temp != null) {
+                            temp.value = kv[1];
                         }
-                        else {
-                            var temp = document.getElementById(kv[0]);
-                            if (temp != null) {
-                                temp.value = kv[1];
-                            }
-                            if (kv[0] == "xh") {
-                                xh = kv[1];
-                                BuildWithXH(kv[1]);
-                            }
+                        if (kv[0] == "xh") {
+                            xh = kv[1];
+                            BuildWithXH(kv[1]);
                         }
                     });
                 }

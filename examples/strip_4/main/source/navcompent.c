@@ -237,28 +237,28 @@ extern esp_err_t nav_write_ds(char dso[32], int num)
         char strtemp[33] = {0};
         strncpy(strtemp, dso, 32);
         strtemp[32] = '\0';
-        if (num == 4)
+        if (num == cus_strip[0])
         {
             err = nvs_set_str(mHandleNvsRead, "dsdata", strtemp);
             strncpy(dsdata, strtemp, 32);
             dsdata[32] = '\0';
             ESP_LOGI(TAG, "write_ds dsdata = %s", strtemp);
         }
-        else if (num == 12)
+        else if (num == cus_strip[1])
         {
             err = nvs_set_str(mHandleNvsRead, "dsdata1", strtemp);
             strncpy(dsdata1, strtemp, 32);
             dsdata1[32] = '\0';
             ESP_LOGI(TAG, "write_ds dsdata1 = %s", strtemp);
         }
-        else if (num == 13)
+        else if (num == cus_strip[2])
         {
             err = nvs_set_str(mHandleNvsRead, "dsdata2", strtemp);
             strncpy(dsdata2, strtemp, 32);
             dsdata2[32] = '\0';
             ESP_LOGI(TAG, "write_ds dsdata2 = %s", strtemp);
         }
-        else if (num == 15)
+        else if (num == cus_strip[3])
         {
             err = nvs_set_str(mHandleNvsRead, "dsdata3", strtemp);
             strncpy(dsdata3, strtemp, 32);
