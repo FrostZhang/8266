@@ -224,7 +224,7 @@ extern void ledc_color(int setc)
     }
 }
 
-//直接对接百度新协议
+//直接对接百度新协议 w (0-100)
 extern void ledc_color2(int cmds[5])
 {
     int w = cmds[4];
