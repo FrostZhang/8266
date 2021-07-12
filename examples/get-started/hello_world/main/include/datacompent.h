@@ -3,7 +3,11 @@
 
 extern const char *REPORTED;
 extern const char *CMD;
+extern const char *CMD0;
 extern const char *CMD1;
+extern const char *CMD2;
+extern const char *CMD3;
+extern const char *CMD4;
 extern const char *OUTPUT0;
 extern const char *OUTPUT1;
 extern const char *LOCAL_IP;
@@ -12,8 +16,13 @@ extern const char *REQUESTID;
 typedef struct data_res
 {
     int cmd;       //cmd
+    int cmd0;       //cmd
+    int cmd1;
+    int cmd2;
+    int cmd3;
+    int cmd4;
     char *output0; //output0
-    char *cmd1;
+    char *output1; //output1
 } data_res;
 
 //ini data then mqtt http udp and...

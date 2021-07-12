@@ -6,7 +6,11 @@
 
 const char *REPORTED = "reported";   //reported
 const char *CMD = "cmd";             //cmd
+const char *CMD0 = "cmd0";           //cmd
 const char *CMD1 = "cmd1";           //cmd1
+const char *CMD2 = "cmd2";           //cmd1
+const char *CMD3 = "cmd3";           //cmd1
+const char *CMD4 = "cmd4";           //cmd1
 const char *OUTPUT0 = "output0";     //output0
 const char *OUTPUT1 = "output1";     //output1
 const char *LOCAL_IP = "local_ip";   //local_ip
@@ -35,15 +39,21 @@ extern void data_initialize()
 static void reset()
 {
     callback_data.cmd = -2;
-    if (callback_data.cmd1 != NULL)
-    {
-        free(callback_data.cmd1);
-        callback_data.cmd1 = NULL;
-    }
+    callback_data.cmd0 = -2;
+    callback_data.cmd1 = -2;
+    callback_data.cmd2 = -2;
+    callback_data.cmd3 = -2;
+    callback_data.cmd4 = -2;
+
     if (callback_data.output0 != NULL)
     {
         free(callback_data.output0);
         callback_data.output0 = NULL;
+    }
+    if (callback_data.output1 != NULL)
+    {
+        free(callback_data.output1);
+        callback_data.output1 = NULL;
     }
 }
 
@@ -129,17 +139,42 @@ extern data_res *data_decode_bdjs(char *data)
             {
                 callback_data.cmd = jsoncmd->valueint;
             }
-            cJSON *jsoncmd1 = cJSON_GetObjectItem(reporter, CMD1);
-            if (jsoncmd1 != NULL && cJSON_IsString(jsoncmd1))
+            cJSON *jsoncmd0 = cJSON_GetObjectItem(reporter, CMD0);
+            if (jsoncmd0 != NULL && cJSON_IsNumber(jsoncmd0))
             {
-                callback_data.cmd1 = malloc(strlen(jsoncmd1->valuestring) + 1);
-                strcpy(callback_data.cmd1, jsoncmd1->valuestring);
+                callback_data.cmd0 = jsoncmd->valueint;
+            }
+            cJSON *jsoncmd1 = cJSON_GetObjectItem(reporter, CMD1);
+            if (jsoncmd1 != NULL && cJSON_IsNumber(jsoncmd1))
+            {
+                callback_data.cmd1 = jsoncmd->valueint;
+            }
+            cJSON *jsoncmd2 = cJSON_GetObjectItem(reporter, CMD1);
+            if (jsoncmd2 != NULL && cJSON_IsNumber(jsoncmd2))
+            {
+                callback_data.cmd2 = jsoncmd->valueint;
+            }
+            cJSON *jsoncmd3 = cJSON_GetObjectItem(reporter, CMD1);
+            if (jsoncmd3 != NULL && cJSON_IsNumber(jsoncmd3))
+            {
+                callback_data.cmd3 = jsoncmd->valueint;
+            }
+            cJSON *jsoncmd4 = cJSON_GetObjectItem(reporter, CMD4);
+            if (jsoncmd4 != NULL && cJSON_IsNumber(jsoncmd4))
+            {
+                callback_data.cmd4 = jsoncmd->valueint;
             }
             cJSON *jsono0 = cJSON_GetObjectItem(reporter, OUTPUT0);
             if (jsono0 != NULL && cJSON_IsString(jsono0))
             {
                 callback_data.output0 = malloc(strlen(jsono0->valuestring) + 1);
                 strcpy(callback_data.output0, jsono0->valuestring);
+            }
+            cJSON *jsono1 = cJSON_GetObjectItem(reporter, OUTPUT1);
+            if (jsono1 != NULL && cJSON_IsString(jsono1))
+            {
+                callback_data.output1 = malloc(strlen(jsono1->valuestring) + 1);
+                strcpy(callback_data.output1, jsono1->valuestring);
             }
         }
         cJSON_Delete(json);
@@ -164,9 +199,10 @@ extern char *data_get_sysmes()
     if (ota_url != NULL)
         sb_appendf(sb, ",ou=%s", ota_url);
 #if defined(APP_STRIP_4) || defined(APP_STRIP_3)
-    sb_appendf(sb, ",cmd=%d,", gpio_bit);
+   
     for (uint8_t i = 0; i < 4; i++)
     {
+        sb_appendf(sb, ",cmd%d=%d,",i, );
         sb_appendf(sb, ",isr%d=%d", i, isr_events[i].for_strip_index);
         if (strlen(isr_events[i].ip) > 4)
             sb_appendf(sb, ",isrp%d=%s", i, isr_events[i].ip);

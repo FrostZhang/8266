@@ -11,7 +11,7 @@
 
 static const char *MQTTZZ = "mqttzz";
 static const char *MQTTMM = "mqttmm";
-static const char *OPENSTR = "open";
+static const char *CMDSTR = "cmd";
 static const char *RESTART = "restart";
 static const char *BDJS = "bdjs";
 static const char *DATA = "data";
@@ -77,9 +77,9 @@ static esp_err_t index_post_handler(httpd_req_t *req)
                 mqttzz = value;
             else if (strcmp(key, MQTTMM) == 0)
                 mqttmm = value;
-            else if (strncmp(key, OPENSTR, 4) == 0)
+            else if (strncmp(key, CMDSTR, 3) == 0)
             {
-                char *io = substring(key, strlen(OPENSTR), strlen(key) - strlen(OPENSTR));
+                char *io = substring(key, strlen(CMDSTR), strlen(key) - strlen(CMDSTR));
                 httpevent.gpio = atoi(io);
                 free(io);
                 httpevent.gpio_level = atoi(value);

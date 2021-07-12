@@ -6,7 +6,7 @@
 #include "esp8266/gpio_struct.h"    //获取gpio当前状态
 
 #define url_encode_buff_size 2048
-char *XINHAO = "ledc";
+char *XINHAO = "strip_4";
 
 char *OTA_LABLE;
 struct tm timeinfo = {0};
@@ -142,7 +142,7 @@ extern void print_free_heap_size()
 //判断gpio的开关状态
 extern int system_get_gpio_state(gpio_num_t num)
 {
-        if (GPIO.out_w1ts & BIT(num))
+        if ((GPIO.out_w1ts & BIT(num))==BIT(num))
         {
                 return 1;
         }

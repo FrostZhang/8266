@@ -204,12 +204,20 @@ extern esp_err_t system_http_callback(http_event *call)
                 {
                         if (ans->cmds[i] != -2)
                         {
+                                printf("http callback 回调 %d isopen %d\n", cus_strip[i], ans->cmds[i]);
                                 gpio_input_num(cus_strip[i], ans->cmds[i]);
                                 char *send = data_bdjs_reported(KEYS[i], ans->cmds[i]);
                                 mqtt_publish(send);
                                 data_free(send);
                         }
                 }
+        }
+        else if (call->gpio > -1)
+        {
+                gpio_input_num(cus_strip[call->gpio], call->gpio_level);
+                char *send = data_bdjs_reported(KEYS[call->gpio], call->gpio_level);
+                mqtt_publish(send);
+                data_free(send);
         }
         if (call->restart == 1)
         {

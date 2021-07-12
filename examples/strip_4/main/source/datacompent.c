@@ -32,7 +32,10 @@ extern void data_initialize()
 
 static void reset()
 {
-    memset(callback_data.cmds, -2, 5);
+    for (uint8_t i = 0; i < 5; i++)
+    {
+        callback_data.cmds[i] = -2;
+    }
     if (callback_data.output0 != NULL)
     {
         free(callback_data.output0);
@@ -100,23 +103,23 @@ extern void add_write_data_bdjs(cJSON *reporter, const char *key, int number)
 {
     if (!cJSON_HasObjectItem(reporter, key))
     {
-         cJSON_AddItemToObject(reporter, key, cJSON_CreateNumber(number));
+        cJSON_AddItemToObject(reporter, key, cJSON_CreateNumber(number));
     }
 }
 
 //添加key 百度的协议 需要end!
-extern void add_write_data_bdjs_s(cJSON *reporter, const char *key, const char * value)
+extern void add_write_data_bdjs_s(cJSON *reporter, const char *key, const char *value)
 {
     if (!cJSON_HasObjectItem(reporter, key))
     {
-         cJSON_AddItemToObject(reporter, key, cJSON_CreateString(value));
+        cJSON_AddItemToObject(reporter, key, cJSON_CreateString(value));
     }
 }
 
 //得到json {"reported":{key:value,key2:value2,...}} 用完后请调用 datafree
 extern char *end_write_data_bdjs()
 {
-     if (userid != NULL)
+    if (userid != NULL)
     {
         increment++;
         char id[16] = {0};
@@ -205,7 +208,7 @@ extern char *data_get_sysmes()
 
     for (uint8_t i = 0; i < 4; i++)
     {
-        sb_appendf(sb, ",%s=%d,", KEYS[i], system_get_gpio_state(cus_strip[i]));
+        sb_appendf(sb, ",%s=%d", KEYS[i], system_get_gpio_state(cus_strip[i]));
         sb_appendf(sb, ",isr%d=%d", i, isr_events[i].for_strip_index);
         if (strlen(isr_events[i].ip) > 4)
             sb_appendf(sb, ",isrp%d=%s", i, isr_events[i].ip);
