@@ -59,7 +59,6 @@ static void ota_task(void *pvParameter)
     char *url = malloc(strlen(path) + 18);
     memset(url, '\0', strlen(path) + 18);
     strncpy(url, path, strlen(path));
-
     const esp_partition_t *notruning = esp_ota_get_next_update_partition(running);
     strcat(url, notruning->label);
     ESP_LOGI(TAG, "begin download: %s", url);
@@ -79,7 +78,6 @@ static void ota_task(void *pvParameter)
     {
         ESP_LOGE(TAG, "Firmware Upgrades Failed");
         free(url);
-        free(path);
         callback();
         vTaskDelete(NULL);
     }

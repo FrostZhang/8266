@@ -77,15 +77,16 @@ extern esp_err_t system_http_callback(http_event *call)
         if (call->bdjs != NULL)
         {
                 data_res *ans = data_decode_bdjs(call->bdjs);
-                // if (ans->cmd != -2)
-                // {
-                //         printf("HTTP get cmd %d \n", ans->cmd);
-                //         change_color(ans->cmd);
-                //         char *send = data_bdjs_reported(CMD, ans->cmd);
-                //         mqtt_publish(send);
-                //         data_free(send);
-                //         print_free_heap_size();
-                // }
+                ledc_color2(ans->cmds);
+                cJSON *cj = begin_write_data_bdjs();
+                add_write_data_bdjs(cj, KEYS[0], ans->cmds[0]);
+                add_write_data_bdjs(cj, KEYS[1], ans->cmds[1]);
+                add_write_data_bdjs(cj, KEYS[2], ans->cmds[2]);
+                add_write_data_bdjs(cj, KEYS[3], ans->cmds[3]);
+                add_write_data_bdjs(cj, KEYS[4], ans->cmds[4]);
+                char *send = end_write_data_bdjs();
+                mqtt_publish(send);
+                data_free(send);
         }
         if (call->restart == 1)
         {

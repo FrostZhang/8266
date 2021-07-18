@@ -244,6 +244,7 @@ extern void ledc_color2(int cmds[5])
     }
     else
     {
+        ledc_set_huang(0);
         ledc_set_colorful(cmds);
         ESP_LOGI(TAG, "set ledc color %d %d %d", cmds[0], cmds[1], cmds[2]);
     }

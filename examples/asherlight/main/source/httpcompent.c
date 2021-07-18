@@ -11,6 +11,7 @@
 
 static const char *MQTTZZ = "mqttzz";
 static const char *MQTTMM = "mqttmm";
+static const char *CMDSTR = "cmd";
 static const char *OPENSTR = "open";
 static const char *RESTART = "restart";
 static const char *BDJS = "bdjs";
@@ -38,7 +39,10 @@ static void reset_callback_data()
 static esp_err_t index_post_handler(httpd_req_t *req)
 {
     static char buf[100];
+    static char revdata[1024];
+    revdata[0] = '\0';
     int ret, remaining = req->content_len;
+    int datalen = remaining;
     reset_callback_data();
     //需要返回index 主页
     int needbackindex = 1;
@@ -54,76 +58,76 @@ static esp_err_t index_post_handler(httpd_req_t *req)
             }
             return ESP_FAIL;
         }
+        strncat(revdata, buf, ret);
         remaining -= ret;
-        ESP_LOGI(TAG, "RECEIVED DATA %.*s", ret, buf);
-        buf[ret] = '\0';
-        http_url_decode(buf);
-
-        char *mqttzz = NULL;
-        char *mqttmm = NULL;
-        int my_isr_index = -1; //0-3
-        int for_strip_index = -1;
-        char *isrpath = NULL;
-        char *ptr;
-        char *p;
-        ptr = strtok_r(buf, "&", &p);
-        while (ptr != NULL)
-        {
-            char *p2;
-            char *newp = ptr;
-            char *key = strtok_r(newp, "=", &p2);
-            char *value = strtok_r(NULL, "=", &p2);
-            if (strcmp(key, MQTTZZ) == 0)
-                mqttzz = value;
-            else if (strcmp(key, MQTTMM) == 0)
-                mqttmm = value;
-            else if (strncmp(key, OPENSTR, 4) == 0)
-            {
-                char *io = substring(key, strlen(OPENSTR), strlen(key) - strlen(OPENSTR));
-                httpevent.gpio = atoi(io);
-                free(io);
-                httpevent.gpio_level = atoi(value);
-            }
-            else if (strcmp(key, RESTART) == 0)
-                httpevent.restart = 1;
-            else if (strcmp(key, BDJS) == 0)
-            {
-                needbackindex = 0;
-                httpevent.bdjs = value;
-                httpevent.bdjs[strlen(value)] = '\0';
-            }
-            else if (strncmp(key, ISRP, 4) == 0)
-            {
-                isrpath = value;
-            }
-            else if (strncmp(key, ISR, 3) == 0)
-            {
-                char *io = substring(key, strlen(ISR), strlen(key) - strlen(ISR));
-                my_isr_index = atoi(io);
-                free(io);
-                for_strip_index = atoi(value);
-            }
-            else if (strncmp(key, COL, 3))
-            {
-                if (value == NULL)
-                {
-                    char *va = substring(value, 1, 6);
-                    
-                }
-            }
-            ptr = strtok_r(NULL, "&", &p);
-        }
-        if (mqttzz != NULL && mqttmm != NULL)
-        {
-            nav_write_mqtt_baidu_account(mqttzz, mqttmm);
-            httpevent.restart = 1;
-        }
-        if (my_isr_index > -1)
-        {
-            nav_write_isr_for(my_isr_index, isrpath, for_strip_index);
-        }
     }
 
+    http_url_decode(revdata);
+    ESP_LOGI(TAG, "RECEIVED DATA %.*s", datalen, revdata);
+
+    char *mqttzz = NULL;
+    char *mqttmm = NULL;
+    int my_isr_index = -1; //0-3
+    int for_strip_index = -1;
+    char *isrpath = NULL;
+    char *ptr;
+    char *p;
+    ptr = strtok_r(revdata, "&", &p);
+    while (ptr != NULL)
+    {
+        char *p2;
+        char *newp = ptr;
+        char *key = strtok_r(newp, "=", &p2);
+        char *value = strtok_r(NULL, "=", &p2);
+        if (strcmp(key, MQTTZZ) == 0)
+            mqttzz = value;
+        else if (strcmp(key, MQTTMM) == 0)
+            mqttmm = value;
+        else if (strncmp(key, CMDSTR, 3) == 0)
+        {
+            char *io = substring(key, strlen(CMDSTR), strlen(key) - strlen(CMDSTR));
+            httpevent.gpio = atoi(io);
+            free(io);
+            httpevent.gpio_level = atoi(value);
+        }
+        else if (strcmp(key, RESTART) == 0)
+            httpevent.restart = 1;
+        else if (strcmp(key, BDJS) == 0)
+        {
+            needbackindex = 0;
+            httpevent.bdjs = value;
+            httpevent.bdjs[strlen(value)] = '\0';
+        }
+        else if (strncmp(key, ISRP, 4) == 0)
+        {
+            isrpath = value;
+        }
+        else if (strncmp(key, ISR, 3) == 0)
+        {
+            char *io = substring(key, strlen(ISR), strlen(key) - strlen(ISR));
+            my_isr_index = atoi(io);
+            free(io);
+            for_strip_index = atoi(value);
+        }
+        else if (strncmp(key, COL, 3))
+        {
+            if (value == NULL)
+            {
+                char *va = substring(value, 1, 6);
+            }
+        }
+        ptr = strtok_r(NULL, "&", &p);
+    }
+    if (mqttzz != NULL && mqttmm != NULL)
+    {
+        nav_write_mqtt_baidu_account(mqttzz, mqttmm);
+        httpevent.restart = 1;
+    }
+    if (my_isr_index > -1)
+    {
+        nav_write_isr_for(my_isr_index, isrpath, for_strip_index);
+    }
+    free(revdata);
     system_http_callback(&httpevent);
     if (needbackindex)
     {
