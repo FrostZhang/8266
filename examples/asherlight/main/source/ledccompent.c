@@ -227,13 +227,15 @@ extern void ledc_color(int setc)
 //直接对接百度新协议 w (0-100)
 extern void ledc_color2(int cmds[5])
 {
-    int w = cmds[4];
-    ledc_set_lumen(cmds[3]);
+    if (cmds[3] != -2)
+    {
+        ledc_set_lumen(cmds[3]);
+    }
 
-    if (w > 0)
+    if (cmds[4] != -2 && cmds[4] > 0)
     {
         ledc_change_state(2);
-        ledc_set_fadtime(w * 100);
+        ledc_set_fadtime(cmds[4] * 100);
     }
     else if (cmds[0] == 255 && cmds[1] == 255 && cmds[2] == 255)
     {
