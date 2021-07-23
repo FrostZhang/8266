@@ -230,8 +230,32 @@ extern void ledc_color2(int cmds[5])
     if (cmds[3] != -2)
     {
         ledc_set_lumen(cmds[3]);
+
+        //仅传了亮度  没有别的参数
+        if (cmds[0] == -2 && cmds[4] == -2)
+        {
+            if (color[0] == 255 && color[1] == 255 && color[2] == 255)
+            {
+                //缓存的是白光
+                ledc_set_colorful(colorblack);
+                ledc_set_huang(color[3]);
+            }
+            else if (color[0] == 0 && color[1] == 0 && color[2] == 0)
+            {
+                //缓存的是黑光
+                ledc_set_colorful(colorblack);
+                ledc_set_huang(color[3]);
+            }
+            else
+            {
+                //缓存的是彩光
+                ledc_set_huang(0);
+                ledc_set_colorful(color);
+            }
+        }
     }
 
+    //彩虹特效
     if (cmds[4] != -2 && cmds[4] > 0)
     {
         ledc_change_state(2);
@@ -239,15 +263,22 @@ extern void ledc_color2(int cmds[5])
     }
     else if (cmds[0] == 255 && cmds[1] == 255 && cmds[2] == 255)
     {
-        //白色 米黄
+        //解析白光
         ledc_set_colorful(colorblack);
         ledc_set_huang(cmds[3]);
+        color[0] = cmds[0];
+        color[1] = cmds[1];
+        color[2] = cmds[2];
         ESP_LOGI(TAG, "set ledc write %d", cmds[3]);
     }
     else
     {
+        //解析彩色 和黑色
         ledc_set_huang(0);
         ledc_set_colorful(cmds);
+        color[0] = cmds[0];
+        color[1] = cmds[1];
+        color[2] = cmds[2];
         ESP_LOGI(TAG, "set ledc color %d %d %d", cmds[0], cmds[1], cmds[2]);
     }
 }
