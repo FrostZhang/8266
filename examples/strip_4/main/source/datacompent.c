@@ -178,10 +178,9 @@ extern data_res *data_decode_bdjs(char *data)
                 }
             }
             cJSON *jsono0 = cJSON_GetObjectItem(reporter, OUTPUT0);
-            if (jsono0 != NULL && cJSON_IsString(jsono0))
+            if (jsono0 != NULL && cJSON_IsNumber(jsono0))
             {
-                callback_data.output0 = malloc(strlen(jsono0->valuestring) + 1);
-                strcpy(callback_data.output0, jsono0->valuestring);
+                callback_data.output0 = jsono0->valueint;
             }
         }
         cJSON_Delete(json);

@@ -173,6 +173,10 @@ extern data_res *data_decode_bdjs(char *data)
                 {
                     callback_data.cmds[i] = jsoncmd->valueint;
                 }
+                else    
+                {
+                    callback_data.cmds[i] = -2;
+                }
             }
             cJSON *jsono0 = cJSON_GetObjectItem(reporter, OUTPUT0);
             if (jsono0 != NULL && cJSON_IsString(jsono0))

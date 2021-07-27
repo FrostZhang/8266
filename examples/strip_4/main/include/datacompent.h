@@ -14,8 +14,8 @@ extern char *KEYS[5];
 typedef struct data_res
 {
     int cmds[5];
-    char *output0; //output0
-    char *output1; //output0
+    int output0; //output0
+    int output1; //output0
 } data_res;
 
 //ini data then mqtt http udp and...

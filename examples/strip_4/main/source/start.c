@@ -62,20 +62,13 @@ static void gpio_task(void *arg)
                                 if (cus_isr[i] == io_num)
                                 {
                                         printf("GPIO[%d] intr\n", io_num);
-                                        if (strlen(isr_events[i].ip) < 9)
-                                        {
-                                                int res = gpio_input_reversal(cus_strip[isr_events[i].for_strip_index]);
-                                                char *send = data_bdjs_reported(KEYS[i], res);
-                                                mqtt_publish(send);
-                                                data_free(send);
-                                        }
-                                        else
-                                        {
-                                                char string[5] = {0};
-                                                char *send = data_bdjs_reported_string(OUTPUT0, itoa(isr_events[i].for_strip_index, string, 10));
-                                                udp_client_sendto2(isr_events[i].ip, send);
-                                                data_free(send);
-                                        }
+                                        int res = gpio_input_reversal(cus_strip[isr_events[i].for_strip_index]);
+                                        cJSON *cj = begin_write_data_bdjs();
+                                        add_write_data_bdjs_s(cj, "sender", mqttusername);
+                                        add_write_data_bdjs(cj, OUTPUT0, res);
+                                        char *send = end_write_data_bdjs();
+                                        udp_client_bord(send);
+                                        data_free(send);
                                 }
                         }
                 }
@@ -274,26 +267,11 @@ extern esp_err_t udpcallback(udp_event *call)
 {
         ESP_LOGI(TAG, "UDP REC %s", call->recdata);
         printf("UDP Stack %ld\n", uxTaskGetStackHighWaterMark(NULL));
-        if (strncmp(call->recdata, "request", 7) == 0)
+        if (strncmp(call->recdata, "search", 6) == 0)
         {
                 char *sysdata = data_get_sysmes();
                 udp_client_sendto(call->addr, sysdata);
                 free(sysdata);
-        }
-        else if (strncmp(call->recdata, "{", 1) == 0)
-        {
-                data_res *ans = data_decode_bdjs(call->recdata);
-                //接收 其他物理开关 发送的指令
-                if (ans->output0 != NULL)
-                {
-                        printf("udp get reversal %s \n", ans->output0);
-                        //得到 cus_strip 序号
-                        int index = atoi(ans->output0);
-                        int res = gpio_input_reversal(cus_strip[index]);
-                        char *send = data_bdjs_reported(KEYS[index], res);
-                        mqtt_publish(send);
-                        data_free(send);
-                }
         }
         return ESP_OK;
 }
